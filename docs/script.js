@@ -8,6 +8,40 @@ fetch("data.json")
 const searchBox = document.getElementById("searchBox");
 const searchBtn = document.getElementById("searchBtn");
 const results = document.getElementById("results");
+const viewportMeta = document.querySelector("meta[name=viewport]");
+
+// フォーカス時のズーム防止（iOS Safari対策）
+searchBox.addEventListener("focus", () => {
+  if (viewportMeta) {
+    viewportMeta.setAttribute(
+      "content",
+      "width=device-width, initial-scale=1.0, maximum-scale=1.0"
+    );
+  }
+});
+
+// フォーカスを外すとズームを元に戻す
+function resetZoom() {
+  if (document.activeElement) document.activeElement.blur(); // フォーカス解除
+  if (viewportMeta) {
+    viewportMeta.setAttribute(
+      "content",
+      "width=device-width, initial-scale=1.0, maximum-scale=10.0"
+    );
+  }
+}
+
+// 検索ボタン押下やEnter押下時にズームを戻す
+searchBtn.addEventListener("click", () => {
+  doSearch();
+  resetZoom();
+});
+searchBox.addEventListener("keydown", (e) => {
+  if (e.key === "Enter") {
+    doSearch();
+    resetZoom();
+  }
+});
 
 function doSearch() {
   const query = searchBox.value.trim().toLowerCase();
@@ -90,9 +124,3 @@ function doSearch() {
     results.appendChild(div);
   });
 }
-
-// イベント
-searchBtn.addEventListener("click", doSearch);
-searchBox.addEventListener("keydown", (e) => {
-  if (e.key === "Enter") doSearch();
-});
