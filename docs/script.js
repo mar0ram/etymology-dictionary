@@ -31,11 +31,33 @@ function resetZoom() {
   }
 }
 
-// 検索ボタン押下やEnter押下時にズームを戻す
+// ビューポートリセット関数
+function resetZoom() {
+  // フォーカスを外す
+  if (document.activeElement) document.activeElement.blur();
+
+  // 少し遅延してスクロール位置をトップに戻す
+  setTimeout(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+    
+    // ビューポートを再設定（iOS Safari対応）
+    const viewportMeta = document.querySelector("meta[name=viewport]");
+    if (viewportMeta) {
+      viewportMeta.setAttribute(
+        "content",
+        "width=device-width, initial-scale=1.0, maximum-scale=1.0"
+      );
+    }
+  }, 100); // 100ms 遅延で確実に反映
+}
+
+// 検索ボタン押下
 searchBtn.addEventListener("click", () => {
   doSearch();
   resetZoom();
 });
+
+// Enter押下
 searchBox.addEventListener("keydown", (e) => {
   if (e.key === "Enter") {
     doSearch();
