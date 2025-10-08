@@ -66,7 +66,7 @@ for _, row in df.iterrows():
     html_output += f"</div>\n\n"
 
 # 出力保存
-with open("dictionary.html", "w", encoding="utf-8") as f:
+with open("docs/dictionary.html", "w", encoding="utf-8") as f:
     f.write(html_output)
 
 print("✅ dictionary.html が生成されました！")
