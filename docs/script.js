@@ -96,5 +96,3 @@ searchBtn.addEventListener("click", doSearch);
 searchBox.addEventListener("keydown", (e) => {
   if (e.key === "Enter") doSearch();
 });
-
-
