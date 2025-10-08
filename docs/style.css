@@ -1,0 +1,313 @@
+/* 全体 */
+body {
+    font-family: 'Merriweather', Georgia, 'Times New Roman', serif;
+    background-color: #f4e5d2;
+    /* 古紙色 */
+    background-image: url('https://i.imgur.com/P2H1H8f.jpg');
+    /* 薄い紙のテクスチャ */
+    background-repeat: repeat;
+    color: #3e2f1c;
+    margin: 0;
+    padding: 0;
+    letter-spacing: 0.5px;
+    word-spacing: 1px;
+    font-feature-settings: "pwid";
+}
+
+/* 検索コンテナ */
+.search-container {
+    width: 90%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 20px auto;
+    flex-wrap: nowrap;
+    gap: 10px;
+}
+
+#searchBox {
+    flex: 1 1 auto;
+    padding: 12px 16px;
+    min-width: 150px; /* 小型でも最小幅確保 */
+    font-size: 16px;
+    border: 2px solid #8b5a2b;
+    /* 茶色のインク色 */
+    border-radius: 4px;
+    background-color: rgba(255, 250, 240, 0.8);
+    /* 透け紙 */
+    color: #3e2f1c;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+#searchBox:focus {
+    border-color: #a0522d;
+    box-shadow: 0 0 6px rgba(160, 82, 45, 0.6);
+}
+
+#searchBtn {
+    padding: 12px 20px;
+    flex: 0 0 auto; /* ボタンは固定幅 */
+    font-size: 16px;
+    border: 2px solid #8b5a2b;
+    background-color: #deb887;
+    color: #3e2f1c;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s, transform 0.2s;
+    font-weight: bold;
+}
+
+#searchBtn:hover {
+    background-color: #d2b48c;
+    transform: translateY(-1px);
+}
+
+/* 結果コンテナ */
+#results {
+    max-width: 900px;
+    margin: 0 auto 50px;
+    padding: 0 20px;
+}
+
+/* 各カード */
+.entry {
+    background-color: rgba(255, 248, 220, 0.9);
+    /* 古紙風 */
+    border: 1px solid #a0522d;
+    border-radius: 8px;
+    box-shadow: 3px 3px 10px rgba(100, 50, 0, 0.3);
+    margin-bottom: 20px;
+    padding: 20px;
+    transition: transform 0.2s, box-shadow 0.2s;
+    font-family: 'Merriweather', serif;
+}
+
+.entry:hover {
+    transform: translateY(-3px);
+    box-shadow: 5px 5px 20px rgba(100, 50, 0, 0.5);
+}
+
+.entry .head {
+    font-size: 22px;
+    font-weight: 700;
+    margin-bottom: 15px;
+    color: #5b3a1b;
+}
+
+/* セクション見出し */
+.section {
+    margin-bottom: 15px;
+    padding: 12px 18px;
+    border-left: 4px solid #8b5a2b;
+    border-radius: 4px;
+    background-color: rgba(255, 245, 230, 0.9);
+    box-shadow: inset 0 0 4px rgba(160, 82, 45, 0.2);
+}
+
+.section:nth-child(even) {
+    background-color: rgba(250, 240, 220, 0.9);
+}
+
+.subtitle {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: #a0522d;
+    text-shadow: 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+/* コンテンツ共通 */
+.content {
+    padding-left: 10px;
+    font-size: 16px;
+    letter-spacing: 0.5px;
+    word-spacing: 1px;
+    color: #3e2f1c;
+}
+
+.content div {
+    line-height: 1.6;
+    margin-bottom: 5px;
+    font-size: 16px;
+    white-space: normal;
+    line-break: strict;
+    word-break: keep-all;
+}
+
+/* h1 partN 横並び＋「+」 */
+.section.h1 .content {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+}
+
+.section.h1 .content span::after {
+    content: "+";
+    margin: 0 3px;
+    color: #8b4513;
+}
+
+.section.h1 .content span:last-child::after {
+    content: "";
+}
+
+/* h4 tag/p */
+.section.h4 .content .tag {
+    margin-left: 0;
+    font-weight: 600;
+    color: #8b4513;
+}
+
+.section.h4 .content .p {
+    margin-left: 20px;
+}
+
+/* h5 period/meaning */
+.section.h5 .content .period-meaning {
+    display: block;
+    margin-bottom: 5px;
+}
+
+.section.h5 .content .period-meaning span.period {
+    font-weight: 500;
+    margin-right: 3px;
+    color: #a0522d;
+}
+
+.section.h5 .content .period-meaning span.meaning::before {
+    content: "：";
+    margin-right: 3px;
+}
+
+/* 画像 */
+.content img {
+    max-width: 100%;
+    border-radius: 6px;
+    margin-bottom: 10px;
+    display: block;
+    border: 1px solid #a0522d;
+    box-shadow: 2px 2px 5px rgba(160, 82, 45, 0.3);
+}
+
+/* レスポンシブ */
+@media (max-width: 1024px) {
+
+    #searchBox,
+    #searchBtn {
+        flex: 1 1 100%;
+    }
+
+    .content,
+    .content div {
+        font-size: 15px;
+    }
+
+    .entry .head {
+        font-size: 20px;
+    }
+}
+
+@media (max-width: 768px) {
+
+    .search-container {
+        flex-wrap: nowrap; /* 横並び維持 */
+        justify-content: space-between; /* ボタンを右端に */
+        width: 95%;
+    }
+    #searchBox {
+        flex: 1 1 70%; /* 検索窓を少し小さめに */
+        margin-bottom: 0;
+    }
+    #searchBtn {
+        flex: 0 0 25%; /* ボタンは固定幅 */
+        margin-bottom: 0;
+    }
+
+    #searchBox,
+    #searchBtn {
+        width: 95%;
+        font-size: 15px;
+    }
+
+    .content {
+        font-size: 14px;
+        padding-left: 6px;
+    }
+
+    .content div {
+        font-size: 14px;
+    }
+
+    .entry .head {
+        font-size: 19px;
+    }
+
+    .section {
+        padding: 12px 15px;
+    }
+
+    .subtitle {
+        font-size: 15px;
+    }
+}
+
+@media (max-width: 600px) {
+
+    #searchBox,
+    #searchBtn {
+        width: 90%;
+        font-size: 14px;
+    }
+
+    .entry {
+        padding: 10px;
+    }
+
+    .entry .head {
+        font-size: 18px;
+    }
+
+    .content {
+        font-size: 12px;
+    }
+
+    .content div {
+        font-size: 12px;
+    }
+
+    .section {
+        padding: 10px 12px;
+    }
+
+    .subtitle {
+        font-size: 14px;
+    }
+}
+
+@media (max-width: 480px) {
+
+    #searchBox,
+    #searchBtn {
+        width: 95%;
+        font-size: 13px;
+        padding: 10px;
+    }
+
+    .entry .head {
+        font-size: 16px;
+    }
+
+    .content {
+        font-size: 12px;
+        padding-left: 4px;
+    }
+
+    .section {
+        padding: 8px 10px;
+    }
+
+    .subtitle {
+        font-size: 13px;
+    }
+}
