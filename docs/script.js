@@ -83,6 +83,12 @@ function doSearch() {
     return;
   }
 
+  // ✅ 改行をHTMLに反映するための関数
+  const nl2br = (text) => {
+    if (!text) return "";
+    return text.replace(/\r?\n/g, "<br>");
+  };
+
   filtered.forEach(item => {
     const div = document.createElement("div");
     div.className = "entry";
@@ -110,29 +116,29 @@ function doSearch() {
       const contentDiv = div.querySelector(".section:last-child .content");
 
       if (hKey.startsWith("h1")) {
-        const parts = childKeys.map(k => item[k]);
+        const parts = childKeys.map(k => nl2br(item[k])); // ← 改行対応
         contentDiv.innerHTML = parts.join(" + ");
-      } else if (hKey.startsWith("h4")) {
+      } else if (hKey.startsWith("h5")) {
         let i = 1;
         while (item[`tag${i}`] || item[`p${i}`]) {
-          const tag = item[`tag${i}`] || "";
-          const p = item[`p${i}`] || "";
+          const tag = nl2br(item[`tag${i}`] || ""); // ← 改行対応
+          const p = nl2br(item[`p${i}`] || "");     // ← 改行対応
           if (tag) contentDiv.innerHTML += `<div class="tag">${tag}</div>`;
           if (p) contentDiv.innerHTML += `<div class="p">${p}</div>`;
           i++;
         }
-      } else if (hKey.startsWith("h5")) {
+      } else if (hKey.startsWith("h6")) {
         let i = 1;
         while (item[`period${i}`] || item[`meaning${i}`]) {
-          const per = item[`period${i}`] || "";
-          const mean = item[`meaning${i}`] || "";
+          const per = nl2br(item[`period${i}`] || "");   // ← 改行対応
+          const mean = nl2br(item[`meaning${i}`] || ""); // ← 改行対応
           if (per || mean)
             contentDiv.innerHTML += `<div class="period-meaning"><span class="period">${per}</span><span class="meaning">${mean}</span></div>`;
           i++;
         }
       } else {
         childKeys.forEach(k => {
-          contentDiv.innerHTML += `<div>${item[k]}</div>`;
+          contentDiv.innerHTML += `<div>${nl2br(item[k])}</div>`; // ← 改行対応
         });
       }
     });

@@ -160,30 +160,30 @@ body {
     content: "";
 }
 
-/* h4 tag/p */
-.section.h4 .content .tag {
+/* h5 tag/p */
+.section.h5 .content .tag {
     margin-left: 0;
     font-weight: 600;
     color: #8b4513;
 }
 
-.section.h4 .content .p {
+.section.h5 .content .p {
     margin-left: 20px;
 }
 
-/* h5 period/meaning */
-.section.h5 .content .period-meaning {
+/* h6 period/meaning */
+.section.h6 .content .period-meaning {
     display: block;
     margin-bottom: 5px;
 }
 
-.section.h5 .content .period-meaning span.period {
+.section.h6 .content .period-meaning span.period {
     font-weight: 500;
     margin-right: 3px;
     color: #a0522d;
 }
 
-.section.h5 .content .period-meaning span.meaning::before {
+.section.h6 .content .period-meaning span.meaning::before {
     content: "：";
     margin-right: 3px;
 }
