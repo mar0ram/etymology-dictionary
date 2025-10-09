@@ -83,7 +83,7 @@ function doSearch() {
     return;
   }
 
-  // ✅ 改行をHTMLに反映するための関数
+  //  改行をHTMLに反映するための関数
   const nl2br = (text) => {
     if (!text) return "";
     return text.replace(/\r?\n/g, "<br>");
