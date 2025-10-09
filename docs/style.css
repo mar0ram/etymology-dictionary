@@ -1,6 +1,7 @@
 /* 全体 */
 body {
-    font-family: 'Merriweather', serif;
+    font-family: 'Noto Sans JP', sans-serif;
+    font-weight: 400;
     background-color: #f4e5d2;
     color: #3e2f1c;
     margin: 0;
