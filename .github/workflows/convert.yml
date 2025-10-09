@@ -5,9 +5,6 @@ on:
     paths:
       - "data/etymology.xlsx"
 
-permissions:
-  contents: write
-
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -31,7 +28,6 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git pull --rebase
-          git add docs/data.json docs/dictionary.html || true
+          git add docs/data.json docs/dictionary.html
           git commit -m "Auto update JSON and HTML from Excel" || echo "No changes to commit"
           git push
