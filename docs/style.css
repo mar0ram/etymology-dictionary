@@ -126,7 +126,7 @@ body {
 .content {
     padding-left: 10px;
     font-size: 16px;
-    letter-spacing: 1px;
+    letter-spacing: .8px;
     word-spacing: 1px;
     color: #3e2f1c;
 }
