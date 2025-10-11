@@ -133,13 +133,18 @@ body {
 
 .content div {
     line-height: 1.6;
-    margin-bottom: 10px;
+    margin-bottom: 12px;
     font-size: 16px;
     white-space: normal;
     word-break: break-word;
     /* 修正：折り返しを許可 */
     overflow-wrap: break-word;
     /* 補助 */
+}
+
+.ml {
+    margin: 3px 0 0 20px;
+    display: inline-block;
 }
 
 /* h1 partN 横並び＋「+」 */
