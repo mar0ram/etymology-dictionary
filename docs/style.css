@@ -117,7 +117,7 @@ body {
 .subtitle {
     font-size: 16px;
     font-weight: 600;
-    margin-bottom: 8px;
+    margin-bottom: 15px;
     color: #a0522d;
     text-shadow: 0 1px 0 rgba(255, 255, 255, 0.2);
 }
@@ -126,14 +126,14 @@ body {
 .content {
     padding-left: 10px;
     font-size: 16px;
-    letter-spacing: 0.5px;
+    letter-spacing: 1px;
     word-spacing: 1px;
     color: #3e2f1c;
 }
 
 .content div {
     line-height: 1.6;
-    margin-bottom: 5px;
+    margin-bottom: 10px;
     font-size: 16px;
     white-space: normal;
     word-break: break-word;
@@ -162,6 +162,7 @@ body {
 /* h5 tag/p */
 .section.h5 .content .tag {
     margin-left: 0;
+    margin-bottom: 5px;
     font-weight: 600;
     color: #8b4513;
 }
@@ -173,7 +174,7 @@ body {
 /* h6 period/meaning */
 .section.h6 .content .period-meaning {
     display: block;
-    margin-bottom: 5px;
+    margin-bottom: 8px;
 }
 
 .section.h6 .content .period-meaning span.period {

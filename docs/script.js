@@ -86,7 +86,7 @@ function doSearch() {
   //  改行をHTMLに反映するための関数
   const nl2br = (text) => {
     if (!text) return "";
-    return text.replace(/\r?\n/g, "<br>");
+    return text.replace(/\r?\n/g, "<br>&nbsp;&nbsp;&nbsp;");
   };
 
   filtered.forEach(item => {
