@@ -143,8 +143,16 @@ body {
 }
 
 .ml {
-    margin: 3px 0 0 20px;
+    margin-left: 20px;
     display: inline-block;
+}
+
+.ml:first-of-type {
+  margin-top: 8px;
+}
+
+.ml + .ml {
+    margin-top: 6px;
 }
 
 /* h1 partN 横並び＋「+」 */
