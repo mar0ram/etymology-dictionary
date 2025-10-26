@@ -144,7 +144,7 @@ body {
 
 .ml {
     margin-left: 20px;
-    display: inline-block;
+    display: block;
 }
 
 .ml:first-of-type {
