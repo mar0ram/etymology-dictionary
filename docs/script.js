@@ -65,30 +65,58 @@ searchBox.addEventListener("keydown", (e) => {
 });
 
 function doSearch() {
-  const query = searchBox.value.trim().toLowerCase();
+  const raw = searchBox.value.trim();
+  const query = raw.toLowerCase();
   results.innerHTML = "";
 
   if (!query) {
-    results.innerHTML = "<p>単語を入力してください</p>";
+    results.innerHTML = "<p>1900は単語／1000は番号を入力</p>";
     return;
   }
 
-  const filtered = data.filter(item => {
-    if (!item.word || typeof item.word !== "string") return false;
-    return item.word.toLowerCase() === query;
-  });
+  // 数値判定（整数のみ）
+  const isNumber = /^[0-9]+$/.test(query);
+
+  let filtered = [];
+
+  if (isNumber) {
+    // --- 数値検索モード ---
+    const numInput = parseInt(query, 10);
+
+    // 1〜1000 以外はエラー
+    if (numInput < 1 || numInput > 1000) {
+      results.innerHTML = "<p>番号検索は 1〜1000 の範囲のみ有効です</p>";
+      return;
+    }
+
+    const actualNum = numInput + 1500;  // Excel 実際の行番号
+
+    filtered = data.filter(item => {
+      return item.num === actualNum;
+    });
+
+  } else {
+    // --- 英単語検索モード ---
+    filtered = data.filter(item => {
+      // 1〜1500 行のみ対象
+      if (item.num > 1500) return false;
+      if (!item.word || typeof item.word !== "string") return false;
+      return item.word.toLowerCase() === query;
+    });
+  }
 
   if (filtered.length === 0) {
     results.innerHTML = "<p>該当なし</p>";
     return;
   }
 
-  //  改行をHTMLに反映するための関数
+  // 改行→HTML
   const nl2br = (text) => {
     if (!text) return "";
     return text.replace(/\r?\n/g, "<br>");
   };
 
+  // 結果描画（あなたの元のコードそのまま）
   filtered.forEach(item => {
     const div = document.createElement("div");
     div.className = "entry";
@@ -116,13 +144,13 @@ function doSearch() {
       const contentDiv = div.querySelector(".section:last-child .content");
 
       if (hKey.startsWith("h1")) {
-        const parts = childKeys.map(k => nl2br(item[k])); // ← 改行対応
+        const parts = childKeys.map(k => nl2br(item[k]));
         contentDiv.innerHTML = parts.join(" + ");
       } else if (hKey.startsWith("h5")) {
         let i = 1;
         while (item[`tag${i}`] || item[`p${i}`]) {
-          const tag = nl2br(item[`tag${i}`] || ""); // ← 改行対応
-          const p = nl2br(item[`p${i}`] || "");     // ← 改行対応
+          const tag = nl2br(item[`tag${i}`] || "");
+          const p = nl2br(item[`p${i}`] || "");
           if (tag) contentDiv.innerHTML += `<div class="tag">${tag}</div>`;
           if (p) contentDiv.innerHTML += `<div class="p">${p}</div>`;
           i++;
@@ -130,15 +158,15 @@ function doSearch() {
       } else if (hKey.startsWith("h6")) {
         let i = 1;
         while (item[`period${i}`] || item[`meaning${i}`]) {
-          const per = nl2br(item[`period${i}`] || "");   // ← 改行対応
-          const mean = nl2br(item[`meaning${i}`] || ""); // ← 改行対応
+          const per = nl2br(item[`period${i}`] || "");
+          const mean = nl2br(item[`meaning${i}`] || "");
           if (per || mean)
             contentDiv.innerHTML += `<div class="period-meaning"><span class="period">${per}</span><span class="meaning">${mean}</span></div>`;
           i++;
         }
       } else {
         childKeys.forEach(k => {
-          contentDiv.innerHTML += `<div>${nl2br(item[k])}</div>`; // ← 改行対応
+          contentDiv.innerHTML += `<div>${nl2br(item[k])}</div>`;
         });
       }
     });
@@ -146,3 +174,4 @@ function doSearch() {
     results.appendChild(div);
   });
 }
+
