@@ -8,16 +8,33 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
-    href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+JP&family=M+PLUS+1p&family=Noto+Sans+JP:wght@100..900&display=swap"
-    rel="stylesheet">
+        href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+JP&family=M+PLUS+1p&family=Noto+Sans+JP:wght@100..900&display=swap"
+        rel="stylesheet">
     <link rel="stylesheet" href="style.css">
     <script src="script.js" defer></script>
 </head>
 
 <body>
-    <div class="search-container"> <input type="text" id="searchBox" placeholder="1900は英単語／1000は番号を入力"> <button
-            id="searchBtn">検索</button> </div>
-    <div id="results"></div>
+    <div class="search-container">
+        <input type="text" id="searchBox" placeholder="1900は英単語／1000は番号を入力">
+        <button id="clearBtn" class="clear-button" style="display:none;">&times;</button>
+        <button id="searchBtn">検索</button>
+    </div>
+    <div id="results">
+        <div class="entry">
+            <div class="head">number. word</div>
+
+            <div class="section-wrapper">
+
+                <div class="main-info-panel">
+                </div>
+
+                <div class="timeline-panel">
+                </div>
+
+            </div>
+        </div>
+    </div>
 </body>
 
 </html>

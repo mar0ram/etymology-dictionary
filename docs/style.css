@@ -1,354 +1,353 @@
-/* 全体 */
+/* --- 1. 基本設定：ディープモード（暗い背景に白い情報パネル） --- */
 body {
-    font-family: 'Noto Sans JP', 'M PLUS 1p', 'IBM Plex Sans JP', sans-serif;
+    font-family: 'Noto Sans JP', sans-serif;
     font-weight: 400;
-    background-color: #f4e5d2;
-    color: #3e2f1c;
+    /* ダークテーマの基調色（思考と集中を促す） */
+    background-color: #121212; 
+    color: #E0E0E0; /* 明るいテキスト色 */
     margin: 0;
     padding: 0;
+    line-height: 1.6;
     letter-spacing: 0.5px;
-    word-spacing: 1px;
-    font-feature-settings: "pwid";
+    font-feature-settings: "palt";
 }
 
-/* 検索コンテナ */
+/* --- 2. 検索エリア：シャープで目立つ検索バー --- */
 .search-container {
     width: 90%;
+    max-width: 960px;
     display: flex;
     justify-content: center;
     align-items: center;
-    margin: 20px auto;
-    flex-wrap: nowrap;
-    gap: 10px;
+    /* 検索バーを画面上部に固定する（ナビゲーション的役割） */
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    margin: 0 auto;
+    padding: 20px 0;
+    gap: 15px;
+    /* 背景に軽いぼかし効果をつけ、コンテンツと分離 */
+    background-color: rgba(18, 18, 18, 0.9);
+    backdrop-filter: blur(5px);
+    border-bottom: 1px solid #333333;
 }
 
 #searchBox {
+    position: relative;
     flex: 1 1 auto;
-    padding: 12px 16px;
+    padding: 18px 25px;
+    /* クリアボタン用のスペースを確保 */
+    padding-right: 50px; 
     min-width: 150px;
-    /* 小型でも最小幅確保 */
-    font-size: 16px;
-    border: 2px solid #8b5a2b;
-    /* 茶色のインク色 */
-    border-radius: 4px;
-    background-color: rgba(255, 250, 240, 0.8);
-    /* 透け紙 */
-    color: #3e2f1c;
+    font-size: 18px;
+    border: 1px solid #444444;
+    border-radius: 30px; /* 角丸を強くし、モダンなカプセル形状に */
+    background-color: #222222;
+    color: #FFFFFF;
     outline: none;
-    transition: border-color 0.2s, box-shadow 0.2s;
+    transition: all 0.3s ease;
+}
+
+#searchBox::placeholder {
+    color: #999999;
 }
 
 #searchBox:focus {
-    border-color: #a0522d;
-    box-shadow: 0 0 6px rgba(160, 82, 45, 0.6);
+    /* アクアブルーをアクセントカラーに */
+    border-color: #00bcd4;
+    box-shadow: 0 0 0 4px rgba(0, 188, 212, 0.3);
+}
+
+/* 💡 クリアボタンのスタイル */
+.clear-button {
+    position: absolute;
+    /* 検索窓の右端付近に配置（微調整） */
+    right: 175px; 
+    top: 50%;
+    transform: translateY(-50%);
+    width: 30px;
+    height: 30px;
+    border: none;
+    background: transparent;
+    color: #999999;
+    font-size: 24px;
+    font-weight: 300;
+    cursor: pointer;
+    line-height: 1;
+    padding: 0;
+    z-index: 10;
+    transition: color 0.2s;
+}
+
+.clear-button:hover {
+    color: #FFFFFF;
 }
 
 #searchBtn {
-    padding: 12px 20px;
+    padding: 18px 30px;
     flex: 0 0 auto;
-    font-size: 16px;
-    border: 2px solid #8b5a2b;
-    background-color: #deb887;
-    color: #3e2f1c;
-    border-radius: 4px;
+    font-size: 18px;
+    border: none;
+    background-color: #00bcd4; /* アクアブルー */
+    color: #121212; /* 黒に近い色でコントラストを強調 */
+    border-radius: 30px;
     cursor: pointer;
-    transition: background-color 0.2s, transform 0.2s;
-    font-weight: bold;
+    transition: background-color 0.3s, transform 0.2s;
+    font-weight: 700;
 }
 
 #searchBtn:hover {
-    background-color: #d2b48c;
-    transform: translateY(-1px);
+    background-color: #00a4b7;
+    transform: scale(1.02);
 }
 
-/* 結果コンテナ */
+/* --- 3. 結果コンテナとオリジナル構造：タイムライン/パネルビュー --- */
 #results {
-    width: 100%;
-    max-width: 100%;
-    box-sizing: border-box;
-    margin: 0 auto 50px;
-    padding: 0 10px;
+    width: 90%;
+    max-width: 960px;
+    margin: 30px auto 50px;
+    padding: 0;
 }
 
-/* 各カード */
+/* --- 4. 各検索結果カード：ルーツ（根源）を視覚化する構造 --- */
 .entry {
-    background-color: rgba(255, 248, 220, 0.9);
-    /* 古紙風 */
-    border: 1px solid #a0522d;
-    border-radius: 8px;
-    box-shadow: 3px 3px 10px rgba(100, 50, 0, 0.3);
-    margin-bottom: 20px;
-    padding: 20px;
+    background-color: #1E1E1E; /* カード背景は少し明るく */
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5); /* 強い影で浮遊感を出す */
+    margin-bottom: 40px;
+    padding: 30px;
     max-width: 100%;
-    overflow-x: hidden;
-    /* 横にはみ出すのを防ぐ */
-    transition: transform 0.2s, box-shadow 0.2s;
-    font-family: 'Merriweather', serif;
+    overflow: hidden;
+    transition: box-shadow 0.3s;
 }
 
 .entry:hover {
-    transform: translateY(-3px);
-    box-shadow: 5px 5px 20px rgba(100, 50, 0, 0.5);
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.6);
 }
 
 .entry .head {
-    font-size: 22px;
-    font-weight: 700;
-    margin-bottom: 15px;
-    color: #5b3a1b;
+    font-size: 32px;
+    font-weight: 900;
+    margin-bottom: 25px;
+    color: #FFFFFF;
+    border-bottom: 3px solid #00bcd4; /* アクセントカラーで単語を強調 */
+    padding-bottom: 15px;
+    letter-spacing: 1px;
 }
 
-/* セクション見出し */
+/* --- 5. セクション構造：情報を左右のパネルに分割 --- */
+.section-wrapper {
+    display: flex;
+    gap: 30px;
+}
+
+/* 語源の主要情報を左に（固定情報） */
+.main-info-panel {
+    flex: 2;
+    min-width: 0;
+}
+
+/* 詳細な歴史や用例を右に（タイムライン） */
+.timeline-panel {
+    flex: 3;
+    min-width: 0;
+    border-left: 2px solid #333333; /* タイムラインの基軸 */
+    padding-left: 30px;
+}
+
+/* セクションの一般的なスタイル（タイムライン側で使用） */
 .section {
-    margin-bottom: 15px;
-    padding: 12px 18px;
-    border-left: 4px solid #8b5a2b;
-    border-radius: 4px;
-    background-color: rgba(255, 245, 230, 0.9);
-    box-shadow: inset 0 0 4px rgba(160, 82, 45, 0.2);
-    max-width: 100%;
-    overflow-x: hidden;
+    margin-bottom: 30px;
+    position: relative;
+    padding: 15px;
+    background-color: #282828;
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
 }
 
-.section:nth-child(even) {
-    background-color: rgba(250, 240, 220, 0.9);
+/* タイムラインのマーカー */
+.timeline-panel .section::before {
+    content: '';
+    position: absolute;
+    left: -37px; /* 線の外側 */
+    top: 25px;
+    width: 12px;
+    height: 12px;
+    background: #00bcd4;
+    border: 2px solid #121212;
+    border-radius: 50%;
+    z-index: 1;
 }
 
 .subtitle {
-    font-size: 16px;
-    font-weight: 600;
-    margin-bottom: 15px;
-    color: #a0522d;
-    text-shadow: 0 1px 0 rgba(255, 255, 255, 0.2);
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 10px;
+    color: #00bcd4;
+    border-bottom: 1px dashed #444444;
+    padding-bottom: 5px;
 }
 
-/* コンテンツ共通 */
+/* --- 6. コンテンツ共通 --- */
 .content {
-    padding-left: 10px;
-    font-size: 16px;
-    letter-spacing: .8px;
-    word-spacing: 1px;
-    color: #3e2f1c;
+    padding-left: 0;
+    font-size: 15px;
+    color: #C0C0C0;
 }
 
 .content div {
-    line-height: 1.6;
-    margin-bottom: 12px;
-    font-size: 16px;
-    white-space: normal;
+    line-height: 1.5;
+    margin-bottom: 25px;
+    font-size: 15px;
     word-break: break-word;
-    /* 修正：折り返しを許可 */
     overflow-wrap: break-word;
-    /* 補助 */
 }
 
 .ml {
-    margin-left: 20px;
-    display: block;
-}
-
-.ml:first-of-type {
-  margin-top: 8px;
-}
-
-.ml + .ml {
+    /* マージン左15px, 上8px, 下15px */
+    margin-left: 18px; 
     margin-top: 6px;
+    display: inline-block;
 }
 
-/* h1 partN 横並び＋「+」 */
+/* --- 7. h1 partN (語源パーツ) - 左パネルに配置 --- */
+.section.h1 {
+    background-color: #282828;
+    border-left: 4px solid #00bcd4;
+    padding: 20px;
+    margin-bottom: 25px;
+}
+
 .section.h1 .content {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 5px;
+    display: block;
+    font-size: 16px;
+    color: #E0E0E0;
+    line-height: 1.8;
 }
 
-.section.h1 .content span::after {
-    content: "+";
-    margin: 0 3px;
-    color: #8b4513;
+.section.h1 .content div {
+    display: inline-block;
+    padding: 5px 10px;
+    margin: 5px 5px;
+    background-color: #333333;
+    border-radius: 4px;
+    font-weight: 600;
 }
 
-.section.h1 .content span:last-child::after {
+.section.h1 .content div::after {
     content: "";
 }
 
-/* h5 tag/p */
+/* --- 8. h5 tag/p (詳細タグ/記述) --- */
 .section.h5 .content .tag {
-    margin-left: 0;
-    margin-bottom: 5px;
-    font-weight: 600;
-    color: #8b4513;
+    font-weight: 700;
+    color: #FFFFFF;
+    display: inline-block;
+    background-color: #00bcd4;
+    padding: 3px 8px;
+    border-radius: 2px;
+    margin-right: 10px;
+    margin-bottom: 10px;
 }
 
 .section.h5 .content .p {
-    margin-left: 20px;
+    margin-left: 0;
+    margin-top: 5px;
 }
 
-/* h6 period/meaning */
+/* --- 9. h6 period/meaning (時期/意味) - タイムライン要素 --- */
+.section.h6 .subtitle {
+    font-size: 16px;
+    color: #E0E0E0;
+    border-bottom: none;
+    font-weight: 500;
+}
+
+.section.h6 .content {
+    padding-left: 0;
+}
+
 .section.h6 .content .period-meaning {
     display: block;
     margin-bottom: 8px;
 }
 
 .section.h6 .content .period-meaning span.period {
-    font-weight: 500;
-    margin-right: 3px;
-    color: #a0522d;
+    display: block;
+    font-weight: 700;
+    font-size: 14px;
+    color: #00bcd4; /* 時期を強調 */
+    margin-bottom: 3px;
+}
+
+.section.h6 .content .period-meaning span.meaning {
+    font-size: 15px;
+    color: #C0C0C0;
 }
 
 .section.h6 .content .period-meaning span.meaning::before {
-    content: "：";
-    margin-right: 3px;
+    content: "";
 }
 
-/* 画像 */
-.content img {
-    max-width: 100%;
-    border-radius: 6px;
-    margin-bottom: 10px;
-    display: block;
-    border: 1px solid #a0522d;
-    box-shadow: 2px 2px 5px rgba(160, 82, 45, 0.3);
-}
-
-/* レスポンシブ */
-@media (max-width: 1024px) {
-
-    #searchBox,
-    #searchBtn {
-        flex: 1 1 100%;
+/* --- 10. レスポンシブ対応：モバイルでは縦積みレイアウトに戻す --- */
+@media (max-width: 900px) {
+    /* パネル構造を縦積みに */
+    .section-wrapper {
+        flex-direction: column;
+        gap: 0;
     }
 
-    .content,
-    .content div {
-        font-size: 15px;
+    /* タイムラインの基軸を左端に */
+    .timeline-panel {
+        border-left: 2px solid #333333;
+        padding-left: 30px;
+        margin-top: 30px;
     }
 
-    .entry .head {
-        font-size: 20px;
+    /* タイムラインのマーカー位置調整 */
+    .timeline-panel .section::before {
+        left: -17px;
     }
 }
 
 @media (max-width: 768px) {
     .search-container {
-        flex-wrap: nowrap;
-        /* 横並び維持 */
-        justify-content: space-between;
-        /* ボタンを右端に */
-        width: 95%;
+        padding: 15px 10px;
+        flex-wrap: wrap;
+        background-color: #121212;
+        backdrop-filter: none;
     }
-
-    #searchBox {
-        flex: 1 1 70%;
-        /* 検索窓を少し小さめに */
-        margin-bottom: 0;
-    }
-
-    #searchBtn {
-        flex: 0 0 25%;
-        /* ボタンは固定幅 */
-        margin-bottom: 0;
-    }
-
-    #searchBox,
-    #searchBtn {
-        width: 95%;
-        font-size: 15px;
-    }
-
-    .content {
-        font-size: 14px;
-        padding-left: 6px;
-    }
-
-    .content div {
-        font-size: 14px;
-    }
-
-    .entry .head {
-        font-size: 19px;
-    }
-
-    .section {
+    
+    #searchBox, #searchBtn {
+        flex: 1 1 100%;
+        font-size: 16px;
         padding: 12px 15px;
+        border-radius: 8px;
     }
 
-    .subtitle {
-        font-size: 15px;
-    }
-}
-
-@media (max-width: 600px) {
-
-    #searchBox,
-    #searchBtn {
-        width: 90%;
-        font-size: 14px;
+    /* 💡 モバイルでのクリアボタンの位置調整 */
+    .clear-button {
+        right: 130px; /* 検索窓の右端付近に配置 */
     }
 
     .entry {
-        padding: 10px;
+        padding: 20px;
+        margin-bottom: 25px;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.4);
     }
 
     .entry .head {
-        font-size: 18px;
+        font-size: 24px;
+        margin-bottom: 15px;
+    }
+    
+    .timeline-panel {
+        padding-left: 20px;
     }
 
-    .content {
-        font-size: 12px;
-    }
-
-    .content div {
-        font-size: 12px;
-    }
-
-    .section {
-        padding: 10px 12px;
-    }
-
-    .subtitle {
-        font-size: 14px;
-    }
-}
-
-@media (max-width: 480px) {
-
-    #searchBox,
-    #searchBtn {
-        width: 95%;
-        font-size: 16px;
-        padding: 10px;
-    }
-
-    .entry .head {
-        font-size: 16px;
-    }
-
-    .content {
-        font-size: 12px;
-        padding-left: 4px;
-    }
-
-    .content div {
-        font-size: 12px;
-        padding-left: 4px;
-        word-break: break-word;
-        /* 念のため再指定 */
-    }
-
-    .entry {
-        padding: 10px 5px;
-    }
-
-    #results {
-        padding: 0 5px;
-    }
-
-    .section {
-        padding: 8px 10px;
-    }
-
-    .subtitle {
-        font-size: 13px;
+    .timeline-panel .section::before {
+        left: -11px; /* マーカーを左に詰める */
+        width: 10px;
+        height: 10px;
     }
 }
