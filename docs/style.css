@@ -16,6 +16,8 @@ body {
 .search-container {
     width: 90%;
     max-width: 960px;
+    /* 💡 position: relative; を維持 (クリアボタン配置の基準) */
+    position: relative; 
     display: flex;
     justify-content: center;
     align-items: center;
@@ -33,6 +35,7 @@ body {
 }
 
 #searchBox {
+    /* 検索窓は position: relative; のままで良いが、クリアボタンの配置は親の search-container に依存 */
     position: relative;
     flex: 1 1 auto;
     padding: 18px 25px;
@@ -61,7 +64,7 @@ body {
 /* 💡 クリアボタンのスタイル */
 .clear-button {
     position: absolute;
-    /* 検索窓の右端付近に配置（微調整） */
+    /* デスクトップ表示時：検索窓の右端付近に配置 */
     right: 175px; 
     top: 50%;
     transform: translateY(-50%);
@@ -151,6 +154,8 @@ body {
 .timeline-panel {
     flex: 3;
     min-width: 0;
+    /* 💡 position: relative; を追加し、マーカーの配置基準とする (レスポンシブ共通) */
+    position: relative;
     border-left: 2px solid #333333; /* タイムラインの基軸 */
     padding-left: 30px;
 }
@@ -165,11 +170,12 @@ body {
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
 }
 
-/* タイムラインのマーカー */
+/* タイムラインのマーカー (デスクトップ/デフォルト) */
 .timeline-panel .section::before {
     content: '';
     position: absolute;
-    left: -37px; /* 線の外側 */
+    /* timeline-panel の border-left の位置に合わせて調整 */
+    left: -37px; 
     top: 25px;
     width: 12px;
     height: 12px;
@@ -204,10 +210,13 @@ body {
 }
 
 .ml {
-    /* マージン左15px, 上8px, 下15px */
+    /* ユーザー様の指定値（上書き） */
     margin-left: 18px; 
     margin-top: 6px;
+    /* 以前の display: block; から display: inline-block; に変更されています */
     display: inline-block;
+    /* 下マージンが削除されたため、ここに追加 */
+    margin-bottom: 15px; 
 }
 
 /* --- 7. h1 partN (語源パーツ) - 左パネルに配置 --- */
@@ -304,9 +313,10 @@ body {
         margin-top: 30px;
     }
 
-    /* タイムラインのマーカー位置調整 */
+    /* 💡 タイムラインマーカー位置の修正（900px未満） */
+    /* timeline-panel の padding-left:30px に対応する */
     .timeline-panel .section::before {
-        left: -17px;
+        left: -17px; /* 左ボーダー（線）の真上に配置 */
     }
 }
 
@@ -327,7 +337,15 @@ body {
 
     /* 💡 モバイルでのクリアボタンの位置調整 */
     .clear-button {
-        right: 130px; /* 検索窓の右端付近に配置 */
+        /* 検索ボタンが全幅になるため、searchBoxの右端に寄せる */
+        /* searchBoxの右パディング(40px)内に収まるよう調整 */
+        right: 40px; 
+        /* 検索ボタンが下にあるため、searchBtnの幅を考慮する必要なし */
+    }
+    
+    /* 検索窓自体の padding-right をモバイル用に調整してボタンを収める */
+    #searchBox {
+        padding-right: 40px; 
     }
 
     .entry {
@@ -342,11 +360,13 @@ body {
     }
     
     .timeline-panel {
-        padding-left: 20px;
+        padding-left: 20px; /* モバイルでは少しパディングを狭くする */
     }
 
+    /* 💡 タイムラインマーカー位置の修正（768px未満） */
+    /* timeline-panel の padding-left:20px に対応する */
     .timeline-panel .section::before {
-        left: -11px; /* マーカーを左に詰める */
+        left: -17px; /* 900px未満と同じ値で、左ボーダーの真上に配置 */
         width: 10px;
         height: 10px;
     }
