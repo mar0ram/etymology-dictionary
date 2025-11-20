@@ -3,8 +3,9 @@ body {
     font-family: 'Noto Sans JP', sans-serif;
     font-weight: 400;
     /* ダークテーマの基調色（思考と集中を促す） */
-    background-color: #121212; 
-    color: #E0E0E0; /* 明るいテキスト色 */
+    background-color: #121212;
+    color: #E0E0E0;
+    /* 明るいテキスト色 */
     margin: 0;
     padding: 0;
     line-height: 1.6;
@@ -16,8 +17,7 @@ body {
 .search-container {
     width: 90%;
     max-width: 960px;
-    /* 💡 position: relative; を維持 (クリアボタン配置の基準) */
-    position: relative; 
+    /* position: relative;  */
     display: flex;
     justify-content: center;
     align-items: center;
@@ -27,24 +27,32 @@ body {
     z-index: 100;
     margin: 0 auto;
     padding: 20px 0;
-    gap: 15px;
+    gap: 25px;
     /* 背景に軽いぼかし効果をつけ、コンテンツと分離 */
     background-color: rgba(18, 18, 18, 0.9);
     backdrop-filter: blur(5px);
     border-bottom: 1px solid #333333;
 }
 
-#searchBox {
-    /* 検索窓は position: relative; のままで良いが、クリアボタンの配置は親の search-container に依存 */
+/* 💡 新規追加: 検索窓とクリアボタンのラッパー */
+.search-box-container {
+    /* search-container の中で、検索窓の比率を維持 */
+    flex: 4 1 auto;
+    width: 100%;
     position: relative;
-    flex: 1 1 auto;
-    padding: 18px 25px;
+    /* 💡 変更点: クリアボタン配置の基準とする */
+}
+
+#searchBox {
+    /* 💡 変更点: search-box-container 内で利用可能なスペース全体を占める */
+    width: 100%;
+    padding: 18px 0px 18px 15px;
     /* クリアボタン用のスペースを確保 */
-    padding-right: 50px; 
     min-width: 150px;
     font-size: 18px;
     border: 1px solid #444444;
-    border-radius: 30px; /* 角丸を強くし、モダンなカプセル形状に */
+    border-radius: 10px;
+    /* 角丸を強くし、モダンなカプセル形状に */
     background-color: #222222;
     color: #FFFFFF;
     outline: none;
@@ -64,8 +72,8 @@ body {
 /* 💡 クリアボタンのスタイル */
 .clear-button {
     position: absolute;
-    /* デスクトップ表示時：検索窓の右端付近に配置 */
-    right: 175px; 
+    /* 💡 変更点: search-box-container を基準に、検索窓の右内側50pxのパディング内に収める */
+    right: 0px;
     top: 50%;
     transform: translateY(-50%);
     width: 30px;
@@ -87,13 +95,15 @@ body {
 }
 
 #searchBtn {
-    padding: 18px 30px;
-    flex: 0 0 auto;
+    padding: 18px 20px;
+    flex: 1 0 auto;
     font-size: 18px;
     border: none;
-    background-color: #00bcd4; /* アクアブルー */
-    color: #121212; /* 黒に近い色でコントラストを強調 */
-    border-radius: 30px;
+    background-color: #00bcd4;
+    /* アクアブルー */
+    color: #121212;
+    /* 黒に近い色でコントラストを強調 */
+    border-radius: 10px;
     cursor: pointer;
     transition: background-color 0.3s, transform 0.2s;
     font-weight: 700;
@@ -114,9 +124,11 @@ body {
 
 /* --- 4. 各検索結果カード：ルーツ（根源）を視覚化する構造 --- */
 .entry {
-    background-color: #1E1E1E; /* カード背景は少し明るく */
+    background-color: #1E1E1E;
+    /* カード背景は少し明るく */
     border-radius: 12px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5); /* 強い影で浮遊感を出す */
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    /* 強い影で浮遊感を出す */
     margin-bottom: 40px;
     padding: 30px;
     max-width: 100%;
@@ -133,7 +145,8 @@ body {
     font-weight: 900;
     margin-bottom: 25px;
     color: #FFFFFF;
-    border-bottom: 3px solid #00bcd4; /* アクセントカラーで単語を強調 */
+    border-bottom: 3px solid #00bcd4;
+    /* アクセントカラーで単語を強調 */
     padding-bottom: 15px;
     letter-spacing: 1px;
 }
@@ -154,9 +167,10 @@ body {
 .timeline-panel {
     flex: 3;
     min-width: 0;
-    /* 💡 position: relative; を追加し、マーカーの配置基準とする (レスポンシブ共通) */
+    /* マーカー配置のため position: relative; が必須 */
     position: relative;
-    border-left: 2px solid #333333; /* タイムラインの基軸 */
+    border-left: 2px solid #333333;
+    /* タイムラインの基軸 */
     padding-left: 30px;
 }
 
@@ -170,14 +184,15 @@ body {
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
 }
 
-/* タイムラインのマーカー (デスクトップ/デフォルト) */
+/* 💡 タイムラインのマーカー (デスクトップ/デフォルト) */
 .timeline-panel .section::before {
     content: '';
     position: absolute;
-    /* timeline-panel の border-left の位置に合わせて調整 */
-    left: -37px; 
+    /* マーカーの中心を border-left (left: 0) に合わせるため、幅16pxの半分 -8px に修正 */
+    left: -38px;
     top: 25px;
     width: 12px;
+    /* マーカー本体12px + border 2px*2 = 16px */
     height: 12px;
     background: #00bcd4;
     border: 2px solid #121212;
@@ -211,12 +226,10 @@ body {
 
 .ml {
     /* ユーザー様の指定値（上書き） */
-    margin-left: 18px; 
+    margin-left: 18px;
     margin-top: 6px;
     /* 以前の display: block; から display: inline-block; に変更されています */
     display: inline-block;
-    /* 下マージンが削除されたため、ここに追加 */
-    margin-bottom: 15px; 
 }
 
 /* --- 7. h1 partN (語源パーツ) - 左パネルに配置 --- */
@@ -252,7 +265,7 @@ body {
     font-weight: 700;
     color: #FFFFFF;
     display: inline-block;
-    background-color: #00bcd4;
+    background-color: #00c0da84;
     padding: 3px 8px;
     border-radius: 2px;
     margin-right: 10px;
@@ -285,7 +298,8 @@ body {
     display: block;
     font-weight: 700;
     font-size: 14px;
-    color: #00bcd4; /* 時期を強調 */
+    color: #00bcd4;
+    /* 時期を強調 */
     margin-bottom: 3px;
 }
 
@@ -300,6 +314,7 @@ body {
 
 /* --- 10. レスポンシブ対応：モバイルでは縦積みレイアウトに戻す --- */
 @media (max-width: 900px) {
+
     /* パネル構造を縦積みに */
     .section-wrapper {
         flex-direction: column;
@@ -314,22 +329,44 @@ body {
     }
 
     /* 💡 タイムラインマーカー位置の修正（900px未満） */
-    /* timeline-panel の padding-left:30px に対応する */
+    /* マーカー幅14pxの半分 -7px に修正 */
     .timeline-panel .section::before {
-        left: -17px; /* 左ボーダー（線）の真上に配置 */
+        left: -38px;
     }
 }
 
 @media (max-width: 768px) {
     .search-container {
         padding: 15px 10px;
-        flex-wrap: wrap;
+        /* flex-wrap: wrap; を削除またはコメントアウトし、横並びを維持 */
+        flex-wrap: nowrap;
+        /* 明示的に横並びを維持 */
         background-color: #121212;
         backdrop-filter: none;
     }
-    
-    #searchBox, #searchBtn {
-        flex: 1 1 100%;
+
+    /* 💡 変更点: search-box-container のモバイル設定 */
+    .search-box-container {
+        /* モバイルでも検索窓が広い幅を占めるよう、flex: 3 を設定 */
+        flex: 4 1 auto;
+    }
+
+    #searchBox {
+        /* 💡 変更点: search-box-container 内で全幅を占めるように */
+        width: 100%;
+        font-size: 16px;
+        padding: 12px 0px 12px 10px;
+        /* 右パディングを40pxに調整 */
+        min-width: 0;
+        border-radius: 10px;
+    }
+
+    #searchBtn {
+        /* 💡 変更点: ボタンの幅を固定または小さめの比率にする (例: 1) */
+        flex: 1 0 auto;
+        /* 1 の比率、または幅を固定したい場合は flex: 0 0 auto; のままでも可 */
+        max-width: 120px;
+        /* 必要に応じて最大幅を設定 */
         font-size: 16px;
         padding: 12px 15px;
         border-radius: 8px;
@@ -337,15 +374,13 @@ body {
 
     /* 💡 モバイルでのクリアボタンの位置調整 */
     .clear-button {
-        /* 検索ボタンが全幅になるため、searchBoxの右端に寄せる */
-        /* searchBoxの右パディング(40px)内に収まるよう調整 */
-        right: 40px; 
-        /* 検索ボタンが下にあるため、searchBtnの幅を考慮する必要なし */
-    }
-    
-    /* 検索窓自体の padding-right をモバイル用に調整してボタンを収める */
-    #searchBox {
-        padding-right: 40px; 
+        /* 💡 変更点: search-box-container が基準になったため、right: 15px (searchBoxのpadding-right: 40px内に収まる) */
+        right: 0px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 25px;
+        height: 25px;
+        font-size: 20px;
     }
 
     .entry {
@@ -355,18 +390,35 @@ body {
     }
 
     .entry .head {
-        font-size: 24px;
+        font-size: 20px;
         margin-bottom: 15px;
     }
-    
+
+    .subtitle {
+        font-size: 16px;
+    }
+
+    .content {
+        font-size: 14px;
+    }
+
+    .content div {
+        line-height: 1.5;
+        margin-bottom: 25px;
+        font-size: 14px;
+        word-break: break-word;
+        overflow-wrap: break-word;
+    }
+
     .timeline-panel {
-        padding-left: 20px; /* モバイルでは少しパディングを狭くする */
+        padding-left: 20px;
+        /* モバイルでは少しパディングを狭くする */
     }
 
     /* 💡 タイムラインマーカー位置の修正（768px未満） */
-    /* timeline-panel の padding-left:20px に対応する */
+    /* マーカー幅14pxの半分 -7px に修正 */
     .timeline-panel .section::before {
-        left: -17px; /* 900px未満と同じ値で、左ボーダーの真上に配置 */
+        left: -28px;
         width: 10px;
         height: 10px;
     }
