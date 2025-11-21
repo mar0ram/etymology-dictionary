@@ -13,6 +13,12 @@ body {
     font-feature-settings: "palt";
 }
 
+.spacer {
+    display: block;
+    margin-bottom: 10px;
+    line-height: 0;
+}
+
 /* --- 2. 検索エリア：シャープで目立つ検索バー --- */
 .search-container {
     width: 90%;
