@@ -13,12 +13,6 @@ body {
     font-feature-settings: "palt";
 }
 
-.spacer {
-    display: block;
-    margin-bottom: 10px;
-    line-height: 0;
-}
-
 /* --- 2. 検索エリア：シャープで目立つ検索バー --- */
 .search-container {
     width: 90%;
@@ -86,8 +80,8 @@ body {
     height: 30px;
     border: none;
     background: transparent;
-    color: #4f4f4f;
-    font-size: 24px;
+    color: #323232;
+    font-size: 30px;
     font-weight: 300;
     cursor: pointer;
     line-height: 1;
@@ -182,7 +176,7 @@ body {
 
 /* セクションの一般的なスタイル（タイムライン側で使用） */
 .section {
-    margin-bottom: 30px;
+    margin-bottom: 20px;
     position: relative;
     padding: 15px;
     background-color: #282828;
@@ -223,11 +217,17 @@ body {
 }
 
 .content div {
-    line-height: 1.5;
+    line-height: 1.8;
     margin-bottom: 25px;
     font-size: 15px;
     word-break: break-word;
     overflow-wrap: break-word;
+}
+
+.spacer {
+    display: block;
+    margin-bottom: 10px;
+    line-height: 0;
 }
 
 .ml {
@@ -409,7 +409,7 @@ body {
     }
 
     .content div {
-        line-height: 1.5;
+        line-height: 1.8;
         margin-bottom: 25px;
         font-size: 14px;
         word-break: break-word;
