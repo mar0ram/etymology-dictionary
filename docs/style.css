@@ -233,7 +233,7 @@ body {
 .ml {
     /* ユーザー様の指定値（上書き） */
     margin-left: 18px;
-    margin-top: 6px;
+    margin-top: 10px;
     /* 以前の display: block; から display: inline-block; に変更されています */
     display: inline-block;
 }
