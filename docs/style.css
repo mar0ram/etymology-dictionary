@@ -217,7 +217,7 @@ body {
 }
 
 .content div {
-    line-height: 1.8;
+    line-height: 1.6;
     margin-bottom: 25px;
     font-size: 15px;
     word-break: break-word;
@@ -409,9 +409,9 @@ body {
     }
 
     .content div {
-        line-height: 1.8;
+        line-height: 1.6;
         margin-bottom: 25px;
-        font-size: 14px;
+        font-size: 13px;
         word-break: break-word;
         overflow-wrap: break-word;
     }
