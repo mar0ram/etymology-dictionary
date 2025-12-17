@@ -8,7 +8,7 @@ body {
     /* 明るいテキスト色 */
     margin: 0;
     padding: 0;
-    line-height: 1.6;
+    line-height: 1.7;
     letter-spacing: 0.5px;
     font-feature-settings: "palt";
 }
@@ -217,7 +217,7 @@ body {
 }
 
 .content div {
-    line-height: 1.6;
+    line-height: 1.7;
     margin-bottom: 25px;
     font-size: 15px;
     word-break: break-word;
@@ -409,7 +409,7 @@ body {
     }
 
     .content div {
-        line-height: 1.6;
+        line-height: 1.7;
         margin-bottom: 25px;
         font-size: 13px;
         word-break: break-word;
