@@ -140,7 +140,18 @@ function doSearch() {
         const div = document.createElement("div");
         div.className = "entry";
 
-        div.innerHTML = `<div class="head">${item.num}. ${item.word}</div>`;
+        let displayNum = item.num;
+        if (!displayNum || displayNum === "") {
+            displayNum = "empty";
+        } else {
+            const numVal = parseInt(displayNum, 10);
+            if (numVal >= 1501) {
+                displayNum = numVal - 1500;
+            }
+        }
+
+        // 修正した番号を反映
+        div.innerHTML = `<div class="head">${displayNum}. ${item.word}</div>`;
 
         // 💡 左右パネルのラッパーを作成
         const wrapper = document.createElement("div");
