@@ -11,7 +11,18 @@ with open("docs/data.json", "w", encoding="utf-8") as f:
 html_output = "<!DOCTYPE html>\n<html>\n<head>\n<meta charset='utf-8'><title>Dictionary</title></head>\n<body>\n"
 
 for _, row in df.iterrows():
-    num = str(int(row["num"]))
+    # 1. セルが空（NaN）かどうかの判定
+    if pd.isna(row["num"]):
+        num = "empty"
+    else:
+        # 数値として取得
+        val = int(row["num"])
+
+        # 2. 1501以上の場合は1500を引く、それ以外はそのまま
+        if val >= 1501:
+            num = str(val - 1500)
+        else:
+            num = str(val)
     word = row["word"]
     html_output += f'<div class="entry">\n'
     html_output += f'  <div class="head"><span class="num">{num}.</span> {word}</div>\n'
