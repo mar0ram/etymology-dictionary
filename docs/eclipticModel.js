@@ -24,15 +24,17 @@ export function drawEclipticModel() {
     renderer.setPixelRatio(window.devicePixelRatio);
     container.appendChild(renderer.domElement);
 
-    // --- ラベル作成用ヘルパー関数 ---
+    // --- ラベル作成用ヘルパー関数 (フォントサイズ調整) ---
     const createLabel = (text, top, left, color) => {
         const div = document.createElement("div");
+        div.className = "ecliptic-label"; // リサイズ制御用にクラス付与
         div.textContent = text;
         div.style.position = "absolute";
         div.style.top = top;
         div.style.left = left;
         div.style.color = color;
-        div.style.fontSize = "14px";
+        // スマホ(600px未満)なら10px、それ以外は14px
+        div.style.fontSize = width < 600 ? "10px" : "14px";
         div.style.fontWeight = "normal";
         div.style.pointerEvents = "none";
         div.style.whiteSpace = "nowrap";
@@ -89,7 +91,7 @@ export function drawEclipticModel() {
     const tropicalMat = new THREE.MeshBasicMaterial({
         color: "#00d320",
         transparent: true,
-        opacity: 0.8,
+        opacity: 0.5,
         side: THREE.DoubleSide
     });
     const tropicalMask = new THREE.Mesh(tropicalGeo, tropicalMat);
@@ -193,11 +195,11 @@ export function drawEclipticModel() {
     createLabel("天球", "5%", "48%", celestialColor);
     createLabel("地軸（垂直）", "25%", "43%", "#ffffff");
     createLabel("黄道", "72%", "48%", "#f6e05e");
-    createLabel("北回帰線（tropic）", "40%", "54%", "#ff00bb");
+    createLabel("北回帰線（tropic）", "39%", "54%", "#ff00bb");
     createLabel("南回帰線（tropic）", "55%", "27%", "#ff00bb");
-    createLabel("熱帯", "48%", "59%", "#00ed24");
+    createLabel("熱帯", "48%", "57%", "#00ed24");
     createLabel("夏至点", "32%", "84%", "#ffffff");
-    createLabel("冬至点", "57%", "8%", "#ffffff");
+    createLabel("冬至点", "57%", "5%", "#ffffff");
 
     function animate() {
         requestAnimationFrame(animate);
@@ -211,5 +213,11 @@ export function drawEclipticModel() {
         renderer.setSize(newWidth, newHeight);
         camera.aspect = newWidth / newHeight;
         camera.updateProjectionMatrix();
+
+        // リサイズ時にフォントサイズを動的に変更
+        const labels = container.querySelectorAll(".ecliptic-label");
+        labels.forEach(label => {
+            label.style.fontSize = newWidth < 600 ? "10px" : "14px";
+        });
     });
 }
