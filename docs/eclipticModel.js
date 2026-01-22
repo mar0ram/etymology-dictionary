@@ -8,9 +8,11 @@ export function drawEclipticModel() {
     // --- 初期化 ---
     container.innerHTML = "";
     container.style.position = "relative";
+    
+    // 横幅を取得し、高さはその90%に設定
     const baseSize = 600 * 0.7;
-    const width = container.clientWidth || baseSize;
-    const height = baseSize;
+    let width = container.clientWidth || baseSize;
+    let height = width * 0.9;
 
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(45, width / height, 1, 2000);
@@ -87,7 +89,7 @@ export function drawEclipticModel() {
     const tropicalMat = new THREE.MeshBasicMaterial({
         color: "#00d320",
         transparent: true,
-        opacity: 0.5,
+        opacity: 0.8,
         side: THREE.DoubleSide
     });
     const tropicalMask = new THREE.Mesh(tropicalGeo, tropicalMat);
@@ -193,7 +195,7 @@ export function drawEclipticModel() {
     createLabel("黄道", "72%", "48%", "#f6e05e");
     createLabel("北回帰線（tropic）", "40%", "54%", "#ff00bb");
     createLabel("南回帰線（tropic）", "55%", "27%", "#ff00bb");
-    createLabel("熱帯", "53%", "57%", "#00ed24");
+    createLabel("熱帯", "48%", "59%", "#00ed24");
     createLabel("夏至点", "32%", "84%", "#ffffff");
     createLabel("冬至点", "57%", "8%", "#ffffff");
 
@@ -205,8 +207,9 @@ export function drawEclipticModel() {
 
     window.addEventListener('resize', () => {
         const newWidth = container.clientWidth || baseSize;
-        renderer.setSize(newWidth, height);
-        camera.aspect = newWidth / height;
+        const newHeight = newWidth * 0.9;
+        renderer.setSize(newWidth, newHeight);
+        camera.aspect = newWidth / newHeight;
         camera.updateProjectionMatrix();
     });
 }
