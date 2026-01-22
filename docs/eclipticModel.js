@@ -9,10 +9,10 @@ export function drawEclipticModel() {
     container.innerHTML = "";
     container.style.position = "relative";
     
-    // 横幅を取得し、高さはその90%に設定
+    // 横幅を取得し、高さを横幅の100%（正方形）に設定
     const baseSize = 600 * 0.7;
     let width = container.clientWidth || baseSize;
-    let height = width * 0.9;
+    let height = width; // 100%
 
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(45, width / height, 1, 2000);
@@ -24,10 +24,10 @@ export function drawEclipticModel() {
     renderer.setPixelRatio(window.devicePixelRatio);
     container.appendChild(renderer.domElement);
 
-    // --- ラベル作成用ヘルパー関数 (フォントサイズ調整) ---
+    // --- ラベル作成用ヘルパー関数 ---
     const createLabel = (text, top, left, color) => {
         const div = document.createElement("div");
-        div.className = "ecliptic-label"; // リサイズ制御用にクラス付与
+        div.className = "ecliptic-label"; // リサイズ制御用
         div.textContent = text;
         div.style.position = "absolute";
         div.style.top = top;
@@ -78,7 +78,7 @@ export function drawEclipticModel() {
     const axisMesh = new THREE.Mesh(axisGeo, axisMat);
     earthGroup.add(axisMesh);
 
-    // --- 熱帯の表現 (垂直な地軸に合わせた赤道付近のマスク) ---
+    // --- 熱帯の表現 ---
     const tropicalGeo = new THREE.SphereGeometry(
         earthRadius + 0.3,
         64,
@@ -97,7 +97,7 @@ export function drawEclipticModel() {
     const tropicalMask = new THREE.Mesh(tropicalGeo, tropicalMat);
     earth.add(tropicalMask);
 
-    // 回帰線 (地軸に対して垂直に配置)
+    // 回帰線
     const createTropicMesh = (latitudeRad) => {
         const y = earthRadius * Math.sin(latitudeRad);
         const r = earthRadius * Math.cos(latitudeRad);
@@ -148,11 +148,11 @@ export function drawEclipticModel() {
     eclipticMesh.rotation.x = Math.PI / 2;
 
     const eclipticContainer = new THREE.Group();
-    eclipticContainer.rotation.z = tiltRad; // ★黄道側を23.4度傾ける
+    eclipticContainer.rotation.z = tiltRad; 
     eclipticContainer.add(eclipticMesh);
     scene.add(eclipticContainer);
 
-    // --- 至点マーカー (傾いた黄道上に配置) ---
+    // 至点マーカー
     const createSolsticePoint = (x) => {
         const geo = new THREE.SphereGeometry(7, 16, 16);
         const mat = new THREE.MeshBasicMaterial({ color: "#ffffff" });
@@ -165,7 +165,7 @@ export function drawEclipticModel() {
 
     scene.add(new THREE.AmbientLight("#ffffff", 0.2));
 
-    // --- アニメーション (傾いた軌道に沿って移動) ---
+    // --- アニメーション ---
     const state = { angle: 0 };
     gsap.to(state, {
         angle: Math.PI * 2,
@@ -175,7 +175,6 @@ export function drawEclipticModel() {
         onUpdate: () => {
             const cos = Math.cos(state.angle);
             const sin = Math.sin(state.angle);
-            // 傾き(tiltRad)を計算に含める
             sunGroup.position.set(
                 cos * eclipticRadius * Math.cos(tiltRad),
                 cos * eclipticRadius * Math.sin(tiltRad),
@@ -195,11 +194,11 @@ export function drawEclipticModel() {
     createLabel("天球", "5%", "48%", celestialColor);
     createLabel("地軸（垂直）", "25%", "43%", "#ffffff");
     createLabel("黄道", "72%", "48%", "#f6e05e");
-    createLabel("北回帰線（tropic）", "39%", "54%", "#ff00bb");
+    createLabel("北回帰線（tropic）", "40%", "54%", "#ff00bb");
     createLabel("南回帰線（tropic）", "55%", "27%", "#ff00bb");
-    createLabel("熱帯", "48%", "57%", "#00ed24");
-    createLabel("夏至点", "32%", "84%", "#ffffff");
-    createLabel("冬至点", "57%", "5%", "#ffffff");
+    createLabel("熱帯", "48%", "59%", "#00ed24");
+    createLabel("夏至点", "32%", "86%", "#ffffff");
+    createLabel("冬至点", "59%", "1%", "#ffffff");
 
     function animate() {
         requestAnimationFrame(animate);
@@ -209,12 +208,11 @@ export function drawEclipticModel() {
 
     window.addEventListener('resize', () => {
         const newWidth = container.clientWidth || baseSize;
-        const newHeight = newWidth * 0.9;
+        const newHeight = newWidth; // 100%
         renderer.setSize(newWidth, newHeight);
         camera.aspect = newWidth / newHeight;
         camera.updateProjectionMatrix();
 
-        // リサイズ時にフォントサイズを動的に変更
         const labels = container.querySelectorAll(".ecliptic-label");
         labels.forEach(label => {
             label.style.fontSize = newWidth < 600 ? "10px" : "14px";
