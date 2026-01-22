@@ -101,7 +101,7 @@ export function drawEclipticModel() {
     const createTropicMesh = (latitudeRad) => {
         const y = earthRadius * Math.sin(latitudeRad);
         const r = earthRadius * Math.cos(latitudeRad);
-        const geometry = new THREE.TorusGeometry(r, 1, 8, 100);
+        const geometry = new THREE.TorusGeometry(r, 1.2, 8, 100);
         const material = new THREE.MeshBasicMaterial({ color: "#ff00bb", transparent: true, opacity: 1 });
         const torus = new THREE.Mesh(geometry, material);
         torus.rotation.x = Math.PI / 2;
@@ -192,13 +192,13 @@ export function drawEclipticModel() {
 
     // --- ラベルの配置 ---
     createLabel("天球", "5%", "48%", celestialColor);
-    createLabel("地軸（垂直）", "25%", "43%", "#ffffff");
-    createLabel("黄道", "72%", "48%", "#f6e05e");
+    createLabel("地軸（垂直）", "25%", "28%", "#ffffff");
+    createLabel("黄道", "75%", "30%", "#f6e05e");
     createLabel("北回帰線（tropic）", "40%", "54%", "#ff00bb");
     createLabel("南回帰線（tropic）", "55%", "27%", "#ff00bb");
     createLabel("熱帯", "48%", "59%", "#00ed24");
     createLabel("夏至点", "32%", "86%", "#ffffff");
-    createLabel("冬至点", "59%", "1%", "#ffffff");
+    createLabel("冬至点", "59%", "2%", "#ffffff");
 
     function animate() {
         requestAnimationFrame(animate);
