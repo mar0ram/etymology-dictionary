@@ -1,6 +1,10 @@
 /* --- 1. 基本設定：ディープモード（暗い背景に白い情報パネル） --- */
 body {
-    font-family: 'Noto Sans JP', sans-serif;
+    font-family:
+        'Charis SIL',
+        'Noto Serif',
+        'Noto Serif JP',
+        serif;
     font-weight: 400;
     /* ダークテーマの基調色（思考と集中を促す） */
     background-color: #121212;
@@ -231,14 +235,14 @@ body {
 }
 
 .arrow {
-  display: inline-block;
-  margin: 0 6px;
-  color: #707070;
+    display: inline-block;
+    margin: 0 6px;
+    color: #707070;
 }
 
 .obsolete {
     color: #777777;
-}   
+}
 
 .ml {
     /* ユーザー様の指定値（上書き） */
