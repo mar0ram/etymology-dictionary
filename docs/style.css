@@ -1,10 +1,13 @@
 /* --- 1. 基本設定：ディープモード（暗い背景に白い情報パネル） --- */
 body {
     font-family:
-        'Charis SIL',
-        'Noto Serif',
-        'Noto Serif JP',
-        serif;
+        "Noto Sans JP",
+        "Yu Gothic UI",
+        "YuGothic",
+        "Hiragino Kaku Gothic Pro",
+        "Segoe UI",
+        "Arial",
+        sans-serif;
     font-weight: 400;
     /* ダークテーマの基調色（思考と集中を促す） */
     background-color: #121212;
@@ -12,9 +15,12 @@ body {
     /* 明るいテキスト色 */
     margin: 0;
     padding: 0;
-    line-height: 1.7;
-    letter-spacing: 0.5px;
+    line-height: 1.6;
     font-feature-settings: "palt";
+}
+
+.none {
+    display: none;
 }
 
 /* --- 2. 検索エリア：シャープで目立つ検索バー --- */
@@ -103,7 +109,7 @@ body {
     flex: 1 0 auto;
     font-size: 18px;
     border: none;
-    background-color: #00bcd4;
+    background-color: #00a4b7;
     /* アクアブルー */
     color: #121212;
     /* 黒に近い色でコントラストを強調 */
@@ -146,10 +152,10 @@ body {
 
 .entry .head {
     font-size: 32px;
-    font-weight: 900;
-    margin-bottom: 25px;
+    font-weight: 800;
+    margin-bottom: 50px;
     color: #FFFFFF;
-    border-bottom: 3px solid #00bcd4;
+    border-bottom: 3px solid #00aac0;
     /* アクセントカラーで単語を強調 */
     padding-bottom: 15px;
     letter-spacing: 1px;
@@ -173,7 +179,7 @@ body {
     min-width: 0;
     /* マーカー配置のため position: relative; が必須 */
     position: relative;
-    border-left: 2px solid #333333;
+    border-left: 2px solid #6f6f6f;
     /* タイムラインの基軸 */
     padding-left: 30px;
 }
@@ -183,9 +189,9 @@ body {
     margin-bottom: 20px;
     position: relative;
     padding: 15px;
-    background-color: #282828;
+    background-color: #cccccc;
     border-radius: 8px;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 4px 10px rgba(218, 218, 218, 0.3);
 }
 
 /* 💡 タイムラインのマーカー (デスクトップ/デフォルト) */
@@ -198,7 +204,7 @@ body {
     width: 12px;
     /* マーカー本体12px + border 2px*2 = 16px */
     height: 12px;
-    background: #00bcd4;
+    background: #00aac0;
     border: 2px solid #121212;
     border-radius: 50%;
     z-index: 1;
@@ -207,9 +213,9 @@ body {
 .subtitle {
     font-size: 18px;
     font-weight: 700;
-    margin-bottom: 10px;
-    color: #00bcd4;
-    border-bottom: 1px dashed #444444;
+    margin-bottom: 20px;
+    color: #333333;
+    border-bottom: 1px dashed #000000;
     padding-bottom: 5px;
 }
 
@@ -217,11 +223,11 @@ body {
 .content {
     padding-left: 0;
     font-size: 15px;
-    color: #C0C0C0;
+    color: #333333;
 }
 
 .content div {
-    line-height: 1.7;
+    line-height: 1.6;
     margin-bottom: 25px;
     font-size: 15px;
     word-break: break-word;
@@ -237,7 +243,7 @@ body {
 .arrow {
     display: inline-block;
     margin: 0 6px;
-    color: #707070;
+    color: #7e7e7e;
 }
 
 .obsolete {
@@ -245,18 +251,17 @@ body {
 }
 
 .ml {
-    /* ユーザー様の指定値（上書き） */
-    margin-left: 18px;
-    margin-top: 10px;
-    /* 以前の display: block; から display: inline-block; に変更されています */
+    margin-left: 1.2em;
+    margin-top: 1em;
+    margin-bottom: 1em;
     display: inline-block;
 }
 
 /* --- 7. h1 partN (語源パーツ) - 左パネルに配置 --- */
 .section.h1 {
-    background-color: #282828;
-    border-left: 4px solid #00bcd4;
-    padding: 20px;
+    background-color: #cccccc;
+    /* border-left: 6px solid #00aac0; */
+    /* padding: 20px; */
     margin-bottom: 25px;
 }
 
@@ -264,7 +269,7 @@ body {
     display: block;
     font-size: 16px;
     color: #E0E0E0;
-    line-height: 1.8;
+    line-height: 1.6;
 }
 
 .section.h1 .content div {
@@ -273,7 +278,7 @@ body {
     margin: 5px 5px;
     background-color: #333333;
     border-radius: 4px;
-    font-weight: 600;
+    font-weight: 700;
 }
 
 .section.h1 .content div::after {
@@ -283,9 +288,9 @@ body {
 /* --- 8. h5 tag/p (詳細タグ/記述) --- */
 .section.h5 .content .tag {
     font-weight: 700;
-    color: #FFFFFF;
+    color: #E0E0E0;
     display: inline-block;
-    background-color: #00c0da84;
+    background-color: #333333;
     padding: 3px 8px;
     border-radius: 2px;
     margin-right: 10px;
@@ -297,42 +302,7 @@ body {
     margin-top: 5px;
 }
 
-/* --- 9. h6 period/meaning (時期/意味) - タイムライン要素 --- */
-.section.h6 .subtitle {
-    font-size: 16px;
-    color: #E0E0E0;
-    border-bottom: none;
-    font-weight: 500;
-}
-
-.section.h6 .content {
-    padding-left: 0;
-}
-
-.section.h6 .content .period-meaning {
-    display: block;
-    margin-bottom: 8px;
-}
-
-.section.h6 .content .period-meaning span.period {
-    display: block;
-    font-weight: 700;
-    font-size: 14px;
-    color: #00bcd4;
-    /* 時期を強調 */
-    margin-bottom: 3px;
-}
-
-.section.h6 .content .period-meaning span.meaning {
-    font-size: 15px;
-    color: #C0C0C0;
-}
-
-.section.h6 .content .period-meaning span.meaning::before {
-    content: "";
-}
-
-/* --- 10. レスポンシブ対応：モバイルでは縦積みレイアウトに戻す --- */
+/* --- 9. レスポンシブ対応：モバイルでは縦積みレイアウトに戻す --- */
 @media (max-width: 900px) {
 
     /* パネル構造を縦積みに */
@@ -343,7 +313,7 @@ body {
 
     /* タイムラインの基軸を左端に */
     .timeline-panel {
-        border-left: 2px solid #333333;
+        border-left: 2px solid #6f6f6f;
         padding-left: 30px;
         margin-top: 30px;
     }
@@ -423,9 +393,9 @@ body {
     }
 
     .content div {
-        line-height: 1.7;
+        line-height: 1.6;
         margin-bottom: 25px;
-        font-size: 13px;
+        font-size: 14px;
         word-break: break-word;
         overflow-wrap: break-word;
     }

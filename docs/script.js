@@ -1,4 +1,5 @@
 import { drawEclipticModel } from "./eclipticModel.js";
+import { drawArcticModel } from "./arctic.js";
 
 let data = [];
 let dataLoaded = false;
@@ -20,6 +21,20 @@ const results = document.getElementById("results");
 const clearBtn = document.getElementById("clearBtn"); // 💡 クリアボタンの要素を取得
 const viewportMeta = document.querySelector("meta[name=viewport]");
 
+function prependEntry(text = 'number. word') {
+    const entry = document.createElement('div');
+    entry.className = 'entry';
+
+    const head = document.createElement('div');
+    head.className = 'head';
+    head.id = 'head';
+    head.textContent = text;
+
+    entry.appendChild(head);
+    results.prepend(entry);
+}
+prependEntry();
+
 // 💡 検索窓への入力監視 (×ボタンの表示/非表示切り替え)
 searchBox.addEventListener("input", () => {
     if (searchBox.value.length > 0) {
@@ -34,7 +49,8 @@ clearBtn.addEventListener("click", () => {
     searchBox.value = ""; // 検索窓の文字を空にする
     clearBtn.style.display = "none"; // ×ボタンを非表示にする
     searchBox.focus(); // 検索窓にフォーカスを戻す（次の入力を促す）
-    results.innerHTML = ""; // 検索結果もクリアする
+    results.innerHTML = "";
+    prependEntry();
 
     resetZoom(); // ズームリセット関数を実行
 });
@@ -221,6 +237,7 @@ function doSearch() {
         });
 
         results.appendChild(div);
+        drawArcticModel();
         drawEclipticModel();
     });
 }
