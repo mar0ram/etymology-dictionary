@@ -3,8 +3,8 @@ import { gsap } from './gsap.js';
 
 export function drawEclipticModel() {
     const container = document.querySelector(".tropic");
-    container.style.backgroundColor = '#000000';
     if (!container) return;
+    container.style.backgroundColor = '#000000';
 
     // --- 初期化 ---
     container.innerHTML = "";
@@ -219,4 +219,6 @@ export function drawEclipticModel() {
             label.style.fontSize = newWidth < 400 ? "10px" : "14px";
         });
     });
+    console.log('tropical');
+    
 }
