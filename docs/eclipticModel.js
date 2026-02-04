@@ -9,197 +9,283 @@ export function drawEclipticModel() {
     // --- 初期化 ---
     container.innerHTML = "";
     container.style.position = "relative";
-    
-    // 横幅を取得し、高さを横幅の100%（正方形）に設定
+
     const baseSize = 600 * 0.7;
     let width = container.clientWidth || baseSize;
-    let height = width; // 100%
+    let height = width;
 
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(45, width / height, 1, 2000);
-    camera.position.set(0, 250, 500);
+    camera.position.set(0, 250, 600); // 視野を少し広げる
     camera.lookAt(0, 0, 0);
 
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     renderer.setSize(width, height);
     renderer.setPixelRatio(window.devicePixelRatio);
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
     container.appendChild(renderer.domElement);
 
-    // --- ラベル作成用ヘルパー関数 ---
+    // テクスチャ読み込み
+    const textureLoader = new THREE.TextureLoader();
+    const sunTexture = textureLoader.load("./textures/sun.jpg");
+    sunTexture.colorSpace = THREE.SRGBColorSpace;
+    const earthTexture = textureLoader.load("./textures/earth.jpg");
+    earthTexture.colorSpace = THREE.SRGBColorSpace;
+
+    // --- 定数 (計算の順序を整理) ---
+    const earthRadius = 40 * 0.7;
+    const sunRadius = 40;
+    const celestialSphereRadius = 230 * 0.7;
+    // 黄道を天球の外側に配置
+    const eclipticRadius = celestialSphereRadius + 1;
+    const tiltRad = 23.4 * Math.PI / 180;
+
+    // --- ラベル作成用ヘルパー関数 (改行・中央基準対応) ---
     const createLabel = (text, top, left, color) => {
         const div = document.createElement("div");
-        div.className = "ecliptic-label"; // リサイズ制御用
-        div.textContent = text;
+        div.className = "ecliptic-label";
+        div.innerHTML = text; // 改行対応
         div.style.position = "absolute";
         div.style.top = top;
         div.style.left = left;
+        div.style.transform = "translate(-50%, -50%)"; // ズレ防止
         div.style.color = color;
-        // スマホ(400px未満)なら10px、それ以外は14px
-        div.style.fontSize = width < 400 ? "10px" : "14px";
+        div.style.fontSize = width < 450 ? "10px" : "16px";
         div.style.fontWeight = "normal";
         div.style.pointerEvents = "none";
         div.style.whiteSpace = "nowrap";
         container.appendChild(div);
     };
 
-    // --- 定数 ---
-    const earthRadius = 40 * 0.7;
-    const sunRadius = 25 * 0.7;
-    const eclipticRadius = 220 * 0.7;
-    const celestialSphereRadius = 230 * 0.7;
-    const tiltRad = 23.4 * Math.PI / 180;
-
     // --- 天球 ---
     const celestialColor = "#4a90e2";
     const celestialSphere = new THREE.Mesh(
         new THREE.SphereGeometry(celestialSphereRadius, 32, 32),
-        new THREE.MeshBasicMaterial({ color: celestialColor, wireframe: true, transparent: true, opacity: 0.12 })
+        new THREE.MeshBasicMaterial({
+            color: celestialColor,
+            wireframe: true,
+            transparent: true,
+            opacity: 0.12,
+            depthWrite: false,
+            depthTest: true
+        })
     );
     scene.add(celestialSphere);
+    celestialSphere.renderOrder = 2;
 
-    // --- 地球 (地軸を垂直に固定) ---
+    // --- 地球 (自転) ---
     const earthGroup = new THREE.Group();
-    earthGroup.rotation.z = 0; // ★垂直に設定
     scene.add(earthGroup);
 
     const earthGeometry = new THREE.SphereGeometry(earthRadius, 64, 64);
     const earthMaterial = new THREE.MeshPhongMaterial({
-        color: "#2c7be5",
-        emissive: "#051020",
-        specular: "#222222",
-        shininess: 10
+        map: earthTexture,
+        specular: new THREE.Color(0x333333),
+        shininess: 15
     });
     const earth = new THREE.Mesh(earthGeometry, earthMaterial);
     earthGroup.add(earth);
+    earth.renderOrder = 1;
 
-    // 地軸の棒 (垂直)
+    // 地軸
     const axisHeight = earthRadius * 10;
-    const axisGeo = new THREE.CylinderGeometry(0.5, 0.5, axisHeight, 8);
-    const axisMat = new THREE.MeshBasicMaterial({ color: "#ffffff" });
-    const axisMesh = new THREE.Mesh(axisGeo, axisMat);
-    earthGroup.add(axisMesh);
-
-    // --- 熱帯の表現 ---
-    const tropicalGeo = new THREE.SphereGeometry(
-        earthRadius + 0.3,
-        64,
-        32,
-        0,
-        Math.PI * 2,
-        Math.PI / 2 - tiltRad,
-        tiltRad * 2
-    );
-    const tropicalMat = new THREE.MeshBasicMaterial({
-        color: "#00d320",
-        transparent: true,
-        opacity: 0.5,
-        side: THREE.DoubleSide
-    });
-    const tropicalMask = new THREE.Mesh(tropicalGeo, tropicalMat);
-    earth.add(tropicalMask);
-
-    // 回帰線
-    const createTropicMesh = (latitudeRad) => {
-        const y = earthRadius * Math.sin(latitudeRad);
-        const r = earthRadius * Math.cos(latitudeRad);
-        const geometry = new THREE.TorusGeometry(r, 1.2, 8, 100);
-        const material = new THREE.MeshBasicMaterial({ color: "#ff00bb", transparent: true, opacity: 1 });
-        const torus = new THREE.Mesh(geometry, material);
-        torus.rotation.x = Math.PI / 2;
-        torus.position.y = y;
-        return torus;
-    };
-    earth.add(createTropicMesh(tiltRad));
-    earth.add(createTropicMesh(-tiltRad));
-
-    // --- 太陽 & 光源 ---
-    const sunGroup = new THREE.Group();
-    scene.add(sunGroup);
-
-    const sun = new THREE.Mesh(
-        new THREE.SphereGeometry(sunRadius, 32, 32),
+    const axisMesh = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.5, 0.5, axisHeight, 8),
         new THREE.MeshBasicMaterial({ color: "#ffffff" })
     );
-    sunGroup.add(sun);
+    earthGroup.add(axisMesh);
 
-    const sunGlowInner = new THREE.Mesh(
-        new THREE.SphereGeometry(sunRadius * 1.2, 32, 32),
-        new THREE.MeshBasicMaterial({ color: "#f6e05e", transparent: true, opacity: 0.4 })
+    // --- 熱帯・回帰線  ---
+    const tropicalMask = new THREE.Mesh(
+        new THREE.SphereGeometry(earthRadius + 0.3, 64, 32, 0, Math.PI * 2, Math.PI / 2 - tiltRad, tiltRad * 2),
+        new THREE.MeshBasicMaterial({ color: "#00d320", transparent: true, opacity: 0.5, side: THREE.DoubleSide })
     );
-    sunGroup.add(sunGlowInner);
+    earth.add(tropicalMask);
 
-    const sunGlowOuter = new THREE.Mesh(
-        new THREE.SphereGeometry(sunRadius * 1.8, 32, 32),
-        new THREE.MeshBasicMaterial({ color: "#f59e0b", transparent: true, opacity: 0.15 })
-    );
-    sunGroup.add(sunGlowOuter);
-
-    const sunLight = new THREE.PointLight("#fffde7", 3.5, 0, 0);
-    sunGroup.add(sunLight);
-
-    // --- 黄道 (23.4度傾ける) ---
-    const eclipticTubeRadius = 1;
-    const eclipticGeo = new THREE.TorusGeometry(eclipticRadius, eclipticTubeRadius, 16, 100);
-    const eclipticMat = new THREE.MeshBasicMaterial({
-        color: "#f6e05e",
-        transparent: true,
-        opacity: 0.8
-    });
-    const eclipticMesh = new THREE.Mesh(eclipticGeo, eclipticMat);
-    eclipticMesh.rotation.x = Math.PI / 2;
-
+    // --- 黄道コンテナ (23.4度傾ける) ---
     const eclipticContainer = new THREE.Group();
-    eclipticContainer.rotation.z = tiltRad; 
-    eclipticContainer.add(eclipticMesh);
+    eclipticContainer.rotation.z = tiltRad;
     scene.add(eclipticContainer);
+
+    const eclipticMesh = new THREE.Mesh(
+        new THREE.TorusGeometry(eclipticRadius, 1.2, 16, 100),
+        new THREE.MeshBasicMaterial({ color: "#f6e05e", transparent: true, opacity: 0.6 })
+    );
+    eclipticMesh.rotation.x = Math.PI / 2;
+    eclipticContainer.add(eclipticMesh);
 
     // 至点マーカー
     const createSolsticePoint = (x) => {
-        const geo = new THREE.SphereGeometry(7, 16, 16);
-        const mat = new THREE.MeshBasicMaterial({ color: "#ffffff" });
-        const mesh = new THREE.Mesh(geo, mat);
-        mesh.position.set(x, 0, 0);
+        const mesh = new THREE.Mesh(
+            new THREE.SphereGeometry(7, 16, 16),
+            new THREE.MeshBasicMaterial({ color: "#ffffff" })
+        );
+        mesh.position.x = x;
         return mesh;
     };
     eclipticContainer.add(createSolsticePoint(eclipticRadius));
     eclipticContainer.add(createSolsticePoint(-eclipticRadius));
 
-    scene.add(new THREE.AmbientLight("#ffffff", 0.2));
+    // --- 太陽 (2つ) ---
+    const createSun = (xPos) => {
+        const sGroup = new THREE.Group();
+        sGroup.position.x = xPos;
 
-    // --- アニメーション ---
-    const state = { angle: 0 };
-    gsap.to(state, {
-        angle: Math.PI * 2,
-        duration: 20,
-        repeat: -1,
-        ease: "none",
-        onUpdate: () => {
-            const cos = Math.cos(state.angle);
-            const sin = Math.sin(state.angle);
-            sunGroup.position.set(
-                cos * eclipticRadius * Math.cos(tiltRad),
-                cos * eclipticRadius * Math.sin(tiltRad),
-                sin * eclipticRadius
-            );
-        }
-    });
+        // 太陽本体
+        const core = new THREE.Mesh(
+            new THREE.SphereGeometry(sunRadius, 64, 64),
+            new THREE.MeshBasicMaterial({ map: sunTexture })
+        );
 
-    gsap.to(earth.rotation, {
-        y: Math.PI * 2,
-        duration: 8,
-        repeat: -1,
-        ease: "none"
-    });
+        // コロナ（発光層）
+        const corona = new THREE.Mesh(
+            new THREE.SphereGeometry(sunRadius * 1.15, 64, 64),
+            new THREE.MeshBasicMaterial({
+                color: 0xffaa33,
+                transparent: true,
+                opacity: 0.35,
+                blending: THREE.AdditiveBlending,
+                side: THREE.BackSide
+            })
+        );
+
+        // リムグロー
+        const glow = new THREE.Mesh(
+            new THREE.SphereGeometry(sunRadius * 1.25, 64, 64),
+            new THREE.MeshBasicMaterial({
+                color: 0xffdd88,
+                transparent: true,
+                opacity: 0.15,
+                blending: THREE.AdditiveBlending
+            })
+        );
+
+        // 光源
+        const light = new THREE.PointLight(0xffffff, 2.5, 0);
+
+        sGroup.add(light, core, corona, glow);
+
+        return sGroup;
+    };
+
+    eclipticContainer.add(createSun(eclipticRadius));
+    eclipticContainer.add(createSun(-eclipticRadius));
+
+    scene.add(new THREE.AmbientLight("#ffffff", 0.3));
+
+    // --- 光のアニメーション関数 (フラッシュ改善版) ---
+    const createDrawingAnimation = (sunIsSummer) => {
+        const beamColor = "#ff7700";
+        const sign = sunIsSummer ? 1 : -1;
+
+        // 太陽のワールド座標を計算
+        const sunPos = new THREE.Vector3(sign * eclipticRadius, 0, 0);
+        sunPos.applyAxisAngle(new THREE.Vector3(0, 0, 1), tiltRad);
+
+        // ターゲット座標
+        const tropicY = sign * earthRadius * Math.sin(tiltRad);
+        const tropicRadius = earthRadius * Math.cos(tiltRad);
+        const targetPos = new THREE.Vector3(sign * tropicRadius, tropicY, 0);
+
+        // ビームの作成
+        const dist = sunPos.distanceTo(targetPos);
+        const beamGeo = new THREE.CylinderGeometry(0.5, 0.5, dist, 8);
+        beamGeo.rotateX(-Math.PI / 2);
+        beamGeo.translate(0, 0, dist / 2);
+
+        // Materialを個別に作成して干渉を防ぐ
+        const beamMat = new THREE.MeshBasicMaterial({ color: beamColor, transparent: true, opacity: 0 });
+        const beamMesh = new THREE.Mesh(beamGeo, beamMat);
+        beamMesh.position.copy(sunPos);
+        beamMesh.lookAt(targetPos);
+        scene.add(beamMesh);
+
+        const ringMat = new THREE.MeshBasicMaterial({ color: beamColor, transparent: true, opacity: 0 });
+        let ringMesh = null;
+
+        const state = { beamScale: 0, arc: 0 };
+
+        // タイムラインの設定
+        const tl = gsap.timeline({
+            repeat: -1,
+            repeatDelay: 0.5,
+            onRepeat: () => {
+                // ループが戻る瞬間に古いメッシュを完全に消去
+                if (ringMesh) {
+                    scene.remove(ringMesh);
+                    ringMesh.geometry.dispose();
+                    ringMesh = null;
+                }
+            }
+        });
+
+        // 1. 初期状態のリセット
+        tl.set(state, { beamScale: 0, arc: 0 });
+        tl.set([beamMat, ringMat], { opacity: 0 });
+
+        // 2. ビームが太陽から伸びる
+        tl.to(state, {
+            beamScale: 1,
+            duration: 0.5,
+            onStart: () => { beamMat.opacity = 1; },
+            onUpdate: () => { beamMesh.scale.z = state.beamScale; }
+        });
+
+        // 3. リングが描画される (不透明度はここで1にする)
+        tl.to(state, {
+            arc: Math.PI * 2,
+            duration: 8,
+            ease: "none",
+            onStart: () => { ringMat.opacity = 1; },
+            onUpdate: () => {
+                if (ringMesh) {
+                    scene.remove(ringMesh);
+                    ringMesh.geometry.dispose();
+                }
+                if (state.arc > 0.01) {
+                    const geo = new THREE.TorusGeometry(tropicRadius, 1.2, 8, 64, state.arc);
+                    ringMesh = new THREE.Mesh(geo, ringMat);
+                    ringMesh.rotation.x = Math.PI / 2;
+                    ringMesh.rotation.z = sunIsSummer ? -state.arc : Math.PI - state.arc;
+                    ringMesh.position.y = tropicY;
+                    scene.add(ringMesh);
+                }
+            }
+        });
+
+        // 4. フェードアウト
+        tl.to([beamMat, ringMat], {
+            opacity: 0,
+            duration: 0.5,
+            onComplete: () => {
+                // フェードアウト完了時にシーンから取り除く
+                if (ringMesh) {
+                    scene.remove(ringMesh);
+                    ringMesh.geometry.dispose();
+                    ringMesh = null;
+                }
+            }
+        });
+    };
+
+    createDrawingAnimation(true);
+    createDrawingAnimation(false);
+
+    // --- 地球の自転 ---
+    gsap.to(earth.rotation, { y: Math.PI * 2, duration: 8, repeat: -1, ease: "none" });
 
     // --- ラベルの配置 ---
-    createLabel("天球", "5%", "48%", celestialColor);
-    createLabel("地軸", "25%", "40%", "#ffffff");
-    createLabel("黄道", "75%", "30%", "#f6e05e");
-    createLabel("北回帰線：tropic", "40%", "54%", "#e800aa");
-    createLabel("南回帰線：tropic", "55%", "27%", "#e800aa");
-    createLabel("熱帯", "48%", "59%", "#00ed24");
-    createLabel("夏至点", "32%", "86%", "#ffffff");
-    createLabel("冬至点", "59%", "3%", "#ffffff");
+    createLabel("天球", "15%", "50%", celestialColor);
+    createLabel("地軸", "30%", "45%", "#ffffff");
+    createLabel("黄道", "74%", "35%", "#f6e05e");
+    // 左右にバランスよく配置
+    createLabel("北回帰線<br>tropic", "51%", "65%", "#ff7700"); // 右上寄り
+    createLabel("南回帰線<br>tropic", "62%", "40%", "#ff7700"); // 左下寄り
+    createLabel("熱帯", "50%", "40%", "#00ed24");
+    // 至点付近
+    createLabel("夏至点", "32%", "92%", "#ffffff");
+    createLabel("冬至点", "67%", "11%", "#ffffff");
+    createLabel("※本来は地球が太陽の周りをまわっているが、<br>　わかりやすくするために地球を中心に描いている。", "3%", "50%", "#ffffff");
 
     function animate() {
         requestAnimationFrame(animate);
@@ -209,16 +295,8 @@ export function drawEclipticModel() {
 
     window.addEventListener('resize', () => {
         const newWidth = container.clientWidth || baseSize;
-        const newHeight = newWidth; // 100%
-        renderer.setSize(newWidth, newHeight);
-        camera.aspect = newWidth / newHeight;
+        renderer.setSize(newWidth, newWidth);
+        camera.aspect = 1;
         camera.updateProjectionMatrix();
-
-        const labels = container.querySelectorAll(".ecliptic-label");
-        labels.forEach(label => {
-            label.style.fontSize = newWidth < 400 ? "10px" : "14px";
-        });
     });
-    console.log('tropical');
-    
 }

@@ -238,6 +238,6 @@ function doSearch() {
 
         results.appendChild(div);
         drawArcticModel();
-        drawEclipticModel();
     });
 }
+drawEclipticModel();
