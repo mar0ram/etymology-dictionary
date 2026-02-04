@@ -237,7 +237,7 @@ function doSearch() {
         });
 
         results.appendChild(div);
+        drawEclipticModel();
         drawArcticModel();
     });
 }
-drawEclipticModel();
