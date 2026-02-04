@@ -275,17 +275,17 @@ export function drawEclipticModel() {
     gsap.to(earth.rotation, { y: Math.PI * 2, duration: 8, repeat: -1, ease: "none" });
 
     // --- ラベルの配置 ---
-    createLabel("天球", "15%", "50%", celestialColor);
+    createLabel("天球", "85%", "50%", celestialColor);
     createLabel("地軸", "30%", "45%", "#ffffff");
-    createLabel("黄道", "74%", "35%", "#f6e05e");
+    createLabel("黄道", "68%", "58%", "#f6e05e");
     // 左右にバランスよく配置
     createLabel("北回帰線<br>tropic", "51%", "65%", "#ff7700"); // 右上寄り
     createLabel("南回帰線<br>tropic", "62%", "40%", "#ff7700"); // 左下寄り
     createLabel("熱帯", "50%", "40%", "#00ed24");
     // 至点付近
-    createLabel("夏至点", "32%", "92%", "#ffffff");
+    createLabel("夏至点", "32%", "93%", "#ffffff");
     createLabel("冬至点", "67%", "11%", "#ffffff");
-    createLabel("※本来は地球が太陽の周りをまわっているが、<br>　わかりやすくするために地球を中心に描いている。", "3%", "50%", "#ffffff");
+    createLabel("※本来は地球が太陽の周りをまわっているが、<br>　わかりやすくするために地球を中心に描いている。", "7%", "50%", "#ffffff");
 
     function animate() {
         requestAnimationFrame(animate);
