@@ -1,5 +1,6 @@
 import { drawEclipticModel } from "./eclipticModel.js";
 import { drawArcticModel } from "./arctic.js";
+import { drawDimensionModel } from "./dimension.js";
 
 let data = [];
 let dataLoaded = false;
@@ -239,5 +240,6 @@ function doSearch() {
         results.appendChild(div);
         drawEclipticModel();
         drawArcticModel();
+        drawDimensionModel();
     });
 }
