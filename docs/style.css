@@ -186,7 +186,7 @@ body {
 
 /* セクションの一般的なスタイル（タイムライン側で使用） */
 .section {
-    margin-bottom: 20px;
+    margin-bottom: 25px;
     position: relative;
     padding: 15px;
     background-color: #cccccc;
@@ -260,9 +260,6 @@ body {
 /* --- 7. h1 partN (語源パーツ) - 左パネルに配置 --- */
 .section.h1 {
     background-color: #cccccc;
-    /* border-left: 6px solid #00aac0; */
-    /* padding: 20px; */
-    margin-bottom: 25px;
 }
 
 .section.h1 .content {
@@ -401,15 +398,15 @@ body {
     }
 
     .timeline-panel {
-        padding-left: 20px;
+        margin-top: 0px;
+        padding-left: 0px;
+        border-left: none;
         /* モバイルでは少しパディングを狭くする */
     }
 
     /* 💡 タイムラインマーカー位置の修正（768px未満） */
     /* マーカー幅14pxの半分 -7px に修正 */
     .timeline-panel .section::before {
-        left: -28px;
-        width: 10px;
-        height: 10px;
+        display: none;
     }
 }
