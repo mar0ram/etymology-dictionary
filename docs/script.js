@@ -1,6 +1,7 @@
 import { drawEclipticModel } from "./eclipticModel.js";
 import { drawArcticModel } from "./arctic.js";
 import { drawDimensionModel } from "./dimension.js";
+import { drawSchemeModel } from "./scheme.js";
 
 let data = [];
 let dataLoaded = false;
@@ -241,5 +242,6 @@ function doSearch() {
         drawEclipticModel();
         drawArcticModel();
         drawDimensionModel();
+        drawSchemeModel();
     });
 }

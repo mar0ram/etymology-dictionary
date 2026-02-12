@@ -125,11 +125,11 @@ export function drawDimensionModel() {
 
     // --- ラベル位置の調整 (立体と被らない位置へ) ---
     // 1D: 左下
-    const label1 = createLabel("lbl-d1", "1D<br><span style='font-size:0.7em'>Line / Length</span>", "80%", "20%", "#00ffff");
+    const label1 = createLabel("lbl-d1", "1D<br><span style='font-size:0.7em'>直線 / 長さ</span>", "80%", "20%", "#00ffff");
     // 2D: 左上
-    const label2 = createLabel("lbl-d2", "2D<br><span style='font-size:0.7em'>Plane / Area</span>", "20%", "20%", "#ff00ff");
+    const label2 = createLabel("lbl-d2", "2D<br><span style='font-size:0.7em'>平面 / 面積</span>", "20%", "20%", "#ff00ff");
     // 3D: 右上
-    const label3 = createLabel("lbl-d3", "3D<br><span style='font-size:0.7em'>Space / Volume</span>", "20%", "80%", "#ffaa00");
+    const label3 = createLabel("lbl-d3", "3D<br><span style='font-size:0.7em'>空間 / 体積</span>", "20%", "80%", "#ffaa00");
 
 
     // --- アニメーション (GSAP Timeline) ---

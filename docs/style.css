@@ -308,17 +308,15 @@ body {
         gap: 0;
     }
 
-    /* タイムラインの基軸を左端に */
-    .timeline-panel {
-        border-left: 2px solid #6f6f6f;
-        padding-left: 30px;
-        margin-top: 30px;
+   .timeline-panel {
+        margin-top: 0px;
+        padding-left: 0px;
+        border-left: none;
     }
 
-    /* 💡 タイムラインマーカー位置の修正（900px未満） */
-    /* マーカー幅14pxの半分 -7px に修正 */
+    /* 💡 タイムラインマーカーなし */
     .timeline-panel .section::before {
-        left: -38px;
+        display: none;
     }
 }
 
@@ -401,11 +399,9 @@ body {
         margin-top: 0px;
         padding-left: 0px;
         border-left: none;
-        /* モバイルでは少しパディングを狭くする */
     }
 
-    /* 💡 タイムラインマーカー位置の修正（768px未満） */
-    /* マーカー幅14pxの半分 -7px に修正 */
+    /* 💡 タイムラインマーカーなし */
     .timeline-panel .section::before {
         display: none;
     }
