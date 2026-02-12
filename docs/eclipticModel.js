@@ -189,7 +189,7 @@ export function drawEclipticModel() {
 
         // ビームの作成
         const dist = sunPos.distanceTo(targetPos);
-        const beamGeo = new THREE.CylinderGeometry(0.5, 0.5, dist, 8);
+        const beamGeo = new THREE.CylinderGeometry(1.2, 1.2, dist, 8);
         beamGeo.rotateX(-Math.PI / 2);
         beamGeo.translate(0, 0, dist / 2);
 
