@@ -242,5 +242,4 @@ export function drawArcticModel() {
         renderer.setSize(newWidth, newHeight);
         renderer.setPixelRatio(window.devicePixelRatio); // リサイズ時もDPRを維持
     });
-    console.log('arctic');
 }

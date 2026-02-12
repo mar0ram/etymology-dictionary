@@ -239,9 +239,74 @@ function doSearch() {
         });
 
         results.appendChild(div);
-        drawEclipticModel();
-        drawArcticModel();
-        drawDimensionModel();
-        drawSchemeModel();
+
+        // 1. 描画を実行（これでCanvasが作られる）
+        // drawEclipticModel();
+        // drawArcticModel();
+        // drawDimensionModel();
+        // drawSchemeModel();
+
+        const configs = [
+            { sel: ".tropic", func: drawEclipticModel },
+            { sel: ".arctic", func: drawArcticModel },
+            { sel: ".dimension", func: drawDimensionModel },
+            { sel: ".scheme", func: drawSchemeModel }
+        ];
+
+        configs.forEach(config => {
+            const target = div.querySelector(config.sel);
+            if (target) {
+                attachMask(target, config.func);
+            }
+        });
     });
+}
+
+/**
+ * 描画済みのコンテナにマスク（ボタン）を被せる関数
+ */
+function attachMask(container, drawFunc) {
+    if (!container) return;
+    // 1. まず描画を実行（この時点でCanvasやラベルが生成される）
+    drawFunc();
+
+    container.style.position = "relative";
+
+    // 2. マスク層（オーバーレイ）を作成
+    const overlay = document.createElement("div");
+    overlay.className = "model-mask";
+    overlay.style.cssText = `
+        position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0, 0, 0, 0.7); /* Canvasの上を覆う */
+        display: flex; align-items: center; justify-content: center;
+        z-index: 100; /* ラベルよりも上にくるように設定 */
+        cursor: pointer; transition: opacity 0.6s ease;
+    `;
+
+    overlay.innerHTML = `
+        <div style="text-align: center; color: #fff;">
+            <div style="font-size: 50px; text-shadow: 0 0 15px rgba(255,255,255,0.8);">▶</div>
+            <div style="font-size: 12px; margin-top: 10px; letter-spacing: 2px;">START ANIMATION</div>
+        </div>
+    `;
+
+    // 3. クリックでアニメーション開始
+    overlay.addEventListener("click", () => {
+        overlay.style.opacity = "0";
+
+        // 止めていたGSAPを再生
+        if (container._gsapAnimations) {
+            container._gsapAnimations.forEach(anim => anim.play());
+        }
+
+        if (container._modelState) {
+            container._modelState.isPlaying = true;
+        }
+
+        setTimeout(() => {
+            overlay.remove(); // 完全に消去
+        }, 600);
+    }, { once: true });
+
+    container.appendChild(overlay);
 }

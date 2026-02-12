@@ -5,12 +5,18 @@ export function drawSchemeModel() {
     const container = document.querySelector(".scheme");
     if (!container) return;
 
+    // --- 初期化 (既存のCanvasとラベルを削除) ---
+    const oldCanvas = container.querySelector("canvas");
+    if (oldCanvas) oldCanvas.remove();
+    const oldLabels = container.querySelectorAll(".scheme-label");
+    oldLabels.forEach(l => l.remove());
+
     container.style.backgroundColor = '#0d1117';
     container.style.overflow = "hidden";
-
-    // --- 初期化 ---
-    container.innerHTML = "";
     container.style.position = "relative";
+
+    // 💡 アニメーション管理用
+    const animations = [];
 
     const baseSize = 600;
     let width = container.clientWidth || baseSize;
@@ -72,20 +78,17 @@ export function drawSchemeModel() {
         moduleGroup.position.set(mX, 0, 0);
         
         const fragments = [];
-        // --- 変更点：要素数を20個に増加 ---
         const fragCount = 20; 
-        const fragGeo = new THREE.IcosahedronGeometry(4, 0); // 少し小さくして密度を高める
+        const fragGeo = new THREE.IcosahedronGeometry(4, 0);
         const fragMat = new THREE.MeshLambertMaterial({ color: 0x666666 });
 
         for (let i = 0; i < fragCount; i++) {
             const mesh = new THREE.Mesh(fragGeo, fragMat.clone());
-            // 初期位置のランダム範囲を少し広げてカオス感を出す
             mesh.position.set(
                 (Math.random() - 0.5) * 200,
                 (Math.random() - 0.5) * 300 + 150, 
                 (Math.random() - 0.5) * 200
             );
-            // ターゲット位置（ボックス内に高密度で集まる）
             mesh.userData.targetPos = {
                 x: (Math.random() - 0.5) * 45,
                 y: (Math.random() - 0.5) * 45,
@@ -109,6 +112,7 @@ export function drawSchemeModel() {
     // --- ラベル ---
     const createLabel = (text, top, left, color) => {
         const div = document.createElement("div");
+        div.className = "scheme-label"; // 💡 クラス名を追加
         div.innerHTML = text;
         div.style.position = "absolute";
         div.style.top = top;
@@ -120,6 +124,8 @@ export function drawSchemeModel() {
         div.style.fontFamily = "sans-serif";
         div.style.textAlign = "center";
         div.style.opacity = 0;
+        div.style.pointerEvents = "none";
+        div.style.zIndex = "5"; // 💡 マスクより下に配置
         container.appendChild(div);
         return div;
     };
@@ -129,7 +135,8 @@ export function drawSchemeModel() {
     const lbl3 = createLabel("順序づけられた<br>SCHEME（計画）", "80%", "50%", "#ffffff");
 
     // --- アニメーション ---
-    const tl = gsap.timeline({ repeat: -1, repeatDelay: 3 });
+    // 💡 paused: true を追加
+    const tl = gsap.timeline({ repeat: -1, repeatDelay: 3, paused: true });
 
     // 0. リセット
     tl.add(() => {
@@ -151,14 +158,13 @@ export function drawSchemeModel() {
     // 2. 順序立てて構成
     tl.to(lbl2, { opacity: 1, duration: 1 });
     modules.forEach((m, mi) => {
-        // --- 変更点：要素数が増えたため stagger を少し速く(0.04)設定してテンポを維持 ---
         m.fragments.forEach((f, fi) => {
             tl.to(f.position, {
                 x: f.userData.targetPos.x,
                 y: f.userData.targetPos.y,
                 z: f.userData.targetPos.z,
                 duration: 1.2,
-                ease: "back.out(1.2)" // 収束時に少し弾む動きを追加
+                ease: "back.out(1.2)"
             }, `step${mi}+=${fi * 0.04}`);
             
             tl.to(f.material.color, { 
@@ -181,9 +187,14 @@ export function drawSchemeModel() {
     // 4. フェードアウト
     tl.to([mainGroup.scale, lbl3], { opacity: 0, duration: 1, delay: 2 });
 
+    // 💡 管理データを保持
+    animations.push(tl);
+    container._gsapAnimations = animations;
+
     // --- ループ ---
     function animate() {
         requestAnimationFrame(animate);
+        // 💡 動きをより強調するため、フラグに関わらず回転は維持
         modules.forEach(m => { m.group.rotation.y += 0.01; });
         renderer.render(scene, camera);
     }

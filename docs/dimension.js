@@ -6,12 +6,18 @@ export function drawDimensionModel() {
     const container = document.querySelector(".dimension");
     if (!container) return;
     
+    // --- 初期化 (既存のCanvasとラベルを削除) ---
+    const oldCanvas = container.querySelector("canvas");
+    if (oldCanvas) oldCanvas.remove();
+    const oldLabels = container.querySelectorAll("div[id^='lbl-d']");
+    oldLabels.forEach(l => l.remove());
+
     container.style.backgroundColor = '#111111';
     container.style.overflow = "hidden";
-
-    // --- 初期化 ---
-    container.innerHTML = "";
     container.style.position = "relative";
+
+    // 💡 アニメーション管理用
+    const animations = [];
 
     const baseSize = 600;
     let width = container.clientWidth || baseSize;
@@ -119,55 +125,58 @@ export function drawDimensionModel() {
         div.style.pointerEvents = "none";
         div.style.textShadow = `0 0 10px ${color}`;
         div.style.opacity = 0;
+        div.style.zIndex = "5"; // マスクより下、Canvasより上に配置
         container.appendChild(div);
         return div;
     };
 
-    // --- ラベル位置の調整 (立体と被らない位置へ) ---
-    // 1D: 左下
+    // --- ラベル位置の調整 ---
     const label1 = createLabel("lbl-d1", "1D<br><span style='font-size:0.7em'>直線 / 長さ</span>", "80%", "20%", "#00ffff");
-    // 2D: 左上
     const label2 = createLabel("lbl-d2", "2D<br><span style='font-size:0.7em'>平面 / 面積</span>", "20%", "20%", "#ff00ff");
-    // 3D: 右上
     const label3 = createLabel("lbl-d3", "3D<br><span style='font-size:0.7em'>空間 / 体積</span>", "20%", "80%", "#ffaa00");
 
 
     // --- アニメーション (GSAP Timeline) ---
-    const tl = gsap.timeline({ repeat: -1, repeatDelay: 2 });
+    // 💡 paused: true を追加
+    const tl = gsap.timeline({ repeat: -1, repeatDelay: 2, paused: true });
 
     // 0. 初期状態リセット
     tl.set(lineMesh.scale, { x: 0 })
       .set(planeGroup.scale, { y: 0 })
       .set(solidGroup.scale, { z: 0 })
       .set([planeGroup, solidGroup], { visible: false })
-      .set([label1, label2, label3], { opacity: 0 }); // 位置は固定なのでopacityのみリセット
+      .set([label1, label2, label3], { opacity: 0 });
 
     // 1. Dimension 1: 線を描く
     tl.to(lineMesh.scale, { x: 1, duration: 1.5, ease: "power2.inOut" })
-      .to(label1, { opacity: 1, duration: 0.5 }, "-=1.0"); // 1D出現
+      .to(label1, { opacity: 1, duration: 0.5 }, "-=1.0");
 
     // 2. Dimension 2: 線を上に伸ばして面にする
     tl.set(planeGroup, { visible: true })
       .to(planeGroup.scale, { y: 1, duration: 1.5, ease: "power2.inOut" })
-      .to(label2, { opacity: 1, duration: 0.5 }, "-=1.0"); // 2D出現（1Dはそのまま）
+      .to(label2, { opacity: 1, duration: 0.5 }, "-=1.0");
 
     // 3. Dimension 3: 面を手前に伸ばして立体にする
     tl.set(solidGroup, { visible: true })
       .to(solidGroup.scale, { z: 1, duration: 1.5, ease: "power2.inOut" })
-      .to(label3, { opacity: 1, duration: 0.5 }, "-=1.0"); // 3D出現（1D, 2Dもそのまま）
+      .to(label3, { opacity: 1, duration: 0.5 }, "-=1.0");
 
     // 4. 回転演出
     tl.to(mainGroup.rotation, { y: Math.PI / 2, duration: 2, ease: "power1.inOut" });
 
     // 5. フェードアウト
-    tl.to([mainGroup.scale, label1, label2, label3], { opacity: 0, duration: 1, onUpdate: () => {
-        // フェードアウト処理
-    }});
+    tl.to([mainGroup.scale, label1, label2, label3], { opacity: 0, duration: 1 });
 
+    animations.push(tl);
+    
+    // 💡 管理データを保持
+    container._gsapAnimations = animations;
 
     // --- レンダリングループ ---
     function animate() {
         requestAnimationFrame(animate);
+        // 💡 再生ボタンが押された後（isPlayingが管理されている場合など）にのみ回転させることも可能ですが、
+        // 背景のわずかな回転は動いていても良いため、そのままにしています。
         scene.rotation.y += 0.002;
         renderer.render(scene, camera);
     }

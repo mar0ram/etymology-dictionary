@@ -4,11 +4,18 @@ import { gsap } from './gsap.js';
 export function drawEclipticModel() {
     const container = document.querySelector(".tropic");
     if (!container) return;
-    container.style.backgroundColor = '#000000';
 
-    // --- 初期化 ---
-    container.innerHTML = "";
+    // --- 初期化 (既存のCanvasとラベルを削除して二重描画を防止) ---
+    const oldCanvas = container.querySelector("canvas");
+    if (oldCanvas) oldCanvas.remove();
+    const oldLabels = container.querySelectorAll(".ecliptic-label");
+    oldLabels.forEach(l => l.remove());
+
+    container.style.backgroundColor = '#000000';
     container.style.position = "relative";
+
+    // 💡 アニメーションを管理するための配列
+    const animations = [];
 
     const baseSize = 600 * 0.7;
     let width = container.clientWidth || baseSize;
@@ -54,6 +61,7 @@ export function drawEclipticModel() {
         div.style.fontWeight = "normal";
         div.style.pointerEvents = "none";
         div.style.whiteSpace = "nowrap";
+        div.style.zIndex = "5"; // マスクより下、Canvasより上に配置
         container.appendChild(div);
     };
 
@@ -209,6 +217,7 @@ export function drawEclipticModel() {
         const tl = gsap.timeline({
             repeat: -1,
             repeatDelay: 0.5,
+            paused: true, // 💡 最初は止めておく
             onRepeat: () => {
                 // ループが戻る瞬間に古いメッシュを完全に消去
                 if (ringMesh) {
@@ -266,13 +275,25 @@ export function drawEclipticModel() {
                 }
             }
         });
+
+        animations.push(tl); // 💡 管理配列に追加
     };
 
     createDrawingAnimation(true);
     createDrawingAnimation(false);
 
     // --- 地球の自転 ---
-    gsap.to(earth.rotation, { y: Math.PI * 2, duration: 8, repeat: -1, ease: "none" });
+    const earthRot = gsap.to(earth.rotation, {
+        y: Math.PI * 2,
+        duration: 8,
+        repeat: -1,
+        ease: "none",
+        paused: true // 💡 最初は止めておく
+    });
+    animations.push(earthRot);
+
+    // 💡 管理用データをコンテナに保持させる（マスク側からアクセス可能にする）
+    container._gsapAnimations = animations;
 
     // --- ラベルの配置 ---
     createLabel("天球", "85%", "50%", celestialColor);
