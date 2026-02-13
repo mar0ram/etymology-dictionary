@@ -240,12 +240,6 @@ function doSearch() {
 
         results.appendChild(div);
 
-        // 1. 描画を実行（これでCanvasが作られる）
-        // drawEclipticModel();
-        // drawArcticModel();
-        // drawDimensionModel();
-        // drawSchemeModel();
-
         const configs = [
             { sel: ".tropic", func: drawEclipticModel },
             { sel: ".arctic", func: drawArcticModel },
@@ -259,6 +253,8 @@ function doSearch() {
                 attachMask(target, config.func);
             }
         });
+
+        insertSampleImages();
     });
 }
 
@@ -309,4 +305,33 @@ function attachMask(container, drawFunc) {
     }, { once: true });
 
     container.appendChild(overlay);
+}
+
+/**
+ * クラス名に基づいて<img>要素を挿入する関数
+ * 要素が存在しない場合は何もしません。
+ */
+function insertSampleImages() {
+  // 「sample_image」クラスを持つすべてのdiv要素を取得
+  const targetElements = document.querySelectorAll('div.sample_image');
+
+  // 要素が0個（取得できない）場合は、ここで処理を終了
+  if (targetElements.length === 0) {
+    return;
+  }
+
+  // 要素が存在する場合のみ、以下の処理を実行
+  targetElements.forEach((el) => {
+    // classListから2つ目のクラス名（インデックス1）を取得
+    const imageName = el.classList[1];
+
+    // 2つ目のクラス名が存在する場合のみ実行
+    if (imageName) {
+      const img = document.createElement('img');
+      img.src = `./sample_images/${imageName}.png`;
+      img.alt = imageName;
+      
+      el.appendChild(img);
+    }
+  });
 }

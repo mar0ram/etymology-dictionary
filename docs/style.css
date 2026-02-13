@@ -234,6 +234,13 @@ body {
     overflow-wrap: break-word;
 }
 
+.ml {
+    margin-left: 1.2em;
+    margin-top: 1em;
+    margin-bottom: 1em;
+    display: inline-block;
+}
+
 .spacer {
     display: block;
     margin-bottom: 10px;
@@ -250,11 +257,9 @@ body {
     color: #777777;
 }
 
-.ml {
-    margin-left: 1.2em;
-    margin-top: 1em;
-    margin-bottom: 1em;
-    display: inline-block;
+.sample_image img {
+    margin-top: 10px;
+    width: 100%;
 }
 
 /* --- 7. h1 partN (語源パーツ) - 左パネルに配置 --- */
