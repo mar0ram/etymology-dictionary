@@ -19,7 +19,7 @@ body {
 
 /* --- 2. 検索エリア：シャープで目立つ検索バー --- */
 .search-container {
-    width: 90%;
+    width: 95%;
     max-width: 960px;
     /* position: relative;  */
     display: flex;
@@ -120,7 +120,7 @@ body {
 
 /* --- 3. 結果コンテナとオリジナル構造：タイムライン/パネルビュー --- */
 #results {
-    width: 90%;
+    width: 95%;
     max-width: 960px;
     margin: 30px auto 50px;
     padding: 0;
@@ -134,7 +134,7 @@ body {
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
     /* 強い影で浮遊感を出す */
     margin-bottom: 40px;
-    padding: 30px;
+    padding: 20px;
     max-width: 100%;
     overflow: hidden;
     transition: box-shadow 0.3s;
@@ -368,7 +368,7 @@ body {
     }
 
     .entry {
-        padding: 20px;
+        padding: 10px;
         margin-bottom: 25px;
         box-shadow: 0 5px 15px rgba(0, 0, 0, 0.4);
     }
