@@ -125,15 +125,16 @@ export function drawDimensionModel() {
         div.style.pointerEvents = "none";
         div.style.textShadow = `0 0 10px ${color}`;
         div.style.opacity = 0;
+        div.style.whiteSpace = "nowrap";
         div.style.zIndex = "5"; // マスクより下、Canvasより上に配置
         container.appendChild(div);
         return div;
     };
 
     // --- ラベル位置の調整 ---
-    const label1 = createLabel("lbl-d1", "1D<br><span style='font-size:0.7em'>直線 / 長さ</span>", "80%", "20%", "#00ffff");
-    const label2 = createLabel("lbl-d2", "2D<br><span style='font-size:0.7em'>平面 / 面積</span>", "20%", "20%", "#ff00ff");
-    const label3 = createLabel("lbl-d3", "3D<br><span style='font-size:0.7em'>空間 / 体積</span>", "20%", "80%", "#ffaa00");
+    const label1 = createLabel("lbl-d1", "1D<br><span style='font-size:0.7em'>直線 / 測定観点：長さ</span>", "80%", "20%", "#00ffff");
+    const label2 = createLabel("lbl-d2", "2D<br><span style='font-size:0.7em'>平面 / 測定観点：面積</span>", "20%", "20%", "#ff00ff");
+    const label3 = createLabel("lbl-d3", "3D<br><span style='font-size:0.7em'>空間 / 測定観点：体積</span>", "20%", "80%", "#ffaa00");
 
 
     // --- アニメーション (GSAP Timeline) ---
