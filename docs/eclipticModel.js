@@ -16,6 +16,7 @@ export function drawEclipticModel() {
 
     // 💡 アニメーションを管理するための配列
     const animations = [];
+    const labels = [];
 
     const baseSize = 600 * 0.7;
     let width = container.clientWidth || baseSize;
@@ -63,6 +64,9 @@ export function drawEclipticModel() {
         div.style.whiteSpace = "nowrap";
         div.style.zIndex = "5"; // マスクより下、Canvasより上に配置
         container.appendChild(div);
+
+        labels.push(div);
+        return div;
     };
 
     // --- 天球 ---
@@ -319,5 +323,10 @@ export function drawEclipticModel() {
         renderer.setSize(newWidth, newWidth);
         camera.aspect = 1;
         camera.updateProjectionMatrix();
+
+        const newFontSize = newWidth < 450 ? "10px" : "16px";
+        labels.forEach(lbl => {
+            lbl.style.fontSize = newFontSize;
+        });
     });
 }

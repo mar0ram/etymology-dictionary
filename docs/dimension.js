@@ -18,6 +18,7 @@ export function drawDimensionModel() {
 
     // 💡 アニメーション管理用
     const animations = [];
+    const labels = [];
 
     const baseSize = 600;
     let width = container.clientWidth || baseSize;
@@ -128,6 +129,8 @@ export function drawDimensionModel() {
         div.style.whiteSpace = "nowrap";
         div.style.zIndex = "5"; // マスクより下、Canvasより上に配置
         container.appendChild(div);
+
+        labels.push(div);
         return div;
     };
 
@@ -192,7 +195,9 @@ export function drawDimensionModel() {
         camera.aspect = newWidth / newHeight;
         camera.updateProjectionMatrix();
 
-        const fontSize = newWidth < 450 ? "14px" : "20px";
-        [label1, label2, label3].forEach(l => l.style.fontSize = fontSize);
+        const newFontSize = newWidth < 450 ? "10px" : "16px";
+        labels.forEach(lbl => {
+            lbl.style.fontSize = newFontSize;
+        });
     });
 }

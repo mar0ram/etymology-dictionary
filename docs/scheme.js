@@ -17,6 +17,7 @@ export function drawSchemeModel() {
 
     // 💡 アニメーション管理用
     const animations = [];
+    const labels = [];
 
     const baseSize = 600;
     let width = container.clientWidth || baseSize;
@@ -24,7 +25,7 @@ export function drawSchemeModel() {
 
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(45, width / height, 1, 2000);
-    camera.position.set(450, 300, 550); 
+    camera.position.set(450, 300, 550);
     camera.lookAt(0, 0, 0);
 
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
@@ -49,18 +50,18 @@ export function drawSchemeModel() {
     const outerBoxGeo = new THREE.BoxGeometry(totalWidth, 120, 120);
     const outerEdges = new THREE.EdgesGeometry(outerBoxGeo);
     const outerFrame = new THREE.LineSegments(
-        outerEdges, 
+        outerEdges,
         new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0 })
     );
     mainGroup.add(outerFrame);
 
     // 貫く中心軸 (Central Flow Line)
     const axisGeom = new THREE.BufferGeometry().setFromPoints([
-        new THREE.Vector3(-totalWidth/2 - 20, 0, 0),
-        new THREE.Vector3(totalWidth/2 + 20, 0, 0)
+        new THREE.Vector3(-totalWidth / 2 - 20, 0, 0),
+        new THREE.Vector3(totalWidth / 2 + 20, 0, 0)
     ]);
     const flowLine = new THREE.Line(
-        axisGeom, 
+        axisGeom,
         new THREE.LineBasicMaterial({ color: 0x00ffff, transparent: true, opacity: 0 })
     );
     mainGroup.add(flowLine);
@@ -74,11 +75,11 @@ export function drawSchemeModel() {
 
     for (let m = 0; m < moduleCount; m++) {
         const moduleGroup = new THREE.Group();
-        const mX = (m - (moduleCount - 1) / 2) * 160; 
+        const mX = (m - (moduleCount - 1) / 2) * 160;
         moduleGroup.position.set(mX, 0, 0);
-        
+
         const fragments = [];
-        const fragCount = 20; 
+        const fragCount = 20;
         const fragGeo = new THREE.IcosahedronGeometry(4, 0);
         const fragMat = new THREE.MeshLambertMaterial({ color: 0x666666 });
 
@@ -86,7 +87,7 @@ export function drawSchemeModel() {
             const mesh = new THREE.Mesh(fragGeo, fragMat.clone());
             mesh.position.set(
                 (Math.random() - 0.5) * 200,
-                (Math.random() - 0.5) * 300 + 150, 
+                (Math.random() - 0.5) * 300 + 150,
                 (Math.random() - 0.5) * 200
             );
             mesh.userData.targetPos = {
@@ -100,10 +101,10 @@ export function drawSchemeModel() {
 
         const hullGeo = new THREE.BoxGeometry(60, 60, 60);
         const hullLines = new THREE.LineSegments(
-            new THREE.EdgesGeometry(hullGeo), 
+            new THREE.EdgesGeometry(hullGeo),
             new THREE.LineBasicMaterial({ color: colors[m], transparent: true, opacity: 0 })
         );
-        
+
         moduleGroup.add(hullLines);
         modules.push({ group: moduleGroup, fragments, hullLines, color: colors[m] });
         mainGroup.add(moduleGroup);
@@ -119,7 +120,7 @@ export function drawSchemeModel() {
         div.style.left = left;
         div.style.transform = "translate(-50%, -50%)";
         div.style.color = color;
-        div.style.fontSize = width < 450 ? "14px" : "20px";
+        div.style.fontSize = width < 450 ? "10px" : "16px";
         div.style.fontWeight = "bold";
         div.style.fontFamily = "sans-serif";
         div.style.textAlign = "center";
@@ -127,6 +128,8 @@ export function drawSchemeModel() {
         div.style.pointerEvents = "none";
         div.style.zIndex = "5"; // 💡 マスクより下に配置
         container.appendChild(div);
+
+        labels.push(div);
         return div;
     };
 
@@ -142,7 +145,7 @@ export function drawSchemeModel() {
     tl.add(() => {
         modules.forEach(m => {
             m.fragments.forEach(f => {
-                f.position.set((Math.random()-0.5)*200, (Math.random()-0.5)*300+150, (Math.random()-0.5)*200);
+                f.position.set((Math.random() - 0.5) * 200, (Math.random() - 0.5) * 300 + 150, (Math.random() - 0.5) * 200);
                 f.material.color.setHex(0x666666);
             });
             m.hullLines.material.opacity = 0;
@@ -166,12 +169,12 @@ export function drawSchemeModel() {
                 duration: 1.2,
                 ease: "back.out(1.2)"
             }, `step${mi}+=${fi * 0.04}`);
-            
-            tl.to(f.material.color, { 
-                r: new THREE.Color(m.color).r, 
-                g: new THREE.Color(m.color).g, 
-                b: new THREE.Color(m.color).b, 
-                duration: 0.6 
+
+            tl.to(f.material.color, {
+                r: new THREE.Color(m.color).r,
+                g: new THREE.Color(m.color).g,
+                b: new THREE.Color(m.color).b,
+                duration: 0.6
             }, `step${mi}+=${fi * 0.04}`);
         });
         tl.to(m.hullLines.material, { opacity: 0.8, duration: 0.5 }, `step${mi}+=0.8`);
@@ -179,10 +182,10 @@ export function drawSchemeModel() {
 
     // 3. 体系化 (軸と外枠の出現)
     tl.to(lbl2, { opacity: 0, duration: 0.5 }, "+=0.5")
-      .to(flowLine.material, { opacity: 1, duration: 0.8 }, "final")
-      .to(outerFrame.material, { opacity: 0.3, duration: 1.2 }, "final")
-      .to(lbl3, { opacity: 1, duration: 1 }, "final+=0.5")
-      .to(mainGroup.rotation, { y: Math.PI * 0.15, duration: 2, ease: "power2.inOut" }, "final");
+        .to(flowLine.material, { opacity: 1, duration: 0.8 }, "final")
+        .to(outerFrame.material, { opacity: 0.3, duration: 1.2 }, "final")
+        .to(lbl3, { opacity: 1, duration: 1 }, "final+=0.5")
+        .to(mainGroup.rotation, { y: Math.PI * 0.15, duration: 2, ease: "power2.inOut" }, "final");
 
     // 4. フェードアウト
     tl.to([mainGroup.scale, lbl3], { opacity: 0, duration: 1, delay: 2 });
@@ -201,9 +204,14 @@ export function drawSchemeModel() {
     animate();
 
     window.addEventListener('resize', () => {
-        const w = container.clientWidth;
-        renderer.setSize(w, w);
+        const newWidth = container.clientWidth;
+        renderer.setSize(newWidth, newWidth);
         camera.aspect = 1;
         camera.updateProjectionMatrix();
+
+        const newFontSize = newWidth < 450 ? "10px" : "16px";
+        labels.forEach(lbl => {
+            lbl.style.fontSize = newFontSize;
+        });
     });
 }

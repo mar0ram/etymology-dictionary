@@ -2,6 +2,7 @@ import { drawEclipticModel } from "./eclipticModel.js";
 import { drawArcticModel } from "./arctic.js";
 import { drawDimensionModel } from "./dimension.js";
 import { drawSchemeModel } from "./scheme.js";
+import { drawPostponeModel } from "./postpone.js";
 
 let data = [];
 let dataLoaded = false;
@@ -244,7 +245,8 @@ function doSearch() {
             { sel: ".tropic", func: drawEclipticModel },
             { sel: ".arctic", func: drawArcticModel },
             { sel: ".dimension", func: drawDimensionModel },
-            { sel: ".scheme", func: drawSchemeModel }
+            { sel: ".scheme", func: drawSchemeModel },
+            { sel: ".postpone", func: drawPostponeModel }
         ];
 
         configs.forEach(config => {

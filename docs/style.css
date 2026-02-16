@@ -251,9 +251,14 @@ body {
     color: #777777;
 }
 
-.sample_image img {
-    margin-top: 10px;
-    width: 100%;
+.sample_image {
+    display: flex;
+    justify-content: center;
+
+    img {
+        margin-top: 10px;
+        width: 80%;
+    }
 }
 
 /* --- 7. h1 partN (語源パーツ) - 左パネルに配置 --- */
@@ -307,7 +312,7 @@ body {
         gap: 0;
     }
 
-   .timeline-panel {
+    .timeline-panel {
         margin-top: 0px;
         padding-left: 0px;
         border-left: none;

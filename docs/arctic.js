@@ -2,7 +2,7 @@ import { THREE } from './three.js';
 
 export function drawArcticModel() {
     const container = document.querySelector('.arctic');
-     if (!container) return;
+    if (!container) return;
 
     // --- おおぐま座データ (変更なし) ---
     const starsData = [
@@ -30,19 +30,19 @@ export function drawArcticModel() {
     const connections = [
         ["alpha", "beta"], ["beta", "gamma"], ["gamma", "delta"], ["delta", "alpha"],
         ["delta", "epsilon"], ["epsilon", "zeta"], ["zeta", "eta"],
-        ["alpha", "h"], 
-        ["beta", "upsilon"], 
-        ["h", "upsilon"], 
-        ["h", "omicron"], 
-        ["omicron", "upsilon"], 
-        ["upsilon", "theta"], 
+        ["alpha", "h"],
+        ["beta", "upsilon"],
+        ["h", "upsilon"],
+        ["h", "omicron"],
+        ["omicron", "upsilon"],
+        ["upsilon", "theta"],
         ["theta", "kappa"],
         ["kappa", "iota"],
-        ["chi", "psi"], 
-        ["psi", "mu"], 
+        ["chi", "psi"],
+        ["psi", "mu"],
         ["lambda", "mu"],
-        ["gamma", "chi"], 
-        ["chi", "nu"], 
+        ["gamma", "chi"],
+        ["chi", "nu"],
         ["nu", "xi"]
     ];
 
@@ -236,7 +236,7 @@ export function drawArcticModel() {
     window.addEventListener('resize', () => {
         const newWidth = container.clientWidth || baseSize;
         const newHeight = newWidth; // 100%
-        
+
         // 描画サイズのみ更新し、カメラ範囲（Frustum）は初期設定のまま固定します。
         // これにより、画面サイズが変化してもCanvas全体が伸縮し、星座が常に収まるようになります。
         renderer.setSize(newWidth, newHeight);
