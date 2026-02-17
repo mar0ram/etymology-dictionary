@@ -101,7 +101,9 @@ export function drawPostponeModel() {
     // === 3. 放物線パス ===
     const startPos = new THREE.Vector3(0, 6, 0);
     const endPos = new THREE.Vector3(0, 6, -220);
-    const curve = new THREE.QuadraticBezierCurve3(startPos, new THREE.Vector3(100, 150, -110), endPos);
+    
+    // 【変更①】制御点のXを0にして、横振れをなくし「持ち上げて奥へ置く」軌道に変更
+    const curve = new THREE.QuadraticBezierCurve3(startPos, new THREE.Vector3(0, 150, -110), endPos);
 
     const pathPoints = curve.getPoints(50);
     const pathGeo = new THREE.BufferGeometry().setFromPoints(pathPoints);
@@ -122,15 +124,16 @@ export function drawPostponeModel() {
         div.innerHTML = html;
         const fontSize = width < 450 ? "10px" : "16px";
         const padding = width < 450 ? "5px 10px" : "10px 20px";
-        div.style.cssText = `position:absolute; top:${top}; left:${left}; transform:translate(-50%, -50%); color:${color}; font-family:'Courier New', monospace; font-size:${fontSize}; font-weight:bold; opacity:0; z-index:10; background:rgba(0,15,30,0.9); padding:${padding}; border-radius:0px; border: 1px solid ${color}; box-shadow: 0 0 20px ${color}66; pointer-events:none; white-space:nowrap; text-transform: uppercase; letter-spacing: 0.2em;`;
+        div.style.cssText = `position:absolute; top:${top}; left:${left}; transform:translate(0%, -50%); color:${color}; font-family:'Courier New', monospace; font-size:${fontSize}; font-weight:bold; opacity:0; z-index:10; background:rgba(0,15,30,0.9); padding:${padding}; border-radius:0px; border: 1px solid ${color}; box-shadow: 0 0 20px ${color}66; pointer-events:none; white-space:nowrap; text-transform: uppercase; letter-spacing: 0.2em;`;
+        // div.style.cssText = `position:absolute; top:${top}; left:${left}; transform:translate(-50%, -50%); color:${color}; font-family:'Courier New', monospace; font-size:${fontSize}; font-weight:bold; opacity:0; z-index:10; background:rgba(0,15,30,0.9); padding:${padding}; border-radius:0px; border: 1px solid ${color}; box-shadow: 0 0 20px ${color}66; pointer-events:none; white-space:nowrap; text-transform: uppercase; letter-spacing: 0.2em;`;
         container.appendChild(div);
 
         labels.push(div);
         return div;
     };
 
-    const lblPost = createLabel("lbl-postpone-post", "post <span style='font-size:0.8em; color:#fff;'>[あとに]</span>", "20%", "70%", "#00ffff");
-    const lblPonere = createLabel("lbl-postpone-ponere", "ponere <span style='font-size:0.8em; color:#fff;'>[置く]</span>", "60%", "70%", "#ffa500");
+    const lblPost = createLabel("lbl-postpone-post", "post <span style='font-size:0.8em; color:#fff;'>[あとに]</span>", "20%", "50%", "#00ffff");
+    const lblPonere = createLabel("lbl-postpone-ponere", "ponere <span style='font-size:0.8em; color:#fff;'>[置く]</span>", "60%", "50%", "#ffa500");
 
     // --- アニメーション・タイムライン ---
     const tl = gsap.timeline({ repeat: -1, repeatDelay: 1, paused: true });
@@ -168,8 +171,6 @@ export function drawPostponeModel() {
         onUpdate: () => {
             const p = curve.getPoint(progress.val);
             objMesh.position.set(p.x, p.y, p.z);
-            objMesh.rotation.x += 0.1;
-            objMesh.rotation.y += 0.1;
         }
     });
 
