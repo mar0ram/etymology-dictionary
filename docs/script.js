@@ -4,7 +4,6 @@ import { drawDimensionModel } from "./dimension.js";
 import { drawSchemeModel } from "./scheme.js";
 import { drawPostponeModel } from "./postpone.js";
 import { drawFiberModel } from "./fiber.js";
-import { drawSculptureModel } from "./sculpture.js";
 
 let data = [];
 let dataLoaded = false;
@@ -249,8 +248,7 @@ function doSearch() {
             { sel: ".dimension", func: drawDimensionModel },
             { sel: ".scheme", func: drawSchemeModel },
             { sel: ".postpone", func: drawPostponeModel },
-            { sel: ".fiber", func: drawFiberModel },
-            { sel: ".sculpture", func: drawSculptureModel }
+            { sel: ".fiber", func: drawFiberModel }
         ];
 
         configs.forEach(config => {
