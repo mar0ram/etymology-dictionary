@@ -10,6 +10,8 @@ export function drawSchemeModel() {
     if (oldCanvas) oldCanvas.remove();
     const oldLabels = container.querySelectorAll(".scheme-label");
     oldLabels.forEach(l => l.remove());
+    const oldControls = container.querySelector(".scheme-controls");
+    if (oldControls) oldControls.remove();
 
     container.style.backgroundColor = '#0d1117';
     container.style.overflow = "hidden";
@@ -18,6 +20,7 @@ export function drawSchemeModel() {
     // 💡 アニメーション管理用
     const animations = [];
     const labels = [];
+    let isRotating = false; // 💡 回転制御フラグ（初期値：false = 静止）
 
     const baseSize = 600;
     let width = container.clientWidth || baseSize;
@@ -113,32 +116,22 @@ export function drawSchemeModel() {
     // --- ラベル ---
     const createLabel = (text, top, left, color) => {
         const div = document.createElement("div");
-        div.className = "scheme-label"; // 💡 クラス名を追加
+        div.className = "scheme-label";
         div.innerHTML = text;
-        div.style.position = "absolute";
-        div.style.top = top;
-        div.style.left = left;
-        div.style.transform = "translate(-50%, -50%)";
-        div.style.color = color;
-        div.style.fontSize = width < 450 ? "10px" : "16px";
-        div.style.fontWeight = "bold";
-        div.style.fontFamily = "sans-serif";
-        div.style.textAlign = "center";
-        div.style.opacity = 0;
-        div.style.pointerEvents = "none";
-        div.style.zIndex = "5"; // 💡 マスクより下に配置
+        const fontSize = width < 450 ? "10px" : "16px";
+        const padding = width < 450 ? "5px 10px" : "10px 20px";
+        div.style.cssText = `position:absolute; top:${top}; left:${left}; transform:translate(-50%, -50%); color:${color}; font-family:'Courier New', monospace; font-size:${fontSize}; font-weight:bold; opacity:0; z-index:10; background:rgba(13, 17, 23, 0); padding:${padding}; border-radius:5px; pointer-events:none; text-align:center;`;
         container.appendChild(div);
 
         labels.push(div);
         return div;
     };
 
-    const lbl1 = createLabel("バラバラな要素", "80%", "50%", "#aaaaaa");
+    const lbl1 = createLabel("バラバラな要素", "70%", "50%", "#aaaaaa");
     const lbl2 = createLabel("まとまってできる<br>SCHEME（体系）", "20%", "50%", "#00d2ff");
-    const lbl3 = createLabel("順序づけられた<br>SCHEME（計画）", "80%", "50%", "#ffffff");
+    const lbl3 = createLabel("順序づけられた<br>SCHEME（計画）", "70%", "50%", "#ffffff");
 
     // --- アニメーション ---
-    // 💡 paused: true を追加
     const tl = gsap.timeline({ repeat: -1, repeatDelay: 3, paused: true });
 
     // 0. リセット
@@ -149,6 +142,7 @@ export function drawSchemeModel() {
                 f.material.color.setHex(0x666666);
             });
             m.hullLines.material.opacity = 0;
+            m.group.rotation.set(0, 0, 0); // 💡 回転をリセット
         });
         outerFrame.material.opacity = 0;
         flowLine.material.opacity = 0;
@@ -190,21 +184,138 @@ export function drawSchemeModel() {
     // 4. フェードアウト
     tl.to([mainGroup.scale, lbl3], { opacity: 0, duration: 1, delay: 2 });
 
-    // 💡 管理データを保持
+    // 💡 アニメーション終了時に回転停止
+    tl.add(() => {
+        isRotating = false;
+    });
+
     animations.push(tl);
-    container._gsapAnimations = animations;
+
+    // --- コントロールボタンの作成 ---
+    const createControlButtons = () => {
+        const buttonContainer = document.createElement('div');
+        buttonContainer.className = 'scheme-controls';
+        const buttonWidth = width * 0.25;
+        buttonContainer.style.cssText = `
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 50;
+            display: flex;
+            gap: 10px;
+        `;
+
+        const buttonStyles = `
+            width: ${buttonWidth}px;
+            padding: 10px 20px;
+            background: rgba(255, 255, 255, 0.9);
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            box-sizing: border-box;
+        `;
+
+        let isPlaying = false;
+
+        const playBtn = document.createElement('button');
+        playBtn.textContent = '▶ Play';
+        playBtn.style.cssText = buttonStyles;
+        playBtn.addEventListener('mouseover', () => {
+            playBtn.style.background = 'rgba(100, 200, 100, 0.9)';
+            playBtn.style.transform = 'scale(1.05)';
+        });
+        playBtn.addEventListener('mouseout', () => {
+            playBtn.style.background = 'rgba(255, 255, 255, 0.9)';
+            playBtn.style.transform = 'scale(1)';
+        });
+        playBtn.addEventListener('click', () => {
+            if (!isPlaying) {
+                animations.forEach(anim => anim.play());
+                isPlaying = true;
+                playBtn.textContent = '⏸ Pause';
+                isRotating = true; // 💡 Play時に回転開始
+            } else {
+                animations.forEach(anim => anim.pause());
+                isPlaying = false;
+                playBtn.textContent = '▶ Play';
+                isRotating = false; // 💡 一時停止時に回転停止
+            }
+        });
+
+        const resetBtn = document.createElement('button');
+        resetBtn.textContent = '↻ Reset';
+        resetBtn.style.cssText = buttonStyles;
+        resetBtn.addEventListener('mouseover', () => {
+            resetBtn.style.background = 'rgba(150, 150, 150, 0.9)';
+            resetBtn.style.transform = 'scale(1.05)';
+        });
+        resetBtn.addEventListener('mouseout', () => {
+            resetBtn.style.background = 'rgba(255, 255, 255, 0.9)';
+            resetBtn.style.transform = 'scale(1)';
+        });
+        resetBtn.addEventListener('click', () => {
+            // すべてのアニメーションを停止して先頭に戻す
+            animations.forEach(anim => {
+                anim.pause();
+                anim.seek(0);
+            });
+            
+            // フラグメント（要素）のリセット
+            modules.forEach(m => {
+                m.fragments.forEach(f => {
+                    f.position.set((Math.random() - 0.5) * 200, (Math.random() - 0.5) * 300 + 150, (Math.random() - 0.5) * 200);
+                    f.material.color.setHex(0x666666);
+                    f.scale.set(1, 1, 1);
+                });
+                m.hullLines.material.opacity = 0;
+                m.group.rotation.set(0, 0, 0);
+            });
+            
+            // メインのグループをリセット
+            outerFrame.material.opacity = 0;
+            flowLine.material.opacity = 0;
+            mainGroup.scale.set(1, 1, 1);
+            mainGroup.rotation.set(0, 0, 0);
+            
+            // ラベルをリセット
+            lbl1.style.opacity = '0';
+            lbl2.style.opacity = '0';
+            lbl3.style.opacity = '0';
+            
+            // 状態をリセット
+            isPlaying = false;
+            playBtn.textContent = '▶ Play';
+            isRotating = false; // 💡 回転を停止
+            
+            // シーンを再描画
+            renderer.render(scene, camera);
+        });
+
+        buttonContainer.appendChild(playBtn);
+        buttonContainer.appendChild(resetBtn);
+
+        return buttonContainer;
+    };
+
+    const controlsContainer = createControlButtons();
+    container.appendChild(controlsContainer);
 
     // --- ループ ---
     function animate() {
         requestAnimationFrame(animate);
-        // 💡 動きをより強調するため、フラグに関わらず回転は維持
-        modules.forEach(m => { m.group.rotation.y += 0.01; });
+        if (isRotating) { // 💡 フラグをチェックして回転を制御
+            modules.forEach(m => { m.group.rotation.y += 0.01; });
+        }
         renderer.render(scene, camera);
     }
     animate();
 
     window.addEventListener('resize', () => {
-        const newWidth = container.clientWidth;
+        const newWidth = container.clientWidth || baseSize;
         renderer.setSize(newWidth, newWidth);
         camera.aspect = 1;
         camera.updateProjectionMatrix();
@@ -212,6 +323,18 @@ export function drawSchemeModel() {
         const newFontSize = newWidth < 450 ? "10px" : "16px";
         labels.forEach(lbl => {
             lbl.style.fontSize = newFontSize;
+            lbl.style.padding = newWidth < 450 ? "5px 10px" : "10px 20px";
+        });
+
+        // ✅ ボタンサイズ、テキスト、パディングもリサイズに対応
+        const newButtonWidth = newWidth * 0.25;
+        const newButtonFontSize = newWidth < 450 ? "10px" : "14px";
+        const newPadding = newWidth < 450 ? "6px 12px" : "10px 20px";
+        const buttons = controlsContainer.querySelectorAll('button');
+        buttons.forEach(btn => {
+            btn.style.width = `${newButtonWidth}px`;
+            btn.style.fontSize = newButtonFontSize;
+            btn.style.padding = newPadding;
         });
     });
 }

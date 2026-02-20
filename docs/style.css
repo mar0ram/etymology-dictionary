@@ -254,10 +254,11 @@ body {
 .sample_image {
     display: flex;
     justify-content: center;
-
+    
     img {
         margin-top: 10px;
-        width: 80%;
+        width: 100%;
+        border-radius:10px;
     }
 }
 

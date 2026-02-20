@@ -10,9 +10,12 @@ export function drawEclipticModel() {
     if (oldCanvas) oldCanvas.remove();
     const oldLabels = container.querySelectorAll(".ecliptic-label");
     oldLabels.forEach(l => l.remove());
+    const oldControls = container.querySelector(".ecliptic-controls");
+    if (oldControls) oldControls.remove();
 
     container.style.backgroundColor = '#000000';
     container.style.position = "relative";
+    container.style.overflow = "hidden";
 
     // 💡 アニメーションを管理するための配列
     const animations = [];
@@ -296,11 +299,100 @@ export function drawEclipticModel() {
     });
     animations.push(earthRot);
 
-    // 💡 管理用データをコンテナに保持させる（マスク側からアクセス可能にする）
-    container._gsapAnimations = animations;
+    // --- コントロールボタンの作成 ---
+    const createControlButtons = () => {
+        const buttonContainer = document.createElement('div');
+        buttonContainer.className = 'ecliptic-controls';
+        const buttonWidth = width * 0.25;
+        buttonContainer.style.cssText = `
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 50;
+            display: flex;
+            gap: 10px;
+        `;
+
+        const buttonStyles = `
+            width: ${buttonWidth}px;
+            padding: 10px 20px;
+            background: rgba(255, 255, 255, 0.9);
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            box-sizing: border-box;
+        `;
+
+        let isPlaying = false;
+
+        const playBtn = document.createElement('button');
+        playBtn.textContent = '▶ Play';
+        playBtn.style.cssText = buttonStyles;
+        playBtn.addEventListener('mouseover', () => {
+            playBtn.style.background = 'rgba(100, 200, 100, 0.9)';
+            playBtn.style.transform = 'scale(1.05)';
+        });
+        playBtn.addEventListener('mouseout', () => {
+            playBtn.style.background = 'rgba(255, 255, 255, 0.9)';
+            playBtn.style.transform = 'scale(1)';
+        });
+        playBtn.addEventListener('click', () => {
+            if (!isPlaying) {
+                animations.forEach(anim => anim.play());
+                isPlaying = true;
+                playBtn.textContent = '⏸ Pause';
+            } else {
+                animations.forEach(anim => anim.pause());
+                isPlaying = false;
+                playBtn.textContent = '▶ Play';
+            }
+        });
+
+        const resetBtn = document.createElement('button');
+        resetBtn.textContent = '↻ Reset';
+        resetBtn.style.cssText = buttonStyles;
+        resetBtn.addEventListener('mouseover', () => {
+            resetBtn.style.background = 'rgba(150, 150, 150, 0.9)';
+            resetBtn.style.transform = 'scale(1.05)';
+        });
+        resetBtn.addEventListener('mouseout', () => {
+            resetBtn.style.background = 'rgba(255, 255, 255, 0.9)';
+            resetBtn.style.transform = 'scale(1)';
+        });
+        resetBtn.addEventListener('click', () => {
+            // すべてのアニメーションを停止して先頭に戻す
+            animations.forEach(anim => {
+                anim.pause();
+                anim.seek(0);
+            });
+            
+            // 地球の回転をリセット
+            earth.rotation.y = 0;
+            earthGroup.rotation.set(0, 0, 0);
+            
+            // 状態をリセット
+            isPlaying = false;
+            playBtn.textContent = '▶ Play';
+            
+            // シーンを再描画
+            renderer.render(scene, camera);
+        });
+
+        buttonContainer.appendChild(playBtn);
+        buttonContainer.appendChild(resetBtn);
+
+        return buttonContainer;
+    };
+
+    const controlsContainer = createControlButtons();
+    container.appendChild(controlsContainer);
 
     // --- ラベルの配置 ---
-    createLabel("天球", "85%", "50%", celestialColor);
+    createLabel("天球", "16%", "50%", celestialColor);
     createLabel("地軸", "30%", "45%", "#ffffff");
     createLabel("黄道", "68%", "58%", "#f6e05e");
     // 左右にバランスよく配置
@@ -327,6 +419,17 @@ export function drawEclipticModel() {
         const newFontSize = newWidth < 450 ? "10px" : "16px";
         labels.forEach(lbl => {
             lbl.style.fontSize = newFontSize;
+        });
+
+        // ✅ ボタンサイズ、テキスト、パディングもリサイズに対応
+        const newButtonWidth = newWidth * 0.25;
+        const newButtonFontSize = newWidth < 450 ? "10px" : "14px";
+        const newPadding = newWidth < 450 ? "6px 12px" : "10px 20px";
+        const buttons = controlsContainer.querySelectorAll('button');
+        buttons.forEach(btn => {
+            btn.style.width = `${newButtonWidth}px`;
+            btn.style.fontSize = newButtonFontSize;
+            btn.style.padding = newPadding;
         });
     });
 }

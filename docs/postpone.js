@@ -10,6 +10,8 @@ export function drawPostponeModel() {
     if (oldCanvas) oldCanvas.remove();
     const oldLabels = container.querySelectorAll("div[id^='lbl-postpone']");
     oldLabels.forEach(l => l.remove());
+    const oldControls = container.querySelector(".postpone-controls");
+    if (oldControls) oldControls.remove();
 
     container.style.backgroundColor = '#00050a';
     container.style.overflow = "hidden";
@@ -102,7 +104,6 @@ export function drawPostponeModel() {
     const startPos = new THREE.Vector3(0, 6, 0);
     const endPos = new THREE.Vector3(0, 6, -220);
     
-    // 【変更①】制御点のXを0にして、横振れをなくし「持ち上げて奥へ置く」軌道に変更
     const curve = new THREE.QuadraticBezierCurve3(startPos, new THREE.Vector3(0, 150, -110), endPos);
 
     const pathPoints = curve.getPoints(50);
@@ -125,7 +126,6 @@ export function drawPostponeModel() {
         const fontSize = width < 450 ? "10px" : "16px";
         const padding = width < 450 ? "5px 10px" : "10px 20px";
         div.style.cssText = `position:absolute; top:${top}; left:${left}; transform:translate(0%, -50%); color:${color}; font-family:'Courier New', monospace; font-size:${fontSize}; font-weight:bold; opacity:0; z-index:10; background:rgba(0,15,30,0.9); padding:${padding}; border-radius:0px; border: 1px solid ${color}; box-shadow: 0 0 20px ${color}66; pointer-events:none; white-space:nowrap; text-transform: uppercase; letter-spacing: 0.2em;`;
-        // div.style.cssText = `position:absolute; top:${top}; left:${left}; transform:translate(-50%, -50%); color:${color}; font-family:'Courier New', monospace; font-size:${fontSize}; font-weight:bold; opacity:0; z-index:10; background:rgba(0,15,30,0.9); padding:${padding}; border-radius:0px; border: 1px solid ${color}; box-shadow: 0 0 20px ${color}66; pointer-events:none; white-space:nowrap; text-transform: uppercase; letter-spacing: 0.2em;`;
         container.appendChild(div);
 
         labels.push(div);
@@ -134,6 +134,10 @@ export function drawPostponeModel() {
 
     const lblPost = createLabel("lbl-postpone-post", "post <span style='font-size:0.8em; color:#fff;'>[あとに]</span>", "20%", "50%", "#00ffff");
     const lblPonere = createLabel("lbl-postpone-ponere", "ponere <span style='font-size:0.8em; color:#fff;'>[置く]</span>", "60%", "50%", "#ffa500");
+
+    // 💡 初期状態：オブジェクトと時間軸を非表示
+    axisGroup.visible = false;
+    objMesh.visible = false;
 
     // --- アニメーション・タイムライン ---
     const tl = gsap.timeline({ repeat: -1, repeatDelay: 1, paused: true });
@@ -144,7 +148,12 @@ export function drawPostponeModel() {
         .set(objMesh.position, { x: startPos.x, y: startPos.y, z: startPos.z })
         .set(pathMat, { opacity: 0 })
         .add(() => { pathLine.geometry.setDrawRange(0, 0); })
-        .set([lblPost, lblPonere], { opacity: 0 });
+        .set([lblPost, lblPonere], { opacity: 0 })
+        .add(() => { 
+            // 💡 アニメーション開始時に表示
+            axisGroup.visible = true;
+            objMesh.visible = true;
+        }, 0);
 
     tl.to(axisGroup.scale, { z: 1, duration: 1 });
     tl.to(objMesh.scale, { x: 1, y: 1, z: 1, duration: 0.5, ease: "back.out" });
@@ -184,7 +193,111 @@ export function drawPostponeModel() {
     tl.to([objMesh.scale, axisGroup.scale, lblPost, lblPonere], { opacity: 0, duration: 1 });
 
     animations.push(tl);
-    container._gsapAnimations = animations;
+
+    // --- コントロールボタンの作成 ---
+    const createControlButtons = () => {
+        const buttonContainer = document.createElement('div');
+        buttonContainer.className = 'postpone-controls';
+        const buttonWidth = width * 0.25;
+        buttonContainer.style.cssText = `
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 50;
+            display: flex;
+            gap: 10px;
+        `;
+
+        const buttonStyles = `
+            width: ${buttonWidth}px;
+            padding: 10px 20px;
+            background: rgba(255, 255, 255, 0.9);
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            box-sizing: border-box;
+        `;
+
+        let isPlaying = false;
+
+        const playBtn = document.createElement('button');
+        playBtn.textContent = '▶ Play';
+        playBtn.style.cssText = buttonStyles;
+        playBtn.addEventListener('mouseover', () => {
+            playBtn.style.background = 'rgba(100, 200, 100, 0.9)';
+            playBtn.style.transform = 'scale(1.05)';
+        });
+        playBtn.addEventListener('mouseout', () => {
+            playBtn.style.background = 'rgba(255, 255, 255, 0.9)';
+            playBtn.style.transform = 'scale(1)';
+        });
+        playBtn.addEventListener('click', () => {
+            if (!isPlaying) {
+                animations.forEach(anim => anim.play());
+                isPlaying = true;
+                playBtn.textContent = '⏸ Pause';
+            } else {
+                animations.forEach(anim => anim.pause());
+                isPlaying = false;
+                playBtn.textContent = '▶ Play';
+            }
+        });
+
+        const resetBtn = document.createElement('button');
+        resetBtn.textContent = '↻ Reset';
+        resetBtn.style.cssText = buttonStyles;
+        resetBtn.addEventListener('mouseover', () => {
+            resetBtn.style.background = 'rgba(150, 150, 150, 0.9)';
+            resetBtn.style.transform = 'scale(1.05)';
+        });
+        resetBtn.addEventListener('mouseout', () => {
+            resetBtn.style.background = 'rgba(255, 255, 255, 0.9)';
+            resetBtn.style.transform = 'scale(1)';
+        });
+        resetBtn.addEventListener('click', () => {
+            // すべてのアニメーションを停止して先頭に戻す
+            animations.forEach(anim => {
+                anim.pause();
+                anim.seek(0);
+            });
+            
+            // オブジェクトと軸の表示/非表示をリセット
+            axisGroup.visible = false;
+            objMesh.visible = false;
+            
+            // オブジェクトの位置とスケールをリセット
+            objMesh.position.set(startPos.x, startPos.y, startPos.z);
+            objMesh.scale.set(0, 0, 0);
+            axisGroup.scale.set(1, 0.001, 1);
+            
+            // パスをリセット
+            pathLine.geometry.setDrawRange(0, 0);
+            pathMat.opacity = 0;
+            
+            // ラベルをリセット
+            lblPost.style.opacity = '0';
+            lblPonere.style.opacity = '0';
+            
+            // 状態をリセット
+            isPlaying = false;
+            playBtn.textContent = '▶ Play';
+            
+            // シーンを再描画
+            renderer.render(scene, camera);
+        });
+
+        buttonContainer.appendChild(playBtn);
+        buttonContainer.appendChild(resetBtn);
+
+        return buttonContainer;
+    };
+
+    const controlsContainer = createControlButtons();
+    container.appendChild(controlsContainer);
 
     function animate() {
         requestAnimationFrame(animate);
@@ -203,6 +316,16 @@ export function drawPostponeModel() {
         labels.forEach(lbl => {
             lbl.style.fontSize = newFontSize;
             lbl.style.padding = newWidth < 450 ? "5px 10px" : "10px 20px";
+        });
+
+        const newButtonWidth = newWidth * 0.25;
+        const newButtonFontSize = newWidth < 450 ? "10px" : "14px";
+        const newPadding = newWidth < 450 ? "6px 12px" : "10px 20px";
+        const buttons = controlsContainer.querySelectorAll('button');
+        buttons.forEach(btn => {
+            btn.style.width = `${newButtonWidth}px`;
+            btn.style.fontSize = newButtonFontSize;
+            btn.style.padding = newPadding;
         });
     });
 }

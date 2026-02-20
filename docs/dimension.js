@@ -11,6 +11,8 @@ export function drawDimensionModel() {
     if (oldCanvas) oldCanvas.remove();
     const oldLabels = container.querySelectorAll("div[id^='lbl-d']");
     oldLabels.forEach(l => l.remove());
+    const oldControls = container.querySelector(".dimension-controls");
+    if (oldControls) oldControls.remove();
 
     container.style.backgroundColor = '#111111';
     container.style.overflow = "hidden";
@@ -57,7 +59,7 @@ export function drawDimensionModel() {
         lineGeo,
         new THREE.MeshBasicMaterial({ color: colorLine })
     );
-    lineMesh.position.set(offset, offset, offset);
+    lineMesh.position.set(offset, offset + dimSize/2, offset);
     lineMesh.scale.set(0, 1, 1);
     mainGroup.add(lineMesh);
 
@@ -80,7 +82,7 @@ export function drawDimensionModel() {
     planeLines.geometry.translate(dimSize / 2, dimSize / 2, 0);
     planeFill.geometry.translate(dimSize / 2, dimSize / 2, 0);
     
-    planeGroup.position.set(offset, offset, offset);
+    planeGroup.position.set(offset, offset + dimSize/2, offset);
     planeGroup.scale.set(1, 0, 1);
     planeGroup.visible = false;
     mainGroup.add(planeGroup);
@@ -104,7 +106,7 @@ export function drawDimensionModel() {
     boxLines.geometry.translate(dimSize / 2, dimSize / 2, dimSize / 2);
     boxFill.geometry.translate(dimSize / 2, dimSize / 2, dimSize / 2);
 
-    solidGroup.position.set(offset, offset, offset);
+    solidGroup.position.set(offset, offset + dimSize/2, offset);
     solidGroup.scale.set(1, 1, 0);
     solidGroup.visible = false;
     mainGroup.add(solidGroup);
@@ -127,7 +129,7 @@ export function drawDimensionModel() {
         div.style.textShadow = `0 0 10px ${color}`;
         div.style.opacity = 0;
         div.style.whiteSpace = "nowrap";
-        div.style.zIndex = "5"; // マスクより下、Canvasより上に配置
+        div.style.zIndex = "5";
         container.appendChild(div);
 
         labels.push(div);
@@ -135,13 +137,12 @@ export function drawDimensionModel() {
     };
 
     // --- ラベル位置の調整 ---
-    const label1 = createLabel("lbl-d1", "1D<br><span style='font-size:0.7em'>直線 / 測定観点：長さ</span>", "80%", "20%", "#00ffff");
-    const label2 = createLabel("lbl-d2", "2D<br><span style='font-size:0.7em'>平面 / 測定観点：面積</span>", "20%", "20%", "#ff00ff");
-    const label3 = createLabel("lbl-d3", "3D<br><span style='font-size:0.7em'>空間 / 測定観点：体積</span>", "20%", "80%", "#ffaa00");
+    const label1 = createLabel("lbl-d1", "1D<br><span style='font-size:0.7em'>直線 / 測定観点：長さ</span>", "60%", "20%", "#00ffff");
+    const label2 = createLabel("lbl-d2", "2D<br><span style='font-size:0.7em'>平面 / 測定観点：面積</span>", "10%", "20%", "#ff00ff");
+    const label3 = createLabel("lbl-d3", "3D<br><span style='font-size:0.7em'>空間 / 測定観点：体積</span>", "10%", "80%", "#ffaa00");
 
 
     // --- アニメーション (GSAP Timeline) ---
-    // 💡 paused: true を追加
     const tl = gsap.timeline({ repeat: -1, repeatDelay: 2, paused: true });
 
     // 0. 初期状態リセット
@@ -172,22 +173,109 @@ export function drawDimensionModel() {
     tl.to([mainGroup.scale, label1, label2, label3], { opacity: 0, duration: 1 });
 
     animations.push(tl);
-    
-    // 💡 管理データを保持
-    container._gsapAnimations = animations;
+
+    // --- コントロールボタンの作成 ---
+    const createControlButtons = () => {
+        const buttonContainer = document.createElement('div');
+        buttonContainer.className = 'dimension-controls';
+        const buttonWidth = width * 0.25;
+        buttonContainer.style.cssText = `
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 50;
+            display: flex;
+            gap: 10px;
+        `;
+
+        const buttonStyles = `
+            width: ${buttonWidth}px;
+            padding: 10px 20px;
+            background: rgba(255, 255, 255, 0.9);
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            box-sizing: border-box;
+        `;
+
+        let isPlaying = false;
+
+        const playBtn = document.createElement('button');
+        playBtn.textContent = '▶ Play';
+        playBtn.style.cssText = buttonStyles;
+        playBtn.addEventListener('mouseover', () => {
+            playBtn.style.background = 'rgba(100, 200, 100, 0.9)';
+            playBtn.style.transform = 'scale(1.05)';
+        });
+        playBtn.addEventListener('mouseout', () => {
+            playBtn.style.background = 'rgba(255, 255, 255, 0.9)';
+            playBtn.style.transform = 'scale(1)';
+        });
+        playBtn.addEventListener('click', () => {
+            if (!isPlaying) {
+                tl.play();
+                isPlaying = true;
+                playBtn.textContent = '⏸ Pause';
+            } else {
+                tl.pause();
+                isPlaying = false;
+                playBtn.textContent = '▶ Play';
+            }
+        });
+
+        const resetBtn = document.createElement('button');
+        resetBtn.textContent = '↻ Reset';
+        resetBtn.style.cssText = buttonStyles;
+        resetBtn.addEventListener('mouseover', () => {
+            resetBtn.style.background = 'rgba(150, 150, 150, 0.9)';
+            resetBtn.style.transform = 'scale(1.05)';
+        });
+        resetBtn.addEventListener('mouseout', () => {
+            resetBtn.style.background = 'rgba(255, 255, 255, 0.9)';
+            resetBtn.style.transform = 'scale(1)';
+        });
+        resetBtn.addEventListener('click', () => {
+            tl.pause();
+            tl.seek(0);
+            isPlaying = false;
+            playBtn.textContent = '▶ Play';
+            // 初期状態を確実に表示
+            lineMesh.scale.set(0, 1, 1);
+            planeGroup.scale.set(1, 0, 1);
+            solidGroup.scale.set(1, 1, 0);
+            planeGroup.visible = false;
+            solidGroup.visible = false;
+            mainGroup.scale.set(1, 1, 1);
+            mainGroup.rotation.set(0, 0, 0);
+            label1.style.opacity = 0;
+            label2.style.opacity = 0;
+            label3.style.opacity = 0;
+            renderer.render(scene, camera);
+        });
+
+        buttonContainer.appendChild(playBtn);
+        buttonContainer.appendChild(resetBtn);
+
+        return buttonContainer;
+    };
+
+    const controlsContainer = createControlButtons();
+    container.appendChild(controlsContainer);
 
     // --- レンダリングループ ---
     function animate() {
         requestAnimationFrame(animate);
-        // 💡 再生ボタンが押された後（isPlayingが管理されている場合など）にのみ回転させることも可能ですが、
-        // 背景のわずかな回転は動いていても良いため、そのままにしています。
         scene.rotation.y += 0.002;
         renderer.render(scene, camera);
     }
     animate();
 
     // --- リサイズ処理 ---
-    window.addEventListener('resize', () => {
+  window.addEventListener('resize', () => {
         const newWidth = container.clientWidth || baseSize;
         const newHeight = newWidth; 
 
@@ -198,6 +286,17 @@ export function drawDimensionModel() {
         const newFontSize = newWidth < 450 ? "10px" : "16px";
         labels.forEach(lbl => {
             lbl.style.fontSize = newFontSize;
+        });
+
+        // ✅ ボタンサイズ、テキスト、パディングもリサイズに対応
+        const newButtonWidth = newWidth * 0.25;
+        const newButtonFontSize = newWidth < 450 ? "10px" : "14px";
+        const newPadding = newWidth < 450 ? "6px 12px" : "10px 20px";
+        const buttons = controlsContainer.querySelectorAll('button');
+        buttons.forEach(btn => {
+            btn.style.width = `${newButtonWidth}px`;
+            btn.style.fontSize = newButtonFontSize;
+            btn.style.padding = newPadding;
         });
     });
 }

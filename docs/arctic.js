@@ -4,15 +4,24 @@ export function drawArcticModel() {
     const container = document.querySelector('.arctic');
     if (!container) return;
 
-    // --- おおぐま座データ (変更なし) ---
+    // --- 初期化 (既存のCanvasを削除) ---
+    const oldCanvas = container.querySelector('canvas');
+    if (oldCanvas) oldCanvas.remove();
+    const oldControls = container.querySelector('.arctic-controls');
+    if (oldControls) oldControls.remove();
+
+    container.style.overflow = 'hidden';
+    container.style.position = 'relative';
+
+    // --- おおぐま座データ ---
     const starsData = [
-        { id: "alpha", ra: 165.93, dec: 61.75, mag: 1.8, color: 0xff4444 }, // 赤
-        { id: "beta", ra: 165.46, dec: 55.38, mag: 2.3, color: 0xff4444 }, // 赤
-        { id: "gamma", ra: 178.45, dec: 53.69, mag: 2.4, color: 0xff4444 }, // 赤
-        { id: "delta", ra: 183.5, dec: 57.1, mag: 3.3, color: 0xff4444 }, // 赤
-        { id: "epsilon", ra: 193.47, dec: 56.96, mag: 1.8, color: 0xff4444 }, // 赤
-        { id: "zeta", ra: 200.08, dec: 56.92, mag: 2.2, color: 0xff4444 }, // 赤
-        { id: "eta", ra: 207.88, dec: 54.31, mag: 1.9, color: 0xff4444 }, // 赤
+        { id: "alpha", ra: 165.93, dec: 61.75, mag: 1.8, color: 0xff4444 },
+        { id: "beta", ra: 165.46, dec: 55.38, mag: 2.3, color: 0xff4444 },
+        { id: "gamma", ra: 178.45, dec: 53.69, mag: 2.4, color: 0xff4444 },
+        { id: "delta", ra: 183.5, dec: 57.1, mag: 3.3, color: 0xff4444 },
+        { id: "epsilon", ra: 193.47, dec: 56.96, mag: 1.8, color: 0xff4444 },
+        { id: "zeta", ra: 200.08, dec: 56.92, mag: 2.2, color: 0xff4444 },
+        { id: "eta", ra: 207.88, dec: 54.31, mag: 1.9, color: 0xff4444 },
         { id: "omicron", ra: 128.9, dec: 63.71, mag: 3.3, color: 0xfff4ea },
         { id: "theta", ra: 142.6, dec: 51.6, mag: 3.1, color: 0xeaf4ff },
         { id: "upsilon", ra: 149.3, dec: 59.0, mag: 3.7, color: 0xfff4ea },
@@ -50,7 +59,7 @@ export function drawArcticModel() {
     const scene = new THREE.Scene();
     const baseSize = 600 * 0.7;
     let width = container.clientWidth || baseSize;
-    let height = width; // 100%
+    let height = width;
     const camera = new THREE.OrthographicCamera(-width / 2, width / 2, height / 2, -height / 2, 0.1, 1000);
     camera.zoom = 1.1;
     camera.updateProjectionMatrix();
@@ -58,11 +67,10 @@ export function drawArcticModel() {
 
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     renderer.setSize(width, height);
-    // 【追加】デバイスのピクセル比を設定（これでボケが劇的に改善します）
     renderer.setPixelRatio(window.devicePixelRatio);
     container.appendChild(renderer.domElement);
 
-    // --- 街の演出レイヤー (変更なし) ---
+    // --- 街の演出レイヤー ---
     container.style.background = "linear-gradient(to bottom, #050510 0%, #101025 70%, #201a30 100%)";
 
     const createCityTexture = () => {
@@ -94,7 +102,7 @@ export function drawArcticModel() {
     citySprite.position.set(0, -height / 2 + height / 6, 15);
     scene.add(citySprite);
 
-    // --- 座標計算とスケーリング (変更なし) ---
+    // --- 座標計算とスケーリング ---
     const avgDec = starsData.reduce((sum, s) => sum + s.dec, 0) / starsData.length;
     const cosDec = Math.cos(avgDec * Math.PI / 180);
 
@@ -120,7 +128,7 @@ export function drawArcticModel() {
         0
     );
 
-    // --- 星と星座線の描画 (修正: 輝きをクリアに) ---
+    // --- 星と星座線の描画 ---
     const starMap = new Map();
 
     const createGlowTexture = (color, isCore = false) => {
@@ -132,12 +140,10 @@ export function drawArcticModel() {
 
         const c = new THREE.Color(color);
         if (isCore) {
-            // 芯の部分：中心を真っ白にし、境界をはっきりさせる
             gradient.addColorStop(0, 'rgba(255, 255, 255, 1)');
             gradient.addColorStop(0.2, 'rgba(255, 255, 255, 0.8)');
             gradient.addColorStop(0.5, 'rgba(255, 255, 255, 0)');
         } else {
-            // 後光の部分：中心を明るく、周辺への減衰を速くする
             gradient.addColorStop(0, 'rgba(255, 255, 255, 1)');
             gradient.addColorStop(0.05, `rgba(${c.r * 255}, ${c.g * 255}, ${c.b * 255}, 1)`);
             gradient.addColorStop(0.2, `rgba(${c.r * 255}, ${c.g * 255}, ${c.b * 255}, 0.3)`);
@@ -151,7 +157,6 @@ export function drawArcticModel() {
 
     starsData.forEach(star => {
         const pos = getPos(star.ra, star.dec);
-        // 星の等級によるサイズ差を少し強調（基本サイズと係数を大きくして光を強く）
         const baseSize = Math.max(0.9, (5.5 - star.mag) * 1.3);
         const baseOpacity = Math.max(0.6, (6 - star.mag) / 5);
 
@@ -161,16 +166,16 @@ export function drawArcticModel() {
             color: star.color,
             transparent: true,
             blending: THREE.AdditiveBlending,
-            opacity: baseOpacity * 1.2 // 透明度の係数を上げて光を強く
+            opacity: baseOpacity * 1.2
         });
         const glow = new THREE.Sprite(glowMaterial);
         glow.position.copy(pos);
-        const glowScale = baseSize * 6; // 少し広がりを抑える
+        const glowScale = baseSize * 6;
         glow.scale.set(glowScale, glowScale, 1);
 
         glow.userData = {
             isStar: true,
-            baseOpacity: baseOpacity * 1.2, // アニメーションの基準透明度も上げる
+            baseOpacity: baseOpacity * 1.2,
             baseScale: glowScale,
             phase: Math.random() * Math.PI * 2,
             twinkleSpeed: 0.03 + Math.random() * 0.04
@@ -186,7 +191,7 @@ export function drawArcticModel() {
         });
         const core = new THREE.Sprite(coreMaterial);
         core.position.copy(pos);
-        const coreScale = baseSize * 1.2; // 芯を小さく鋭く
+        const coreScale = baseSize * 1.2;
         core.scale.set(coreScale, coreScale, 1);
         core.userData = { isCore: true, baseScale: coreScale };
         scene.add(core);
@@ -194,12 +199,12 @@ export function drawArcticModel() {
         starMap.set(star.id, pos);
     });
 
-    // --- 以降、Line描画・アニメーション・リサイズ処理は元のまま ---
+    // --- Line描画 ---
     const lineMaterial = new THREE.LineBasicMaterial({
         color: 0x88aaff,
         transparent: true,
         opacity: 0.3,
-        linewidth: 1.5 // 【追加】線の太さを1.5倍に（※ブラウザ環境によっては反映されません）
+        linewidth: 1.5
     });
 
     connections.forEach(([startId, endId]) => {
@@ -212,6 +217,82 @@ export function drawArcticModel() {
         }
     });
 
+    // --- コントロールボタンを作成 ---
+    const createControlButtons = () => {
+        const buttonContainer = document.createElement('div');
+        buttonContainer.className = 'arctic-controls';
+        const buttonWidth = width * 0.3;
+        buttonContainer.style.cssText = `
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 50;
+            display: flex;
+            gap: 10px;
+        `;
+
+        const buttonStyles = `
+            width: ${buttonWidth}px;
+            padding: 10px 20px;
+            background: rgba(255, 255, 255, 0.9);
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            box-sizing: border-box;
+        `;
+
+        let isTwinklingEnabled = true;
+
+        const toggleBtn = document.createElement('button');
+        toggleBtn.textContent = '✦ Twinkling';
+        toggleBtn.style.cssText = buttonStyles;
+        toggleBtn.addEventListener('mouseover', () => {
+            toggleBtn.style.background = 'rgba(200, 150, 255, 0.9)';
+            toggleBtn.style.transform = 'scale(1.05)';
+        });
+        toggleBtn.addEventListener('mouseout', () => {
+            toggleBtn.style.background = 'rgba(255, 255, 255, 0.9)';
+            toggleBtn.style.transform = 'scale(1)';
+        });
+        toggleBtn.addEventListener('click', () => {
+            isTwinklingEnabled = !isTwinklingEnabled;
+            if (isTwinklingEnabled) {
+                toggleBtn.textContent = '✦ Twinkling';
+            } else {
+                toggleBtn.textContent = '○ Static';
+            }
+        });
+
+        const resetBtn = document.createElement('button');
+        resetBtn.textContent = '↻ Reset';
+        resetBtn.style.cssText = buttonStyles;
+        resetBtn.addEventListener('mouseover', () => {
+            resetBtn.style.background = 'rgba(150, 150, 150, 0.9)';
+            resetBtn.style.transform = 'scale(1.05)';
+        });
+        resetBtn.addEventListener('mouseout', () => {
+            resetBtn.style.background = 'rgba(255, 255, 255, 0.9)';
+            resetBtn.style.transform = 'scale(1)';
+        });
+        resetBtn.addEventListener('click', () => {
+            isTwinklingEnabled = true;
+            toggleBtn.textContent = '✦ Twinkling';
+        });
+
+        buttonContainer.appendChild(toggleBtn);
+        buttonContainer.appendChild(resetBtn);
+
+        return { buttonContainer, isTwinklingRef: { current: isTwinklingEnabled } };
+    };
+
+    const { buttonContainer, isTwinklingRef } = createControlButtons();
+    container.appendChild(buttonContainer);
+
+    // --- アニメーション ---
     let time = 0;
     function animate() {
         requestAnimationFrame(animate);
@@ -219,12 +300,17 @@ export function drawArcticModel() {
 
         scene.children.forEach(child => {
             if (child.userData.isStar) {
-                const twinkle = Math.sin(time * 2 + child.userData.phase) * 0.15;
-                const noise = (Math.random() - 0.5) * 0.05;
+                if (isTwinklingRef.current) {
+                    const twinkle = Math.sin(time * 2 + child.userData.phase) * 0.15;
+                    const noise = (Math.random() - 0.5) * 0.05;
 
-                child.material.opacity = child.userData.baseOpacity + twinkle + noise;
-                const currentScale = child.userData.baseScale * (1 + twinkle * 0.5);
-                child.scale.set(currentScale, currentScale, 1);
+                    child.material.opacity = child.userData.baseOpacity + twinkle + noise;
+                    const currentScale = child.userData.baseScale * (1 + twinkle * 0.5);
+                    child.scale.set(currentScale, currentScale, 1);
+                } else {
+                    child.material.opacity = child.userData.baseOpacity;
+                    child.scale.set(child.userData.baseScale, child.userData.baseScale, 1);
+                }
             }
         });
 
@@ -233,13 +319,23 @@ export function drawArcticModel() {
 
     animate();
 
+    // --- リサイズ対応 ---
     window.addEventListener('resize', () => {
         const newWidth = container.clientWidth || baseSize;
-        const newHeight = newWidth; // 100%
+        const newHeight = newWidth;
 
-        // 描画サイズのみ更新し、カメラ範囲（Frustum）は初期設定のまま固定します。
-        // これにより、画面サイズが変化してもCanvas全体が伸縮し、星座が常に収まるようになります。
         renderer.setSize(newWidth, newHeight);
-        renderer.setPixelRatio(window.devicePixelRatio); // リサイズ時もDPRを維持
+        renderer.setPixelRatio(window.devicePixelRatio);
+
+        // ✅ ボタンサイズもリサイズに対応
+        const newButtonWidth = newWidth * 0.3;
+        const newButtonFontSize = newWidth < 450 ? "10px" : "14px";
+        const newPadding = newWidth < 450 ? "6px 12px" : "10px 20px";
+        const buttons = buttonContainer.querySelectorAll('button');
+        buttons.forEach(btn => {
+            btn.style.width = `${newButtonWidth}px`;
+            btn.style.fontSize = newButtonFontSize;
+            btn.style.padding = newPadding;
+        });
     });
 }

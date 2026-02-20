@@ -11,12 +11,17 @@ export function drawTenseLineModel() {
     // --- 既存要素のクリーンアップ ---
     const oldCanvas = container.querySelector("canvas");
     if (oldCanvas) oldCanvas.remove();
-    const oldLabels = container.querySelectorAll("#lbl-tense");
+    const oldLabels = container.querySelectorAll(".tense-label");
     oldLabels.forEach(l => l.remove());
+    const oldControls = container.querySelector(".tense-controls");
+    if (oldControls) oldControls.remove();
 
     container.style.backgroundColor = '#111111';
     container.style.overflow = "hidden";
     container.style.position = "relative";
+
+    const animations = [];
+    const labels = [];
 
     const baseSize = 600;
     let width = container.clientWidth || baseSize;
@@ -66,10 +71,10 @@ export function drawTenseLineModel() {
 
     const geometry = new LineGeometry();
     geometry.setPositions(getCatenaryPoints());
-    geometry.setColors(colors); // 💡 頂点カラーを適用
+    geometry.setColors(colors);
 
     const material = new LineMaterial({
-        vertexColors: true,     // 💡 頂点カラーを有効化
+        vertexColors: true,
         linewidth: 4,
         transparent: true,
         opacity: 0.9,
@@ -87,17 +92,22 @@ export function drawTenseLineModel() {
     p2.position.copy(endPoint);
     scene.add(p1, p2);
 
-    // --- ラベル ---
-    const label = document.createElement("div");
-    label.id = "lbl-tense";
-    label.innerHTML = "TENSE<br><span style='font-size:0.6em; letter-spacing:3px;'>張り詰めた・緊張した</span>";
-    label.style.cssText = `
-        position: absolute; top: 25%; left: 50%; transform: translate(-50%, -50%);
-        color: #00ffff; font-family: 'Orbitron', sans-serif; text-align: center;
-        opacity: 0; pointer-events: none; text-shadow: 0 0 15px #00ffff; z-index: 5;
-    `;
-    label.style.fontSize = width < 450 ? "14px" : "24px";
-    container.appendChild(label);
+    // --- ラベル作成 ---
+    const createLabel = (id, html, top, left, color) => {
+        const div = document.createElement("div");
+        div.className = "tense-label";
+        div.id = id;
+        div.innerHTML = html;
+        const fontSize = width < 450 ? "12px" : "20px";
+        const padding = width < 450 ? "5px 10px" : "10px 20px";
+        div.style.cssText = `position:absolute; top:${top}; left:${left}; transform:translate(-50%, -50%); color:${color}; font-family:'Orbitron', monospace; font-size:${fontSize}; font-weight:bold; opacity:0; z-index:10; background:rgba(17,17,17,0.9); padding:${padding}; border-radius:5px; pointer-events:none; text-align:center; text-shadow: 0 0 15px ${color}66;`;
+        container.appendChild(div);
+
+        labels.push(div);
+        return div;
+    };
+
+    const label = createLabel("lbl-tense", "TENSE<br><span style='font-size:0.6em; letter-spacing:3px;'>張り詰めた・緊張した</span>", "25%", "50%", "#00ffff");
 
     const update = () => {
         geometry.setPositions(getCatenaryPoints());
@@ -112,7 +122,103 @@ export function drawTenseLineModel() {
       .to(label, { opacity: 0, duration: 0.8 }, "+=1")
       .to(state, { sag: 160, duration: 2.5, ease: "power2.inOut", onUpdate: update });
 
-    container._gsapAnimations = [tl];
+    animations.push(tl);
+
+    // --- コントロールボタンの作成 ---
+    const createControlButtons = () => {
+        const buttonContainer = document.createElement('div');
+        buttonContainer.className = 'tense-controls';
+        const buttonWidth = width * 0.25;
+        buttonContainer.style.cssText = `
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 50;
+            display: flex;
+            gap: 10px;
+        `;
+
+        const buttonStyles = `
+            width: ${buttonWidth}px;
+            padding: 10px 20px;
+            background: rgba(255, 255, 255, 0.9);
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            box-sizing: border-box;
+        `;
+
+        let isPlaying = false;
+
+        const playBtn = document.createElement('button');
+        playBtn.textContent = '▶ Play';
+        playBtn.style.cssText = buttonStyles;
+        playBtn.addEventListener('mouseover', () => {
+            playBtn.style.background = 'rgba(100, 200, 100, 0.9)';
+            playBtn.style.transform = 'scale(1.05)';
+        });
+        playBtn.addEventListener('mouseout', () => {
+            playBtn.style.background = 'rgba(255, 255, 255, 0.9)';
+            playBtn.style.transform = 'scale(1)';
+        });
+        playBtn.addEventListener('click', () => {
+            if (!isPlaying) {
+                animations.forEach(anim => anim.play());
+                isPlaying = true;
+                playBtn.textContent = '⏸ Pause';
+            } else {
+                animations.forEach(anim => anim.pause());
+                isPlaying = false;
+                playBtn.textContent = '▶ Play';
+            }
+        });
+
+        const resetBtn = document.createElement('button');
+        resetBtn.textContent = '↻ Reset';
+        resetBtn.style.cssText = buttonStyles;
+        resetBtn.addEventListener('mouseover', () => {
+            resetBtn.style.background = 'rgba(150, 150, 150, 0.9)';
+            resetBtn.style.transform = 'scale(1.05)';
+        });
+        resetBtn.addEventListener('mouseout', () => {
+            resetBtn.style.background = 'rgba(255, 255, 255, 0.9)';
+            resetBtn.style.transform = 'scale(1)';
+        });
+        resetBtn.addEventListener('click', () => {
+            // 💡 すべてのアニメーションを停止して先頭に戻す
+            animations.forEach(anim => {
+                anim.pause();
+                anim.seek(0);
+            });
+            
+            // 💡 状態をリセット
+            state.sag = 160;
+            state.vibration = 0;
+            update();
+            
+            // 💡 ラベルをリセット
+            label.style.opacity = '0';
+            
+            // 💡 ボタン状態をリセット
+            isPlaying = false;
+            playBtn.textContent = '▶ Play';
+            
+            // 💡 シーンを再描画
+            renderer.render(scene, camera);
+        });
+
+        buttonContainer.appendChild(playBtn);
+        buttonContainer.appendChild(resetBtn);
+
+        return buttonContainer;
+    };
+
+    const controlsContainer = createControlButtons();
+    container.appendChild(controlsContainer);
 
     function animate() {
         requestAnimationFrame(animate);
@@ -129,6 +235,22 @@ export function drawTenseLineModel() {
         camera.aspect = 1;
         camera.updateProjectionMatrix();
         material.resolution.set(newWidth, newWidth);
-        label.style.fontSize = newWidth < 450 ? "14px" : "24px";
+
+        const newFontSize = newWidth < 450 ? "12px" : "20px";
+        labels.forEach(lbl => {
+            lbl.style.fontSize = newFontSize;
+            lbl.style.padding = newWidth < 450 ? "5px 10px" : "10px 20px";
+        });
+
+        // ✅ ボタンサイズ、テキスト、パディングもリサイズに対応
+        const newButtonWidth = newWidth * 0.25;
+        const newButtonFontSize = newWidth < 450 ? "10px" : "14px";
+        const newPadding = newWidth < 450 ? "6px 12px" : "10px 20px";
+        const buttons = controlsContainer.querySelectorAll('button');
+        buttons.forEach(btn => {
+            btn.style.width = `${newButtonWidth}px`;
+            btn.style.fontSize = newButtonFontSize;
+            btn.style.padding = newPadding;
+        });
     });
 }
