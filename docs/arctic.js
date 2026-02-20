@@ -131,27 +131,34 @@ export function drawArcticModel() {
     // --- 星と星座線の描画 ---
     const starMap = new Map();
 
+    // 💡 改善：より美しいグロウテクスチャを作成（解像度向上＆グラデーション最適化）
     const createGlowTexture = (color, isCore = false) => {
         const canvas = document.createElement('canvas');
-        canvas.width = 128;
-        canvas.height = 128;
+        canvas.width = 256;
+        canvas.height = 256;
         const context = canvas.getContext('2d');
-        const gradient = context.createRadialGradient(64, 64, 0, 64, 64, 64);
+        const gradient = context.createRadialGradient(128, 128, 0, 128, 128, 128);
 
         const c = new THREE.Color(color);
         if (isCore) {
+            // コア：より明るく鋭い光のグラデーション
             gradient.addColorStop(0, 'rgba(255, 255, 255, 1)');
-            gradient.addColorStop(0.2, 'rgba(255, 255, 255, 0.8)');
-            gradient.addColorStop(0.5, 'rgba(255, 255, 255, 0)');
+            gradient.addColorStop(0.1, 'rgba(255, 255, 255, 0.95)');
+            gradient.addColorStop(0.25, 'rgba(255, 255, 255, 0.6)');
+            gradient.addColorStop(0.5, 'rgba(255, 255, 255, 0.2)');
+            gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
         } else {
+            // グロー：より滑らかで美しいグラデーション
             gradient.addColorStop(0, 'rgba(255, 255, 255, 1)');
-            gradient.addColorStop(0.05, `rgba(${c.r * 255}, ${c.g * 255}, ${c.b * 255}, 1)`);
-            gradient.addColorStop(0.2, `rgba(${c.r * 255}, ${c.g * 255}, ${c.b * 255}, 0.3)`);
-            gradient.addColorStop(0.6, `rgba(${c.r * 255}, ${c.g * 255}, ${c.b * 255}, 0)`);
+            gradient.addColorStop(0.02, `rgba(${c.r * 255}, ${c.g * 255}, ${c.b * 255}, 1)`);
+            gradient.addColorStop(0.1, `rgba(${c.r * 255}, ${c.g * 255}, ${c.b * 255}, 0.8)`);
+            gradient.addColorStop(0.3, `rgba(${c.r * 255}, ${c.g * 255}, ${c.b * 255}, 0.4)`);
+            gradient.addColorStop(0.6, `rgba(${c.r * 255}, ${c.g * 255}, ${c.b * 255}, 0.1)`);
+            gradient.addColorStop(1, `rgba(${c.r * 255}, ${c.g * 255}, ${c.b * 255}, 0)`);
         }
 
         context.fillStyle = gradient;
-        context.fillRect(0, 0, 128, 128);
+        context.fillRect(0, 0, 256, 256);
         return new THREE.CanvasTexture(canvas);
     };
 
@@ -170,7 +177,7 @@ export function drawArcticModel() {
         });
         const glow = new THREE.Sprite(glowMaterial);
         glow.position.copy(pos);
-        const glowScale = baseSize * 6;
+        const glowScale = baseSize * 8;
         glow.scale.set(glowScale, glowScale, 1);
 
         glow.userData = {
@@ -178,7 +185,8 @@ export function drawArcticModel() {
             baseOpacity: baseOpacity * 1.2,
             baseScale: glowScale,
             phase: Math.random() * Math.PI * 2,
-            twinkleSpeed: 0.03 + Math.random() * 0.04
+            twinkleSpeed: 0.03 + Math.random() * 0.04,
+            pulseIntensity: 0.3 + Math.random() * 0.3
         };
         scene.add(glow);
 
@@ -191,7 +199,7 @@ export function drawArcticModel() {
         });
         const core = new THREE.Sprite(coreMaterial);
         core.position.copy(pos);
-        const coreScale = baseSize * 1.2;
+        const coreScale = baseSize * 1.5;
         core.scale.set(coreScale, coreScale, 1);
         core.userData = { isCore: true, baseScale: coreScale };
         scene.add(core);
@@ -216,6 +224,11 @@ export function drawArcticModel() {
             scene.add(line);
         }
     });
+
+    // --- 状態管理用オブジェクト ---
+    const state = {
+        isTwinklingEnabled: false
+    };
 
     // --- コントロールボタンを作成 ---
     const createControlButtons = () => {
@@ -245,10 +258,8 @@ export function drawArcticModel() {
             box-sizing: border-box;
         `;
 
-        let isTwinklingEnabled = true;
-
         const toggleBtn = document.createElement('button');
-        toggleBtn.textContent = '✦ Twinkling';
+        toggleBtn.textContent = '○ Twinkling';
         toggleBtn.style.cssText = buttonStyles;
         toggleBtn.addEventListener('mouseover', () => {
             toggleBtn.style.background = 'rgba(200, 150, 255, 0.9)';
@@ -259,11 +270,11 @@ export function drawArcticModel() {
             toggleBtn.style.transform = 'scale(1)';
         });
         toggleBtn.addEventListener('click', () => {
-            isTwinklingEnabled = !isTwinklingEnabled;
-            if (isTwinklingEnabled) {
+            state.isTwinklingEnabled = !state.isTwinklingEnabled;
+            if (state.isTwinklingEnabled) {
                 toggleBtn.textContent = '✦ Twinkling';
             } else {
-                toggleBtn.textContent = '○ Static';
+                toggleBtn.textContent = '○ Twinkling';
             }
         });
 
@@ -279,17 +290,17 @@ export function drawArcticModel() {
             resetBtn.style.transform = 'scale(1)';
         });
         resetBtn.addEventListener('click', () => {
-            isTwinklingEnabled = true;
-            toggleBtn.textContent = '✦ Twinkling';
+            state.isTwinklingEnabled = false;
+            toggleBtn.textContent = '○ Twinkling';
         });
 
         buttonContainer.appendChild(toggleBtn);
         buttonContainer.appendChild(resetBtn);
 
-        return { buttonContainer, isTwinklingRef: { current: isTwinklingEnabled } };
+        return buttonContainer;
     };
 
-    const { buttonContainer, isTwinklingRef } = createControlButtons();
+    const buttonContainer = createControlButtons();
     container.appendChild(buttonContainer);
 
     // --- アニメーション ---
@@ -300,14 +311,18 @@ export function drawArcticModel() {
 
         scene.children.forEach(child => {
             if (child.userData.isStar) {
-                if (isTwinklingRef.current) {
+                if (state.isTwinklingEnabled) {
+                    // 💡 改善：より複雑で美しい輝きアニメーション
                     const twinkle = Math.sin(time * 2 + child.userData.phase) * 0.15;
+                    const pulse = Math.sin(time * 0.8 + child.userData.phase * 2) * child.userData.pulseIntensity;
+                    const shimmer = Math.cos(time * 3.5 + child.userData.phase) * 0.08;
                     const noise = (Math.random() - 0.5) * 0.05;
 
-                    child.material.opacity = child.userData.baseOpacity + twinkle + noise;
-                    const currentScale = child.userData.baseScale * (1 + twinkle * 0.5);
+                    child.material.opacity = Math.max(0.3, Math.min(1.0, child.userData.baseOpacity + twinkle + pulse + shimmer + noise));
+                    const currentScale = child.userData.baseScale * (1 + (twinkle + pulse) * 0.4);
                     child.scale.set(currentScale, currentScale, 1);
                 } else {
+                    // 静止状態：アニメーションなし
                     child.material.opacity = child.userData.baseOpacity;
                     child.scale.set(child.userData.baseScale, child.userData.baseScale, 1);
                 }
