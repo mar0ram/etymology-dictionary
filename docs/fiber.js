@@ -37,27 +37,27 @@ export function drawFiberModel() {
         const x = (i - leftFiberCount / 2) * 4.5;
         const randomPhase = Math.random() * Math.PI * 2;
         const randomAmplitude = 2 + Math.random() * 2;
-        
+
         for (let j = 0; j <= 60; j++) {
             const y = (j - 30) * 8;
             const wave = Math.sin(y * 0.015 + randomPhase) * randomAmplitude;
             const jitter = (Math.random() - 0.5) * 0.5;
             points.push(new THREE.Vector3(x + wave + jitter, y, 0));
         }
-        
+
         const geo = new THREE.BufferGeometry().setFromPoints(points);
-        const lineMat = new THREE.LineBasicMaterial({ 
+        const lineMat = new THREE.LineBasicMaterial({
             color: 0x8a8a8a,
-            transparent: true, 
-            opacity: 0.55, 
+            transparent: true,
+            opacity: 0.55,
             linewidth: 2
         });
         const line = new THREE.Line(geo, lineMat);
         fiberBundleLeftGroup.add(line);
-        leftFibers.push({ 
-            line, 
-            geo, 
-            baseColor: lineMat.color.clone(), 
+        leftFibers.push({
+            line,
+            geo,
+            baseColor: lineMat.color.clone(),
             phase: randomPhase,
             amplitude: randomAmplitude,
             initialOpacity: 0.55
@@ -74,7 +74,7 @@ export function drawFiberModel() {
         const points = [];
         const angle = (i / rightFiberCount) * Math.PI * 2;
         const baseRadius = 40;
-        
+
         for (let j = 0; j <= 60; j++) {
             const y = (j - 30) * 8;
             const twistAngle = angle + y * 0.025;
@@ -83,22 +83,22 @@ export function drawFiberModel() {
             const z = Math.sin(twistAngle) * radius;
             points.push(new THREE.Vector3(x, y, z));
         }
-        
+
         const geo = new THREE.BufferGeometry().setFromPoints(points);
         const hue = 0.52 + (i / rightFiberCount) * 0.18;
-        const lineMat = new THREE.LineBasicMaterial({ 
+        const lineMat = new THREE.LineBasicMaterial({
             color: new THREE.Color().setHSL(hue, 1, 0.55),
-            transparent: true, 
-            opacity: 0.65, 
+            transparent: true,
+            opacity: 0.65,
             blending: THREE.AdditiveBlending,
             linewidth: 2
         });
         const line = new THREE.Line(geo, lineMat);
         fiberBundleRightGroup.add(line);
-        rightFibers.push({ 
-            line, 
-            geo, 
-            baseColor: lineMat.color.clone(), 
+        rightFibers.push({
+            line,
+            geo,
+            baseColor: lineMat.color.clone(),
             phase: Math.random() * Math.PI * 2,
             hueBase: hue,
             initialOpacity: 0.65
@@ -108,7 +108,7 @@ export function drawFiberModel() {
     // --- レイアウト調整 ---
     const updateLayout = () => {
         const w = container.clientWidth || baseSize;
-        
+
         const leftScale = (w * 0.55) / (leftFiberCount * 4.5);
         fiberBundleLeftGroup.scale.set(leftScale, leftScale, leftScale);
         fiberBundleLeftGroup.position.x = -w * 0.26;
@@ -129,23 +129,23 @@ export function drawFiberModel() {
         animationStartTime = null;
         pausedTime = 0;
         isPlaying = false;
-        
+
         // 左側ファイバーをリセット
         leftFibers.forEach(fiber => {
             fiber.line.material.opacity = fiber.initialOpacity;
             fiber.line.material.color.copy(fiber.baseColor);
         });
-        
+
         // 右側ファイバーをリセット
         rightFibers.forEach(fiber => {
             fiber.line.material.opacity = fiber.initialOpacity;
             fiber.line.material.color.copy(fiber.baseColor);
         });
-        
+
         // 回転をリセット
         fiberBundleLeftGroup.rotation.y = 0;
         fiberBundleRightGroup.rotation.y = 0;
-        
+
         renderer.render(scene, camera);
     };
 
@@ -153,7 +153,7 @@ export function drawFiberModel() {
         if (!animationStartTime) {
             animationStartTime = Date.now();
         }
-        
+
         const elapsed = (Date.now() - animationStartTime) / 1000 + pausedTime;
         const time = elapsed;
 
@@ -161,7 +161,7 @@ export function drawFiberModel() {
         leftFibers.forEach((fiber, i) => {
             const subtleShimmer = 0.1 + Math.sin(time * 0.6 + fiber.phase) * 0.08;
             fiber.line.material.opacity = 0.5 + subtleShimmer;
-            
+
             const brightness = 0.75 + Math.sin(time * 0.8 + fiber.phase * 0.5) * 0.15;
             fiber.line.material.color.copy(fiber.baseColor).multiplyScalar(brightness);
         });
@@ -170,7 +170,7 @@ export function drawFiberModel() {
         rightFibers.forEach((fiber, i) => {
             const lightWave = (time * 2.5 + fiber.phase + i * 0.08) % (Math.PI * 2);
             const lightIntensity = Math.sin(lightWave) * 0.5 + 0.5;
-            
+
             const opacity = 0.3 + lightIntensity * 0.6;
             fiber.line.material.opacity = opacity;
 
@@ -189,7 +189,6 @@ export function drawFiberModel() {
     const createControlButtons = () => {
         const buttonContainer = document.createElement('div');
         buttonContainer.className = 'fiber-controls';
-        const buttonWidth = width * 0.25;
         buttonContainer.style.cssText = `
             position: absolute;
             bottom: 0;
@@ -198,11 +197,15 @@ export function drawFiberModel() {
             z-index: 50;
             display: flex;
             gap: 10px;
+            width: 100%;
+            justify-content: center;
         `;
 
         const buttonStyles = `
-            width: ${buttonWidth}px;
-            padding: 10px 20px;
+            width: 25%;
+            min-width: 80px;
+            max-width: 150px;
+            padding: 10px 0;
             background: rgba(255, 255, 255, 0.9);
             border: none;
             border-radius: 5px;
@@ -211,6 +214,7 @@ export function drawFiberModel() {
             font-weight: bold;
             transition: all 0.3s ease;
             box-sizing: border-box;
+            text-align: center;
         `;
 
         const playBtn = document.createElement('button');
@@ -275,14 +279,11 @@ export function drawFiberModel() {
         camera.updateProjectionMatrix();
         updateLayout();
 
-        const newButtonWidth = w * 0.25;
-        const newButtonFontSize = w < 450 ? "10px" : "14px";
-        const newPadding = w < 450 ? "6px 12px" : "10px 20px";
+        // ✅ JSによるピクセル単位の幅計算を廃止し、レスポンシブなCSS設定に一任
+        const newButtonFontSize = newWidth < 450 ? "10px" : "14px";
         const buttons = controlsContainer.querySelectorAll('button');
         buttons.forEach(btn => {
-            btn.style.width = `${newButtonWidth}px`;
             btn.style.fontSize = newButtonFontSize;
-            btn.style.padding = newPadding;
         });
     });
 }

@@ -118,29 +118,33 @@ export function drawScatterAnimation() {
   const createControlButtons = () => {
     const buttonContainer = document.createElement('div');
     buttonContainer.className = 'scatter-controls';
-    const buttonWidth = width * 0.3;
     buttonContainer.style.cssText = `
-      position: absolute;
-      bottom: 0;
-      left: 50%;
-      transform: translateX(-50%);
-      z-index: 50;
-      display: flex;
-      gap: 10px;
-    `;
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 50;
+            display: flex;
+            gap: 10px;
+            width: 100%;
+            justify-content: center;
+        `;
 
     const buttonStyles = `
-      width: ${buttonWidth}px;
-      padding: 10px 20px;
-      background: rgba(255, 255, 255, 0.9);
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-      font-size: 14px;
-      font-weight: bold;
-      transition: all 0.3s ease;
-      box-sizing: border-box;
-    `;
+            width: 25%;
+            min-width: 80px;
+            max-width: 150px;
+            padding: 10px 0;
+            background: rgba(255, 255, 255, 0.9);
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            box-sizing: border-box;
+            text-align: center;
+        `;
 
     const scatterBtn = document.createElement('button');
     scatterBtn.textContent = '⚡ Scatter';
@@ -269,15 +273,11 @@ export function drawScatterAnimation() {
     camera.updateProjectionMatrix();
     renderer.setSize(newWidth, newHeight);
 
-    // ✅ ボタンサイズもリサイズに対応
-    const newButtonWidth = newWidth * 0.3;
+    // ✅ JSによるピクセル単位の幅計算を廃止し、レスポンシブなCSS設定に一任
     const newButtonFontSize = newWidth < 450 ? "10px" : "14px";
-    const newPadding = newWidth < 450 ? "6px 12px" : "10px 20px";
-    const buttons = buttonContainer.querySelectorAll('button');
+    const buttons = controlsContainer.querySelectorAll('button');
     buttons.forEach(btn => {
-      btn.style.width = `${newButtonWidth}px`;
       btn.style.fontSize = newButtonFontSize;
-      btn.style.padding = newPadding;
     });
   });
 }

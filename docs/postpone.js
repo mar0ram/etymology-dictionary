@@ -103,7 +103,7 @@ export function drawPostponeModel() {
     // === 3. 放物線パス ===
     const startPos = new THREE.Vector3(0, 6, 0);
     const endPos = new THREE.Vector3(0, 6, -220);
-    
+
     const curve = new THREE.QuadraticBezierCurve3(startPos, new THREE.Vector3(0, 150, -110), endPos);
 
     const pathPoints = curve.getPoints(50);
@@ -123,7 +123,7 @@ export function drawPostponeModel() {
         const div = document.createElement("div");
         div.id = id;
         div.innerHTML = html;
-        const fontSize = width < 450 ? "10px" : "16px";
+        const fontSize = width < 450 ? "14px" : "18px";
         const padding = width < 450 ? "5px 10px" : "10px 20px";
         div.style.cssText = `position:absolute; top:${top}; left:${left}; transform:translate(0%, -50%); color:${color}; font-family:'Courier New', monospace; font-size:${fontSize}; font-weight:bold; opacity:0; z-index:10; background:rgba(0,15,30,0.9); padding:${padding}; border-radius:0px; border: 1px solid ${color}; box-shadow: 0 0 20px ${color}66; pointer-events:none; white-space:nowrap; text-transform: uppercase; letter-spacing: 0.2em;`;
         container.appendChild(div);
@@ -149,7 +149,7 @@ export function drawPostponeModel() {
         .set(pathMat, { opacity: 0 })
         .add(() => { pathLine.geometry.setDrawRange(0, 0); })
         .set([lblPost, lblPonere], { opacity: 0 })
-        .add(() => { 
+        .add(() => {
             // 💡 アニメーション開始時に表示
             axisGroup.visible = true;
             objMesh.visible = true;
@@ -198,7 +198,6 @@ export function drawPostponeModel() {
     const createControlButtons = () => {
         const buttonContainer = document.createElement('div');
         buttonContainer.className = 'postpone-controls';
-        const buttonWidth = width * 0.25;
         buttonContainer.style.cssText = `
             position: absolute;
             bottom: 0;
@@ -207,11 +206,15 @@ export function drawPostponeModel() {
             z-index: 50;
             display: flex;
             gap: 10px;
+            width: 100%;
+            justify-content: center;
         `;
 
         const buttonStyles = `
-            width: ${buttonWidth}px;
-            padding: 10px 20px;
+            width: 25%;
+            min-width: 80px;
+            max-width: 150px;
+            padding: 10px 0;
             background: rgba(255, 255, 255, 0.9);
             border: none;
             border-radius: 5px;
@@ -220,6 +223,7 @@ export function drawPostponeModel() {
             font-weight: bold;
             transition: all 0.3s ease;
             box-sizing: border-box;
+            text-align: center;
         `;
 
         let isPlaying = false;
@@ -264,28 +268,28 @@ export function drawPostponeModel() {
                 anim.pause();
                 anim.seek(0);
             });
-            
+
             // オブジェクトと軸の表示/非表示をリセット
             axisGroup.visible = false;
             objMesh.visible = false;
-            
+
             // オブジェクトの位置とスケールをリセット
             objMesh.position.set(startPos.x, startPos.y, startPos.z);
             objMesh.scale.set(0, 0, 0);
             axisGroup.scale.set(1, 0.001, 1);
-            
+
             // パスをリセット
             pathLine.geometry.setDrawRange(0, 0);
             pathMat.opacity = 0;
-            
+
             // ラベルをリセット
             lblPost.style.opacity = '0';
             lblPonere.style.opacity = '0';
-            
+
             // 状態をリセット
             isPlaying = false;
             playBtn.textContent = '▶ Play';
-            
+
             // シーンを再描画
             renderer.render(scene, camera);
         });
@@ -312,20 +316,17 @@ export function drawPostponeModel() {
         camera.aspect = 1;
         camera.updateProjectionMatrix();
 
-        const newFontSize = newWidth < 450 ? "10px" : "16px";
+        const newFontSize = newWidth < 450 ? "14px" : "18px";
         labels.forEach(lbl => {
             lbl.style.fontSize = newFontSize;
             lbl.style.padding = newWidth < 450 ? "5px 10px" : "10px 20px";
         });
 
-        const newButtonWidth = newWidth * 0.25;
+        // ✅ JSによるピクセル単位の幅計算を廃止し、レスポンシブなCSS設定に一任
         const newButtonFontSize = newWidth < 450 ? "10px" : "14px";
-        const newPadding = newWidth < 450 ? "6px 12px" : "10px 20px";
         const buttons = controlsContainer.querySelectorAll('button');
         buttons.forEach(btn => {
-            btn.style.width = `${newButtonWidth}px`;
             btn.style.fontSize = newButtonFontSize;
-            btn.style.padding = newPadding;
         });
     });
 }

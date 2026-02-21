@@ -118,7 +118,7 @@ export function drawSchemeModel() {
         const div = document.createElement("div");
         div.className = "scheme-label";
         div.innerHTML = text;
-        const fontSize = width < 450 ? "10px" : "16px";
+        const fontSize = width < 450 ? "14px" : "18px";
         const padding = width < 450 ? "5px 10px" : "10px 20px";
         div.style.cssText = `position:absolute; top:${top}; left:${left}; transform:translate(-50%, -50%); color:${color}; font-family:'Courier New', monospace; font-size:${fontSize}; font-weight:bold; opacity:0; z-index:10; background:rgba(13, 17, 23, 0); padding:${padding}; border-radius:5px; pointer-events:none; text-align:center;`;
         container.appendChild(div);
@@ -136,6 +136,7 @@ export function drawSchemeModel() {
 
     // 0. リセット
     tl.add(() => {
+        isRotating = true; // ✅ リピート時に回転フラグを再有効化
         modules.forEach(m => {
             m.fragments.forEach(f => {
                 f.position.set((Math.random() - 0.5) * 200, (Math.random() - 0.5) * 300 + 150, (Math.random() - 0.5) * 200);
@@ -195,7 +196,6 @@ export function drawSchemeModel() {
     const createControlButtons = () => {
         const buttonContainer = document.createElement('div');
         buttonContainer.className = 'scheme-controls';
-        const buttonWidth = width * 0.25;
         buttonContainer.style.cssText = `
             position: absolute;
             bottom: 0;
@@ -204,11 +204,15 @@ export function drawSchemeModel() {
             z-index: 50;
             display: flex;
             gap: 10px;
+            width: 100%;
+            justify-content: center;
         `;
 
         const buttonStyles = `
-            width: ${buttonWidth}px;
-            padding: 10px 20px;
+            width: 25%;
+            min-width: 80px;
+            max-width: 150px;
+            padding: 10px 0;
             background: rgba(255, 255, 255, 0.9);
             border: none;
             border-radius: 5px;
@@ -217,6 +221,7 @@ export function drawSchemeModel() {
             font-weight: bold;
             transition: all 0.3s ease;
             box-sizing: border-box;
+            text-align: center;
         `;
 
         let isPlaying = false;
@@ -263,7 +268,7 @@ export function drawSchemeModel() {
                 anim.pause();
                 anim.seek(0);
             });
-            
+
             // フラグメント（要素）のリセット
             modules.forEach(m => {
                 m.fragments.forEach(f => {
@@ -274,23 +279,23 @@ export function drawSchemeModel() {
                 m.hullLines.material.opacity = 0;
                 m.group.rotation.set(0, 0, 0);
             });
-            
+
             // メインのグループをリセット
             outerFrame.material.opacity = 0;
             flowLine.material.opacity = 0;
             mainGroup.scale.set(1, 1, 1);
             mainGroup.rotation.set(0, 0, 0);
-            
+
             // ラベルをリセット
             lbl1.style.opacity = '0';
             lbl2.style.opacity = '0';
             lbl3.style.opacity = '0';
-            
+
             // 状態をリセット
             isPlaying = false;
             playBtn.textContent = '▶ Play';
             isRotating = false; // 💡 回転を停止
-            
+
             // シーンを再描画
             renderer.render(scene, camera);
         });
@@ -320,21 +325,17 @@ export function drawSchemeModel() {
         camera.aspect = 1;
         camera.updateProjectionMatrix();
 
-        const newFontSize = newWidth < 450 ? "10px" : "16px";
+        const newFontSize = newWidth < 450 ? "14px" : "18px";
         labels.forEach(lbl => {
             lbl.style.fontSize = newFontSize;
             lbl.style.padding = newWidth < 450 ? "5px 10px" : "10px 20px";
         });
 
-        // ✅ ボタンサイズ、テキスト、パディングもリサイズに対応
-        const newButtonWidth = newWidth * 0.25;
+        // ✅ JSによるピクセル単位の幅計算を廃止し、レスポンシブなCSS設定に一任
         const newButtonFontSize = newWidth < 450 ? "10px" : "14px";
-        const newPadding = newWidth < 450 ? "6px 12px" : "10px 20px";
         const buttons = controlsContainer.querySelectorAll('button');
         buttons.forEach(btn => {
-            btn.style.width = `${newButtonWidth}px`;
             btn.style.fontSize = newButtonFontSize;
-            btn.style.padding = newPadding;
         });
     });
 }

@@ -5,7 +5,7 @@ export function drawDimensionModel() {
     // コンテナ要素の取得
     const container = document.querySelector(".dimension");
     if (!container) return;
-    
+
     // --- 初期化 (既存のCanvasとラベルを削除) ---
     const oldCanvas = container.querySelector("canvas");
     if (oldCanvas) oldCanvas.remove();
@@ -27,9 +27,9 @@ export function drawDimensionModel() {
     let height = width;
 
     const scene = new THREE.Scene();
-    
+
     const camera = new THREE.PerspectiveCamera(45, width / height, 1, 2000);
-    camera.position.set(400, 300, 400); 
+    camera.position.set(400, 300, 400);
     camera.lookAt(0, 0, 0);
 
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
@@ -49,17 +49,17 @@ export function drawDimensionModel() {
     const mainGroup = new THREE.Group();
     scene.add(mainGroup);
 
-    const dimSize = 150; 
+    const dimSize = 150;
     const offset = -dimSize / 2;
 
     // === Dimension 1: 直線 (Line) ===
     const lineGeo = new THREE.BoxGeometry(dimSize, 2, 2);
-    lineGeo.translate(dimSize / 2, 0, 0); 
+    lineGeo.translate(dimSize / 2, 0, 0);
     const lineMesh = new THREE.Mesh(
         lineGeo,
         new THREE.MeshBasicMaterial({ color: colorLine })
     );
-    lineMesh.position.set(offset, offset + dimSize/2, offset);
+    lineMesh.position.set(offset, offset + dimSize / 2, offset);
     lineMesh.scale.set(0, 1, 1);
     mainGroup.add(lineMesh);
 
@@ -74,15 +74,15 @@ export function drawDimensionModel() {
         new THREE.PlaneGeometry(dimSize, dimSize),
         new THREE.MeshBasicMaterial({ color: colorPlane, transparent: true, opacity: 0.2, side: THREE.DoubleSide })
     );
-    
+
     const planeGroup = new THREE.Group();
     planeGroup.add(planeLines);
     planeGroup.add(planeFill);
-    
+
     planeLines.geometry.translate(dimSize / 2, dimSize / 2, 0);
     planeFill.geometry.translate(dimSize / 2, dimSize / 2, 0);
-    
-    planeGroup.position.set(offset, offset + dimSize/2, offset);
+
+    planeGroup.position.set(offset, offset + dimSize / 2, offset);
     planeGroup.scale.set(1, 0, 1);
     planeGroup.visible = false;
     mainGroup.add(planeGroup);
@@ -106,7 +106,7 @@ export function drawDimensionModel() {
     boxLines.geometry.translate(dimSize / 2, dimSize / 2, dimSize / 2);
     boxFill.geometry.translate(dimSize / 2, dimSize / 2, dimSize / 2);
 
-    solidGroup.position.set(offset, offset + dimSize/2, offset);
+    solidGroup.position.set(offset, offset + dimSize / 2, offset);
     solidGroup.scale.set(1, 1, 0);
     solidGroup.visible = false;
     mainGroup.add(solidGroup);
@@ -122,7 +122,7 @@ export function drawDimensionModel() {
         div.style.left = left;
         div.style.transform = "translate(-50%, -50%)";
         div.style.color = color;
-        div.style.fontSize = width < 450 ? "14px" : "20px";
+        div.style.fontSize = width < 450 ? "14px" : "18px";
         div.style.fontWeight = "bold";
         div.style.fontFamily = "'Courier New', sans-serif";
         div.style.pointerEvents = "none";
@@ -147,24 +147,24 @@ export function drawDimensionModel() {
 
     // 0. 初期状態リセット
     tl.set(lineMesh.scale, { x: 0 })
-      .set(planeGroup.scale, { y: 0 })
-      .set(solidGroup.scale, { z: 0 })
-      .set([planeGroup, solidGroup], { visible: false })
-      .set([label1, label2, label3], { opacity: 0 });
+        .set(planeGroup.scale, { y: 0 })
+        .set(solidGroup.scale, { z: 0 })
+        .set([planeGroup, solidGroup], { visible: false })
+        .set([label1, label2, label3], { opacity: 0 });
 
     // 1. Dimension 1: 線を描く
     tl.to(lineMesh.scale, { x: 1, duration: 1.5, ease: "power2.inOut" })
-      .to(label1, { opacity: 1, duration: 0.5 }, "-=1.0");
+        .to(label1, { opacity: 1, duration: 0.5 }, "-=1.0");
 
     // 2. Dimension 2: 線を上に伸ばして面にする
     tl.set(planeGroup, { visible: true })
-      .to(planeGroup.scale, { y: 1, duration: 1.5, ease: "power2.inOut" })
-      .to(label2, { opacity: 1, duration: 0.5 }, "-=1.0");
+        .to(planeGroup.scale, { y: 1, duration: 1.5, ease: "power2.inOut" })
+        .to(label2, { opacity: 1, duration: 0.5 }, "-=1.0");
 
     // 3. Dimension 3: 面を手前に伸ばして立体にする
     tl.set(solidGroup, { visible: true })
-      .to(solidGroup.scale, { z: 1, duration: 1.5, ease: "power2.inOut" })
-      .to(label3, { opacity: 1, duration: 0.5 }, "-=1.0");
+        .to(solidGroup.scale, { z: 1, duration: 1.5, ease: "power2.inOut" })
+        .to(label3, { opacity: 1, duration: 0.5 }, "-=1.0");
 
     // 4. 回転演出
     tl.to(mainGroup.rotation, { y: Math.PI / 2, duration: 2, ease: "power1.inOut" });
@@ -178,7 +178,6 @@ export function drawDimensionModel() {
     const createControlButtons = () => {
         const buttonContainer = document.createElement('div');
         buttonContainer.className = 'dimension-controls';
-        const buttonWidth = width * 0.25;
         buttonContainer.style.cssText = `
             position: absolute;
             bottom: 0;
@@ -187,11 +186,15 @@ export function drawDimensionModel() {
             z-index: 50;
             display: flex;
             gap: 10px;
+            width: 100%;
+            justify-content: center;
         `;
 
         const buttonStyles = `
-            width: ${buttonWidth}px;
-            padding: 10px 20px;
+            width: 25%;
+            min-width: 80px;
+            max-width: 150px;
+            padding: 10px 0;
             background: rgba(255, 255, 255, 0.9);
             border: none;
             border-radius: 5px;
@@ -200,6 +203,7 @@ export function drawDimensionModel() {
             font-weight: bold;
             transition: all 0.3s ease;
             box-sizing: border-box;
+            text-align: center;
         `;
 
         let isPlaying = false;
@@ -275,28 +279,24 @@ export function drawDimensionModel() {
     animate();
 
     // --- リサイズ処理 ---
-  window.addEventListener('resize', () => {
+    window.addEventListener('resize', () => {
         const newWidth = container.clientWidth || baseSize;
-        const newHeight = newWidth; 
+        const newHeight = newWidth;
 
         renderer.setSize(newWidth, newHeight);
         camera.aspect = newWidth / newHeight;
         camera.updateProjectionMatrix();
 
-        const newFontSize = newWidth < 450 ? "10px" : "16px";
+        const newFontSize = newWidth < 450 ? "14px" : "18px";
         labels.forEach(lbl => {
             lbl.style.fontSize = newFontSize;
         });
 
-        // ✅ ボタンサイズ、テキスト、パディングもリサイズに対応
-        const newButtonWidth = newWidth * 0.25;
+        // ✅ JSによるピクセル単位の幅計算を廃止し、レスポンシブなCSS設定に一任
         const newButtonFontSize = newWidth < 450 ? "10px" : "14px";
-        const newPadding = newWidth < 450 ? "6px 12px" : "10px 20px";
         const buttons = controlsContainer.querySelectorAll('button');
         buttons.forEach(btn => {
-            btn.style.width = `${newButtonWidth}px`;
             btn.style.fontSize = newButtonFontSize;
-            btn.style.padding = newPadding;
         });
     });
 }

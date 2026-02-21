@@ -61,7 +61,7 @@ export function drawEclipticModel() {
         div.style.left = left;
         div.style.transform = "translate(-50%, -50%)"; // ズレ防止
         div.style.color = color;
-        div.style.fontSize = width < 450 ? "10px" : "16px";
+        div.style.fontSize = width < 450 ? "12px" : "16px";
         div.style.fontWeight = "normal";
         div.style.pointerEvents = "none";
         div.style.whiteSpace = "nowrap";
@@ -303,7 +303,6 @@ export function drawEclipticModel() {
     const createControlButtons = () => {
         const buttonContainer = document.createElement('div');
         buttonContainer.className = 'ecliptic-controls';
-        const buttonWidth = width * 0.25;
         buttonContainer.style.cssText = `
             position: absolute;
             bottom: 0;
@@ -312,11 +311,15 @@ export function drawEclipticModel() {
             z-index: 50;
             display: flex;
             gap: 10px;
+            width: 100%;
+            justify-content: center;
         `;
 
         const buttonStyles = `
-            width: ${buttonWidth}px;
-            padding: 10px 20px;
+            width: 25%;
+            min-width: 80px;
+            max-width: 150px;
+            padding: 10px 0;
             background: rgba(255, 255, 255, 0.9);
             border: none;
             border-radius: 5px;
@@ -325,6 +328,7 @@ export function drawEclipticModel() {
             font-weight: bold;
             transition: all 0.3s ease;
             box-sizing: border-box;
+            text-align: center;
         `;
 
         let isPlaying = false;
@@ -369,15 +373,15 @@ export function drawEclipticModel() {
                 anim.pause();
                 anim.seek(0);
             });
-            
+
             // 地球の回転をリセット
             earth.rotation.y = 0;
             earthGroup.rotation.set(0, 0, 0);
-            
+
             // 状態をリセット
             isPlaying = false;
             playBtn.textContent = '▶ Play';
-            
+
             // シーンを再描画
             renderer.render(scene, camera);
         });
@@ -416,20 +420,16 @@ export function drawEclipticModel() {
         camera.aspect = 1;
         camera.updateProjectionMatrix();
 
-        const newFontSize = newWidth < 450 ? "10px" : "16px";
+        const newFontSize = newWidth < 450 ? "12px" : "16px";
         labels.forEach(lbl => {
             lbl.style.fontSize = newFontSize;
         });
 
-        // ✅ ボタンサイズ、テキスト、パディングもリサイズに対応
-        const newButtonWidth = newWidth * 0.25;
+        // ✅ JSによるピクセル単位の幅計算を廃止し、レスポンシブなCSS設定に一任
         const newButtonFontSize = newWidth < 450 ? "10px" : "14px";
-        const newPadding = newWidth < 450 ? "6px 12px" : "10px 20px";
         const buttons = controlsContainer.querySelectorAll('button');
         buttons.forEach(btn => {
-            btn.style.width = `${newButtonWidth}px`;
             btn.style.fontSize = newButtonFontSize;
-            btn.style.padding = newPadding;
         });
     });
 }
