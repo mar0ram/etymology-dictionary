@@ -1,7 +1,6 @@
 /* --- 1. 基本設定：ディープモード（暗い背景に白い情報パネル） --- */
 body {
-    font-family:
-        "M PLUS Rounded 1c", sans-serif;
+    font-family:"M PLUS Rounded 1c", sans-serif;
     font-weight: 400;
     /* ダークテーマの基調色（思考と集中を促す） */
     background-color: #121212;

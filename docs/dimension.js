@@ -21,6 +21,7 @@ export function drawDimensionModel() {
     // 💡 アニメーション管理用
     const animations = [];
     const labels = [];
+    let isPlaying = false; // スコープを関数全体に移動
 
     const baseSize = 600;
     let width = container.clientWidth || baseSize;
@@ -206,8 +207,6 @@ export function drawDimensionModel() {
             text-align: center;
         `;
 
-        let isPlaying = false;
-
         const playBtn = document.createElement('button');
         playBtn.textContent = '▶ Play';
         playBtn.style.cssText = buttonStyles;
@@ -255,6 +254,7 @@ export function drawDimensionModel() {
             solidGroup.visible = false;
             mainGroup.scale.set(1, 1, 1);
             mainGroup.rotation.set(0, 0, 0);
+            scene.rotation.set(0, 0, 0); // グリッドの回転をリセット
             label1.style.opacity = 0;
             label2.style.opacity = 0;
             label3.style.opacity = 0;
@@ -273,7 +273,9 @@ export function drawDimensionModel() {
     // --- レンダリングループ ---
     function animate() {
         requestAnimationFrame(animate);
-        scene.rotation.y += 0.002;
+        if (isPlaying) {
+            scene.rotation.y += 0.002;
+        }
         renderer.render(scene, camera);
     }
     animate();
