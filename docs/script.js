@@ -6,6 +6,7 @@ import { drawPostponeModel } from "./postpone.js";
 import { drawFiberModel } from "./fiber.js";
 import { drawTenseLineModel } from "./tense.js";
 import { drawScatterAnimation } from './scatter.js';
+import { drawTransparentAnimation } from './transparent.js';
 
 let data = [];
 let dataLoaded = false;
@@ -252,7 +253,8 @@ function doSearch() {
             { sel: ".postpone", func: drawPostponeModel },
             { sel: ".fiber", func: drawFiberModel },
             { sel: ".tense", func: drawTenseLineModel },
-            { sel: ".scatter", func: drawScatterAnimation, }
+            { sel: ".scatter", func: drawScatterAnimation },
+            { sel: ".transparent", func: drawTransparentAnimation },
         ];
 
         configs.forEach(config => {

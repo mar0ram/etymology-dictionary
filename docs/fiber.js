@@ -190,70 +190,73 @@ export function drawFiberModel() {
         const buttonContainer = document.createElement('div');
         buttonContainer.className = 'fiber-controls';
         buttonContainer.style.cssText = `
-            position: absolute;
-            bottom: 0;
+           position: absolute;
+            bottom: 20px;
             left: 50%;
             transform: translateX(-50%);
             z-index: 50;
             display: flex;
-            gap: 10px;
+            gap: 15px;
             width: 100%;
             justify-content: center;
         `;
 
         const buttonStyles = `
             width: 25%;
-            min-width: 80px;
-            max-width: 150px;
-            padding: 10px 0;
-            background: rgba(255, 255, 255, 0.9);
-            border: none;
-            border-radius: 5px;
+            min-width: 100px;
+            max-width: 160px;
+            padding: 12px 0;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 30px;
+            color: white;
             cursor: pointer;
             font-size: 14px;
             font-weight: bold;
-            transition: all 0.3s ease;
+            backdrop-filter: blur(5px);
+            transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
             box-sizing: border-box;
             text-align: center;
+            letter-spacing: 1px;
         `;
 
         const playBtn = document.createElement('button');
-        playBtn.textContent = '▶ Play';
+        playBtn.textContent = 'PLAY';
         playBtn.style.cssText = buttonStyles;
         playBtn.addEventListener('mouseover', () => {
-            playBtn.style.background = 'rgba(100, 200, 100, 0.9)';
-            playBtn.style.transform = 'scale(1.05)';
+            playBtn.style.background = 'rgba(255, 255, 255, 0.2)';
+            playBtn.style.borderColor = 'rgba(255, 255, 255, 0.8)';
         });
         playBtn.addEventListener('mouseout', () => {
-            playBtn.style.background = 'rgba(255, 255, 255, 0.9)';
-            playBtn.style.transform = 'scale(1)';
+            playBtn.style.background = 'rgba(255, 255, 255, 0.1)';
+            playBtn.style.borderColor = 'rgba(255, 255, 255, 0.3)';
         });
         playBtn.addEventListener('click', () => {
             if (!isPlaying) {
                 isPlaying = true;
-                playBtn.textContent = '⏸ Pause';
+                playBtn.textContent = 'PAUSE';
             } else {
                 isPlaying = false;
                 pausedTime += (Date.now() - animationStartTime) / 1000;
                 animationStartTime = null;
-                playBtn.textContent = '▶ Play';
+                playBtn.textContent = 'PLAY';
             }
         });
 
         const resetBtn = document.createElement('button');
-        resetBtn.textContent = '↻ Reset';
+        resetBtn.textContent = 'RESET';
         resetBtn.style.cssText = buttonStyles;
         resetBtn.addEventListener('mouseover', () => {
-            resetBtn.style.background = 'rgba(150, 150, 150, 0.9)';
-            resetBtn.style.transform = 'scale(1.05)';
+            resetBtn.style.background = 'rgba(255, 255, 255, 0.2)';
+            resetBtn.style.borderColor = 'rgba(255, 255, 255, 0.8)';
         });
         resetBtn.addEventListener('mouseout', () => {
-            resetBtn.style.background = 'rgba(255, 255, 255, 0.9)';
-            resetBtn.style.transform = 'scale(1)';
+            resetBtn.style.background = 'rgba(255, 255, 255, 0.1)';
+            resetBtn.style.borderColor = 'rgba(255, 255, 255, 0.3)';
         });
         resetBtn.addEventListener('click', () => {
             resetAnimation();
-            playBtn.textContent = '▶ Play';
+            playBtn.textContent = 'PLAY';
         });
 
         buttonContainer.appendChild(playBtn);
@@ -273,9 +276,11 @@ export function drawFiberModel() {
     animate();
 
     window.addEventListener('resize', () => {
-        const w = container.clientWidth || baseSize;
-        renderer.setSize(w, w);
-        camera.aspect = 1;
+        const newWidth = container.clientWidth || baseSize;
+        const newHeight = newWidth;
+
+        renderer.setSize(newWidth, newHeight);
+        camera.aspect = newWidth / newHeight;
         camera.updateProjectionMatrix();
         updateLayout();
 

@@ -236,49 +236,52 @@ export function drawArcticModel() {
         buttonContainer.className = 'arctic-controls';
         buttonContainer.style.cssText = `
             position: absolute;
-            bottom: 0;
+            bottom: 20px;
             left: 50%;
             transform: translateX(-50%);
             z-index: 50;
             display: flex;
-            gap: 10px;
+            gap: 15px;
             width: 100%;
             justify-content: center;
         `;
 
         const buttonStyles = `
             width: 25%;
-            min-width: 80px;
-            max-width: 150px;
-            padding: 10px 0;
-            background: rgba(255, 255, 255, 0.9);
-            border: none;
-            border-radius: 5px;
+            min-width: 100px;
+            max-width: 160px;
+            padding: 12px 0;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 30px;
+            color: white;
             cursor: pointer;
             font-size: 14px;
             font-weight: bold;
-            transition: all 0.3s ease;
+            backdrop-filter: blur(5px);
+            transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
             box-sizing: border-box;
             text-align: center;
+            letter-spacing: 1px;
         `;
 
         const toggleBtn = document.createElement('button');
-        toggleBtn.textContent = '○ Twinkling';
+        toggleBtn.textContent = 'Twinkling';
         toggleBtn.style.cssText = buttonStyles;
         toggleBtn.addEventListener('mouseover', () => {
-            toggleBtn.style.background = 'rgba(200, 150, 255, 0.9)';
-            toggleBtn.style.transform = 'scale(1.05)';
+            toggleBtn.style.background = 'rgba(255, 255, 255, 0.2)';
+            toggleBtn.style.borderColor = 'rgba(255, 255, 255, 0.8)';
         });
         toggleBtn.addEventListener('mouseout', () => {
-            toggleBtn.style.background = 'rgba(255, 255, 255, 0.9)';
-            toggleBtn.style.transform = 'scale(1)';
+            toggleBtn.style.background = 'rgba(255, 255, 255, 0.1)';
+            toggleBtn.style.borderColor = 'rgba(255, 255, 255, 0.3)';
         });
         toggleBtn.addEventListener('click', () => {
             state.isTwinklingEnabled = !state.isTwinklingEnabled;
             if (state.isTwinklingEnabled) {
-                toggleBtn.textContent = '✦ Twinkling';
+                toggleBtn.textContent = 'STOP';
             } else {
-                toggleBtn.textContent = '○ Twinkling';
+                toggleBtn.textContent = 'Twinkling';
             }
         });
 
@@ -286,16 +289,16 @@ export function drawArcticModel() {
         resetBtn.textContent = '↻ Reset';
         resetBtn.style.cssText = buttonStyles;
         resetBtn.addEventListener('mouseover', () => {
-            resetBtn.style.background = 'rgba(150, 150, 150, 0.9)';
-            resetBtn.style.transform = 'scale(1.05)';
+            resetBtn.style.background = 'rgba(255, 255, 255, 0.2)';
+            resetBtn.style.borderColor = 'rgba(255, 255, 255, 0.8)';
         });
         resetBtn.addEventListener('mouseout', () => {
-            resetBtn.style.background = 'rgba(255, 255, 255, 0.9)';
-            resetBtn.style.transform = 'scale(1)';
+            resetBtn.style.background = 'rgba(255, 255, 255, 0.1)';
+            resetBtn.style.borderColor = 'rgba(255, 255, 255, 0.3)';
         });
         resetBtn.addEventListener('click', () => {
             state.isTwinklingEnabled = false;
-            toggleBtn.textContent = '○ Twinkling';
+            toggleBtn.textContent = 'Twinkling';
         });
 
         buttonContainer.appendChild(toggleBtn);

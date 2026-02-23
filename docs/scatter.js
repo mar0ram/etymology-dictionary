@@ -23,7 +23,7 @@ export function drawScatterAnimation() {
 
   let scene, camera, renderer, particles;
 
-  const baseSize = 800;
+  const baseSize = 600;
   let width = container.clientWidth || baseSize;
   let height = container.clientHeight || baseSize;
 
@@ -120,54 +120,57 @@ export function drawScatterAnimation() {
     buttonContainer.className = 'scatter-controls';
     buttonContainer.style.cssText = `
             position: absolute;
-            bottom: 0;
+            bottom: 20px;
             left: 50%;
             transform: translateX(-50%);
             z-index: 50;
             display: flex;
-            gap: 10px;
+            gap: 15px;
             width: 100%;
             justify-content: center;
         `;
 
     const buttonStyles = `
             width: 25%;
-            min-width: 80px;
-            max-width: 150px;
-            padding: 10px 0;
-            background: rgba(255, 255, 255, 0.9);
-            border: none;
-            border-radius: 5px;
+            min-width: 100px;
+            max-width: 160px;
+            padding: 12px 0;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 30px;
+            color: white;
             cursor: pointer;
             font-size: 14px;
             font-weight: bold;
-            transition: all 0.3s ease;
+            backdrop-filter: blur(5px);
+            transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
             box-sizing: border-box;
             text-align: center;
+            letter-spacing: 1px;
         `;
 
     const scatterBtn = document.createElement('button');
-    scatterBtn.textContent = '⚡ Scatter';
+    scatterBtn.textContent = 'SCATTER';
     scatterBtn.style.cssText = buttonStyles;
     scatterBtn.addEventListener('mouseover', () => {
-      scatterBtn.style.background = 'rgba(255, 100, 100, 0.9)';
-      scatterBtn.style.transform = 'scale(1.05)';
+      scatterBtn.style.background = 'rgba(255, 255, 255, 0.2)';
+      scatterBtn.style.borderColor = 'rgba(255, 255, 255, 0.8)';
     });
     scatterBtn.addEventListener('mouseout', () => {
-      scatterBtn.style.background = 'rgba(255, 255, 255, 0.9)';
-      scatterBtn.style.transform = 'scale(1)';
+      scatterBtn.style.background = 'rgba(255, 255, 255, 0.1)';
+      scatterBtn.style.borderColor = 'rgba(255, 255, 255, 0.3)';
     });
 
     const gatherBtn = document.createElement('button');
-    gatherBtn.textContent = '⊙ Gather';
+    gatherBtn.textContent = 'GATHER';
     gatherBtn.style.cssText = buttonStyles;
     gatherBtn.addEventListener('mouseover', () => {
-      gatherBtn.style.background = 'rgba(100, 200, 255, 0.9)';
-      gatherBtn.style.transform = 'scale(1.05)';
+      gatherBtn.style.background = 'rgba(255, 255, 255, 0.2)';
+      gatherBtn.style.borderColor = 'rgba(255, 255, 255, 0.8)';
     });
     gatherBtn.addEventListener('mouseout', () => {
-      gatherBtn.style.background = 'rgba(255, 255, 255, 0.9)';
-      gatherBtn.style.transform = 'scale(1)';
+      gatherBtn.style.background = 'rgba(255, 255, 255, 0.1)';
+      gatherBtn.style.borderColor = 'rgba(255, 255, 255, 0.3)';
     });
 
     buttonContainer.appendChild(scatterBtn);
