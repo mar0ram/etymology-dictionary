@@ -7,6 +7,7 @@ import { drawFiberModel } from "./fiber.js";
 import { drawTenseLineModel } from "./tense.js";
 import { drawScatterAnimation } from './scatter.js';
 import { drawTransparentAnimation } from './transparent.js';
+import { drawSteepModel } from './steep.js';
 
 let data = [];
 let dataLoaded = false;
@@ -255,6 +256,7 @@ function doSearch() {
             { sel: ".tense", func: drawTenseLineModel },
             { sel: ".scatter", func: drawScatterAnimation },
             { sel: ".transparent", func: drawTransparentAnimation },
+            { sel: ".steep", func: drawSteepModel }
         ];
 
         configs.forEach(config => {
