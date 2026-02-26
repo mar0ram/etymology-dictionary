@@ -8,6 +8,7 @@ import { drawTenseLineModel } from "./tense.js";
 import { drawScatterAnimation } from './scatter.js';
 import { drawTransparentAnimation } from './transparent.js';
 import { drawSteepModel } from './steep.js';
+import  { drawPrecedeModel } from './precede.js';
 
 let data = [];
 let dataLoaded = false;
@@ -256,7 +257,8 @@ function doSearch() {
             { sel: ".tense", func: drawTenseLineModel },
             { sel: ".scatter", func: drawScatterAnimation },
             { sel: ".transparent", func: drawTransparentAnimation },
-            { sel: ".steep", func: drawSteepModel }
+            { sel: ".steep", func: drawSteepModel },
+            { sel: ".precede", func: drawPrecedeModel }
         ];
 
         configs.forEach(config => {
