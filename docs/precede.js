@@ -60,7 +60,7 @@ export function drawPrecedeModel() {
     player.position.set(0, 0, 0);
 
     // プレイヤー：ベースシェル（ダークメタルな八角形）
-    const pBaseGeo = new THREE.CircleGeometry(15, 8);
+    const pBaseGeo = new THREE.CircleGeometry(10, 8);
     const pBaseMat = new THREE.MeshStandardMaterial({ color: 0x112233, metalness: 0.9, roughness: 0.2 });
     const pBase = new THREE.Mesh(pBaseGeo, pBaseMat);
     player.add(pBase);
@@ -73,14 +73,14 @@ export function drawPrecedeModel() {
     player.add(pCore);
 
     // プレイヤー：回転するアウターリング（途切れたデジタルリング）
-    const pRingGeo = new THREE.RingGeometry(18, 20, 32, 1, 0, Math.PI * 1.5);
+    const pRingGeo = new THREE.RingGeometry(12, 14, 32, 1, 0, Math.PI * 1.5);
     const pRingMat = new THREE.MeshBasicMaterial({ color: 0x00ffff, transparent: true, opacity: 0.8, side: THREE.DoubleSide });
     const pRing = new THREE.Mesh(pRingGeo, pRingMat);
     pRing.position.z = 0.5;
     player.add(pRing);
 
     // プレイヤー：内側のワイヤーフレーム装飾
-    const pInnerGeo = new THREE.RingGeometry(9, 10, 16);
+    const pInnerGeo = new THREE.RingGeometry(8, 9, 16);
     const pInnerMat = new THREE.MeshBasicMaterial({ color: 0x00cccc, wireframe: true, transparent: true, opacity: 0.5 });
     const pInner = new THREE.Mesh(pInnerGeo, pInnerMat);
     pInner.position.z = 0.6;
@@ -228,7 +228,7 @@ export function drawPrecedeModel() {
     });
 
     // --- 移動・追従ロジック用変数 ---
-    const speed = 4;
+    const speed = 2;
     const gap = 60; // 二つのオブジェクトの隙間
     const targetDir = new THREE.Vector3(1, 0, 0); // 目標とする進行方向
     const currentOffset = new THREE.Vector3(gap, 0, 0); // 現在の先行オブジェクトの相対位置
