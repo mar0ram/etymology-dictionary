@@ -9,7 +9,7 @@ export function drawEpidemicModel() {
     // --- 2. 初期化 ---
     const oldCanvas = container.querySelector("canvas");
     if (oldCanvas) oldCanvas.remove();
-    const oldControls = container.querySelector(".dimension-controls");
+    const oldControls = container.querySelector(".epidemic-controls");
     if (oldControls) oldControls.remove();
 
     container.style.backgroundColor = '#02040a'; 
@@ -94,14 +94,14 @@ export function drawEpidemicModel() {
     // --- 5. コントロールボタンの作成 ---
     const createControlButtons = () => {
         const buttonContainer = document.createElement('div');
-        buttonContainer.className = 'dimension-controls';
+        buttonContainer.className = 'epidemic-controls';
         buttonContainer.style.cssText = `
-            position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
+            position: absolute; bottom: 0px; left: 50%; transform: translateX(-50%);
             z-index: 50; display: flex; gap: 15px; width: 100%; justify-content: center;
         `;
 
         const buttonStyles = `
-            width: 35%; min-width: 120px; max-width: 180px; padding: 12px 0;
+            width: 35%; min-width: 100px; max-width: 160px; padding: 12px 0;
             background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.3);
             border-radius: 30px; color: white; cursor: pointer; font-size: 14px; font-weight: bold;
             backdrop-filter: blur(5px); transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);

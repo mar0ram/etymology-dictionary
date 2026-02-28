@@ -219,7 +219,7 @@ body {
     color: #333333;
 }
 
-.content div {
+.content div:not(:has(button)) {
     line-height: 1.6;
     margin-bottom: 25px;
     font-size: 15px;
@@ -391,7 +391,7 @@ body {
         font-size: 14px;
     }
 
-    .content div {
+    .content div:not(:has(button)) {
         line-height: 1.6;
         margin-bottom: 25px;
         font-size: 14px;
