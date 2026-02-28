@@ -98,9 +98,7 @@ export function drawTenseLineModel() {
         div.className = "tense-label";
         div.id = id;
         div.innerHTML = html;
-        const fontSize = width < 450 ? "14px" : "18px";
-        const padding = width < 450 ? "5px 10px" : "10px 20px";
-        div.style.cssText = `position:absolute; top:${top}; left:${left}; transform:translate(-50%, -50%); color:${color}; font-family:'Orbitron', monospace; font-size:${fontSize}; font-weight:bold; opacity:0; z-index:10; background:rgba(17,17,17,0.9); padding:${padding}; border-radius:5px; pointer-events:none; text-align:center; text-shadow: 0 0 15px ${color}66;`;
+        div.style.cssText = `position:absolute; top:${top}; left:${left}; transform:translate(-50%, -50%); color:${color}; font-family:'Orbitron', monospace; font-weight:bold; opacity:0; z-index:10; background:rgba(17,17,17,0.9); border-radius:5px; pointer-events:none; text-align:center; text-shadow: 0 0 15px ${color}66; white-space:nowrap;`;
         container.appendChild(div);
         labels.push(div);
         return div;
@@ -113,15 +111,11 @@ export function drawTenseLineModel() {
     };
 
     const tl = gsap.timeline({ repeat: -1, repeatDelay: 1.5, paused: true });
-
     tl.to(label, { opacity: 1, duration: 1.2, ease: "power2.out" })
       .to(state, { sag: 0, duration: 0.5, ease: "expo.out", onUpdate: update })
-      // 💥 張り切る瞬間に最大の揺れを付与
       .to(state, { vibration: 40, duration: 0.1, onUpdate: update }, "-=0.4")
-      // 🌊 滑らかに減衰（不自然な揺り戻しを防ぐため ease を調整）
       .to(state, { vibration: 0, duration: 2.5, ease: "power2.out", onUpdate: update })
       .to(label, { opacity: 0, duration: 0.8 }, "+=0.5")
-      // 🍃 完全に静止してから、ゆっくりたわませる
       .to(state, { sag: 160, duration: 2.5, ease: "power2.inOut", onUpdate: update });
 
     animations.push(tl);
@@ -129,36 +123,9 @@ export function drawTenseLineModel() {
     const createControlButtons = () => {
         const buttonContainer = document.createElement('div');
         buttonContainer.className = 'tense-controls';
-         buttonContainer.style.cssText = `
-           position: absolute;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 50;
-            display: flex;
-            gap: 15px;
-            width: 100%;
-            justify-content: center;
-        `;
+        buttonContainer.style.cssText = `position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 50; display: flex; gap: 15px; width: 100%; justify-content: center;`;
 
-        const buttonStyles = `
-            width: 25%;
-            min-width: 100px;
-            max-width: 160px;
-            padding: 12px 0;
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            border-radius: 30px;
-            color: white;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: bold;
-            backdrop-filter: blur(5px);
-            transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
-            box-sizing: border-box;
-            text-align: center;
-            letter-spacing: 1px;
-        `;
+        const buttonStyles = `width: 25%; min-width: 100px; max-width: 160px; padding: 12px 0; background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.3); border-radius: 30px; color: white; cursor: pointer; font-size: 14px; font-weight: bold; backdrop-filter: blur(5px); transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1); box-sizing: border-box; text-align: center; letter-spacing: 1px;`;
 
         const playBtn = document.createElement('button');
         playBtn.textContent = 'PLAY';
@@ -166,12 +133,10 @@ export function drawTenseLineModel() {
         playBtn.addEventListener('click', () => {
             if (!isPlaying) {
                 animations.forEach(anim => anim.play());
-                isPlaying = true;
-                playBtn.textContent = 'PAUSE';
+                isPlaying = true; playBtn.textContent = 'PAUSE';
             } else {
                 animations.forEach(anim => anim.pause());
-                isPlaying = false;
-                playBtn.textContent = 'PLAY';
+                isPlaying = false; playBtn.textContent = 'PLAY';
             }
         });
 
@@ -179,16 +144,10 @@ export function drawTenseLineModel() {
         resetBtn.textContent = 'RESET';
         resetBtn.style.cssText = buttonStyles;
         resetBtn.addEventListener('click', () => {
-            animations.forEach(anim => {
-                anim.pause();
-                anim.seek(0);
-            });
-            state.sag = 160;
-            state.vibration = 0;
-            state.time = 0;
+            animations.forEach(anim => { anim.pause(); anim.seek(0); });
+            state.sag = 160; state.vibration = 0; state.time = 0;
             update();
-            label.style.opacity = '0';
-            isPlaying = false;
+            label.style.opacity = '0'; isPlaying = false;
             playBtn.textContent = 'PLAY';
             renderer.render(scene, camera);
         });
@@ -201,6 +160,31 @@ export function drawTenseLineModel() {
     const controlsContainer = createControlButtons();
     container.appendChild(controlsContainer);
 
+    // --- 💡 修正: リサイズ関数を独立させて初期実行 ---
+    const handleResize = () => {
+        const newWidth = container.clientWidth || baseSize;
+        renderer.setSize(newWidth, newWidth);
+        camera.aspect = 1;
+        camera.updateProjectionMatrix();
+        material.resolution.set(newWidth, newWidth);
+
+        const newFontSize = newWidth < 450 ? "14px" : "18px";
+        const newPadding = newWidth < 450 ? "5px 10px" : "10px 20px";
+        labels.forEach(lbl => {
+            lbl.style.fontSize = newFontSize;
+            lbl.style.padding = newPadding;
+        });
+
+        const newButtonFontSize = newWidth < 450 ? "10px" : "14px";
+        const buttons = controlsContainer.querySelectorAll('button');
+        buttons.forEach(btn => {
+            btn.style.fontSize = newButtonFontSize;
+        });
+    };
+
+    handleResize();
+    window.addEventListener('resize', handleResize);
+
     function animate() {
         requestAnimationFrame(animate);
         if (isPlaying) {
@@ -212,12 +196,4 @@ export function drawTenseLineModel() {
         renderer.render(scene, camera);
     }
     animate();
-
-    window.addEventListener('resize', () => {
-        const newWidth = container.clientWidth || baseSize;
-        renderer.setSize(newWidth, newWidth);
-        camera.aspect = 1;
-        camera.updateProjectionMatrix();
-        material.resolution.set(newWidth, newWidth);
-    });
 }

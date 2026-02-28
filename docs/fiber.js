@@ -105,10 +105,8 @@ export function drawFiberModel() {
         });
     }
 
-    // --- レイアウト調整 ---
-    const updateLayout = () => {
-        const w = container.clientWidth || baseSize;
-
+    // 💡 レイアウト更新ロジック
+    const updateLayout = (w) => {
         const leftScale = (w * 0.55) / (leftFiberCount * 4.5);
         fiberBundleLeftGroup.scale.set(leftScale, leftScale, leftScale);
         fiberBundleLeftGroup.position.x = -w * 0.26;
@@ -117,70 +115,51 @@ export function drawFiberModel() {
         fiberBundleRightGroup.scale.set(rightScale, rightScale, rightScale);
         fiberBundleRightGroup.position.x = w * 0.30;
     };
-    updateLayout();
 
     // --- アニメーション制御変数 ---
     let animationStartTime = null;
     let isPlaying = false;
     let pausedTime = 0;
 
-    // リセット用関数
     const resetAnimation = () => {
         animationStartTime = null;
         pausedTime = 0;
         isPlaying = false;
-
-        // 左側ファイバーをリセット
         leftFibers.forEach(fiber => {
             fiber.line.material.opacity = fiber.initialOpacity;
             fiber.line.material.color.copy(fiber.baseColor);
         });
-
-        // 右側ファイバーをリセット
         rightFibers.forEach(fiber => {
             fiber.line.material.opacity = fiber.initialOpacity;
             fiber.line.material.color.copy(fiber.baseColor);
         });
-
-        // 回転をリセット
         fiberBundleLeftGroup.rotation.y = 0;
         fiberBundleRightGroup.rotation.y = 0;
-
         renderer.render(scene, camera);
     };
 
     const animateAll = () => {
-        if (!animationStartTime) {
-            animationStartTime = Date.now();
-        }
-
+        if (!animationStartTime) animationStartTime = Date.now();
         const elapsed = (Date.now() - animationStartTime) / 1000 + pausedTime;
         const time = elapsed;
 
-        // 左側：工業用繊維
-        leftFibers.forEach((fiber, i) => {
+        leftFibers.forEach((fiber) => {
             const subtleShimmer = 0.1 + Math.sin(time * 0.6 + fiber.phase) * 0.08;
             fiber.line.material.opacity = 0.5 + subtleShimmer;
-
             const brightness = 0.75 + Math.sin(time * 0.8 + fiber.phase * 0.5) * 0.15;
             fiber.line.material.color.copy(fiber.baseColor).multiplyScalar(brightness);
         });
 
-        // 右側：光ファイバー
         rightFibers.forEach((fiber, i) => {
             const lightWave = (time * 2.5 + fiber.phase + i * 0.08) % (Math.PI * 2);
             const lightIntensity = Math.sin(lightWave) * 0.5 + 0.5;
-
-            const opacity = 0.3 + lightIntensity * 0.6;
-            fiber.line.material.opacity = opacity;
-
+            fiber.line.material.opacity = 0.3 + lightIntensity * 0.6;
             const colorShift = Math.sin(time * 1.8 + fiber.phase) * 0.1;
             const hue = fiber.hueBase + colorShift;
             const brightness = 0.55 + lightIntensity * 0.45;
             fiber.line.material.color.setHSL(hue, 1, brightness);
         });
 
-        // 回転
         fiberBundleLeftGroup.rotation.y += 0.0008;
         fiberBundleRightGroup.rotation.y -= 0.002;
     };
@@ -190,47 +169,21 @@ export function drawFiberModel() {
         const buttonContainer = document.createElement('div');
         buttonContainer.className = 'fiber-controls';
         buttonContainer.style.cssText = `
-           position: absolute;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 50;
-            display: flex;
-            gap: 15px;
-            width: 100%;
-            justify-content: center;
+            position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
+            z-index: 50; display: flex; gap: 15px; width: 100%; justify-content: center;
         `;
 
         const buttonStyles = `
-            width: 25%;
-            min-width: 100px;
-            max-width: 160px;
-            padding: 12px 0;
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            border-radius: 30px;
-            color: white;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: bold;
-            backdrop-filter: blur(5px);
-            transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
-            box-sizing: border-box;
-            text-align: center;
-            letter-spacing: 1px;
+            width: 25%; min-width: 100px; max-width: 160px; padding: 12px 0;
+            background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 30px; color: white; cursor: pointer; font-size: 14px; font-weight: bold;
+            backdrop-filter: blur(5px); transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+            box-sizing: border-box; text-align: center; letter-spacing: 1px;
         `;
 
         const playBtn = document.createElement('button');
         playBtn.textContent = 'PLAY';
         playBtn.style.cssText = buttonStyles;
-        playBtn.addEventListener('mouseover', () => {
-            playBtn.style.background = 'rgba(255, 255, 255, 0.2)';
-            playBtn.style.borderColor = 'rgba(255, 255, 255, 0.8)';
-        });
-        playBtn.addEventListener('mouseout', () => {
-            playBtn.style.background = 'rgba(255, 255, 255, 0.1)';
-            playBtn.style.borderColor = 'rgba(255, 255, 255, 0.3)';
-        });
         playBtn.addEventListener('click', () => {
             if (!isPlaying) {
                 isPlaying = true;
@@ -246,14 +199,6 @@ export function drawFiberModel() {
         const resetBtn = document.createElement('button');
         resetBtn.textContent = 'RESET';
         resetBtn.style.cssText = buttonStyles;
-        resetBtn.addEventListener('mouseover', () => {
-            resetBtn.style.background = 'rgba(255, 255, 255, 0.2)';
-            resetBtn.style.borderColor = 'rgba(255, 255, 255, 0.8)';
-        });
-        resetBtn.addEventListener('mouseout', () => {
-            resetBtn.style.background = 'rgba(255, 255, 255, 0.1)';
-            resetBtn.style.borderColor = 'rgba(255, 255, 255, 0.3)';
-        });
         resetBtn.addEventListener('click', () => {
             resetAnimation();
             playBtn.textContent = 'PLAY';
@@ -261,12 +206,36 @@ export function drawFiberModel() {
 
         buttonContainer.appendChild(playBtn);
         buttonContainer.appendChild(resetBtn);
-
         return buttonContainer;
     };
 
     const controlsContainer = createControlButtons();
     container.appendChild(controlsContainer);
+
+    // --- 💡 修正: リサイズ関数を独立させて初期実行 ---
+    const handleResize = () => {
+        const newWidth = container.clientWidth || baseSize;
+        const newHeight = newWidth;
+
+        renderer.setSize(newWidth, newHeight);
+        camera.aspect = newWidth / newHeight;
+        camera.updateProjectionMatrix();
+        
+        // レイアウト更新
+        updateLayout(newWidth);
+
+        // ボタンのフォントサイズ調整
+        const newButtonFontSize = newWidth < 450 ? "10px" : "14px";
+        const buttons = controlsContainer.querySelectorAll('button');
+        buttons.forEach(btn => {
+            btn.style.fontSize = newButtonFontSize;
+        });
+    };
+
+    // 初期化時に一度実行
+    handleResize();
+
+    window.addEventListener('resize', handleResize);
 
     function animate() {
         requestAnimationFrame(animate);
@@ -274,21 +243,4 @@ export function drawFiberModel() {
         renderer.render(scene, camera);
     }
     animate();
-
-    window.addEventListener('resize', () => {
-        const newWidth = container.clientWidth || baseSize;
-        const newHeight = newWidth;
-
-        renderer.setSize(newWidth, newHeight);
-        camera.aspect = newWidth / newHeight;
-        camera.updateProjectionMatrix();
-        updateLayout();
-
-        // ✅ JSによるピクセル単位の幅計算を廃止し、レスポンシブなCSS設定に一任
-        const newButtonFontSize = newWidth < 450 ? "10px" : "14px";
-        const buttons = controlsContainer.querySelectorAll('button');
-        buttons.forEach(btn => {
-            btn.style.fontSize = newButtonFontSize;
-        });
-    });
 }

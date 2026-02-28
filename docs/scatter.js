@@ -48,7 +48,6 @@ export function drawScatterAnimation() {
 
   for (let i = 0; i < particleCount; i++) {
     const i3 = i * 3;
-
     const radius = 200 + Math.random() * 100;
     const theta = Math.random() * Math.PI * 2;
     const phi = Math.acos(2 * Math.random() - 1);
@@ -86,7 +85,6 @@ export function drawScatterAnimation() {
       varying vec3 vColor;
       uniform float time;
       uniform float pixelRatio;
-      
       void main() {
         vColor = color;
         vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
@@ -96,11 +94,9 @@ export function drawScatterAnimation() {
     `,
     fragmentShader: `
       varying vec3 vColor;
-      
       void main() {
         float dist = length(gl_PointCoord - vec2(0.5));
         if (dist > 0.5) discard;
-        
         float alpha = 1.0 - smoothstep(0.3, 0.5, dist);
         gl_FragColor = vec4(vColor, alpha);
       }
@@ -119,59 +115,25 @@ export function drawScatterAnimation() {
     const buttonContainer = document.createElement('div');
     buttonContainer.className = 'scatter-controls';
     buttonContainer.style.cssText = `
-            position: absolute;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 50;
-            display: flex;
-            gap: 15px;
-            width: 100%;
-            justify-content: center;
+            position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
+            z-index: 50; display: flex; gap: 15px; width: 100%; justify-content: center;
         `;
 
     const buttonStyles = `
-            width: 25%;
-            min-width: 100px;
-            max-width: 160px;
-            padding: 12px 0;
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            border-radius: 30px;
-            color: white;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: bold;
-            backdrop-filter: blur(5px);
-            transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
-            box-sizing: border-box;
-            text-align: center;
-            letter-spacing: 1px;
+            width: 25%; min-width: 100px; max-width: 160px; padding: 12px 0;
+            background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 30px; color: white; cursor: pointer; font-size: 14px; font-weight: bold;
+            backdrop-filter: blur(5px); transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+            box-sizing: border-box; text-align: center; letter-spacing: 1px;
         `;
 
     const scatterBtn = document.createElement('button');
     scatterBtn.textContent = 'SCATTER';
     scatterBtn.style.cssText = buttonStyles;
-    scatterBtn.addEventListener('mouseover', () => {
-      scatterBtn.style.background = 'rgba(255, 255, 255, 0.2)';
-      scatterBtn.style.borderColor = 'rgba(255, 255, 255, 0.8)';
-    });
-    scatterBtn.addEventListener('mouseout', () => {
-      scatterBtn.style.background = 'rgba(255, 255, 255, 0.1)';
-      scatterBtn.style.borderColor = 'rgba(255, 255, 255, 0.3)';
-    });
-
+    
     const gatherBtn = document.createElement('button');
     gatherBtn.textContent = 'GATHER';
     gatherBtn.style.cssText = buttonStyles;
-    gatherBtn.addEventListener('mouseover', () => {
-      gatherBtn.style.background = 'rgba(255, 255, 255, 0.2)';
-      gatherBtn.style.borderColor = 'rgba(255, 255, 255, 0.8)';
-    });
-    gatherBtn.addEventListener('mouseout', () => {
-      gatherBtn.style.background = 'rgba(255, 255, 255, 0.1)';
-      gatherBtn.style.borderColor = 'rgba(255, 255, 255, 0.3)';
-    });
 
     buttonContainer.appendChild(scatterBtn);
     buttonContainer.appendChild(gatherBtn);
@@ -185,90 +147,49 @@ export function drawScatterAnimation() {
   // --- アニメーション関数 ---
   const scatter = () => {
     if (isScattered) return;
-
-    // ✅ 進行中のアニメーションをすべて終了
     animations.forEach(anim => anim.kill());
     animations.length = 0;
-
     isScattered = true;
-
     const positions = particles.geometry.attributes.position.array;
-
     for (let i = 0; i < particleCount; i++) {
       const i3 = i * 3;
-
       const targetX = (Math.random() - 0.5) * 3000;
       const targetY = (Math.random() - 0.5) * 3000;
       const targetZ = (Math.random() - 0.5) * 3000;
-
       const anim = gsap.to(positions, {
         duration: 2 + Math.random() * 1.5,
         ease: 'power2.out',
-        [i3]: targetX,
-        [i3 + 1]: targetY,
-        [i3 + 2]: targetZ,
-        onUpdate: () => {
-          particles.geometry.attributes.position.needsUpdate = true;
-        }
+        [i3]: targetX, [i3 + 1]: targetY, [i3 + 2]: targetZ,
+        onUpdate: () => { particles.geometry.attributes.position.needsUpdate = true; }
       });
-
       animations.push(anim);
     }
   };
 
   const gather = () => {
     if (!isScattered) return;
-
-    // ✅ 進行中のアニメーションをすべて終了
     animations.forEach(anim => anim.kill());
     animations.length = 0;
-
     isScattered = false;
-
     const positions = particles.geometry.attributes.position.array;
-
     for (let i = 0; i < particleCount; i++) {
       const i3 = i * 3;
       const original = originalPositions[i];
-
       const anim = gsap.to(positions, {
         duration: 1.5 + Math.random() * 1,
         ease: 'elastic.out(1, 0.5)',
-        [i3]: original.x,
-        [i3 + 1]: original.y,
-        [i3 + 2]: original.z,
-        onUpdate: () => {
-          particles.geometry.attributes.position.needsUpdate = true;
-        }
+        [i3]: original.x, [i3 + 1]: original.y, [i3 + 2]: original.z,
+        onUpdate: () => { particles.geometry.attributes.position.needsUpdate = true; }
       });
-
       animations.push(anim);
     }
   };
 
-  // --- ボタンイベントリスナー ---
   scatterBtn.addEventListener('click', scatter);
   gatherBtn.addEventListener('click', gather);
 
-  // --- アニメーションループ ---
-  let time = 0;
-  const animate = () => {
-    requestAnimationFrame(animate);
-
-    time += 0.005;
-
-    if (particles) {
-      particles.rotation.y += 0.001;
-      particles.rotation.x += 0.0005;
-      particles.material.uniforms.time.value = time;
-    }
-
-    renderer.render(scene, camera);
-  };
-  animate();
-
-  // --- リサイズ対応 ---
-  window.addEventListener('resize', () => {
+  // --- 💡 修正: リサイズ関数を独立させて初期実行 ---
+  const handleResize = () => {
     const newWidth = container.clientWidth || baseSize;
     const newHeight = container.clientHeight || baseSize;
 
@@ -276,11 +197,27 @@ export function drawScatterAnimation() {
     camera.updateProjectionMatrix();
     renderer.setSize(newWidth, newHeight);
 
-    // ✅ JSによるピクセル単位の幅計算を廃止し、レスポンシブなCSS設定に一任
     const newButtonFontSize = newWidth < 450 ? "10px" : "14px";
-    const buttons = controlsContainer.querySelectorAll('button');
+    const buttons = buttonContainer.querySelectorAll('button');
     buttons.forEach(btn => {
       btn.style.fontSize = newButtonFontSize;
     });
-  });
+  };
+
+  // 初期化時に実行
+  handleResize();
+  window.addEventListener('resize', handleResize);
+
+  let time = 0;
+  const animate = () => {
+    requestAnimationFrame(animate);
+    time += 0.005;
+    if (particles) {
+      particles.rotation.y += 0.001;
+      particles.rotation.x += 0.0005;
+      particles.material.uniforms.time.value = time;
+    }
+    renderer.render(scene, camera);
+  };
+  animate();
 }

@@ -23,7 +23,7 @@ export function drawEpidemicModel() {
 
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(45, width / height, 1, 1000);
-    camera.position.set(0, 0, 370);
+    camera.position.set(0, 0, 500);
 
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     renderer.setSize(width, height);
@@ -168,7 +168,6 @@ export function drawEpidemicModel() {
     const controlsContainer = createControlButtons();
     container.appendChild(controlsContainer);
 
-    // 💡【修正の肝】リサイズ処理を関数として独立させる
     const handleResize = () => {
         const newWidth = container.clientWidth || baseSize;
         const newHeight = newWidth * 0.6;

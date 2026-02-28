@@ -32,7 +32,6 @@ export function drawTransparentAnimation() {
   container.appendChild(renderer.domElement);
 
   // --- 奥にあるオブジェクト (さいころ) ---
-  // ガラスの縮小に合わせてさいころも少し調整 (130 * 0.7 = 91)
   const cubeSize = 90;
   const diceGeometry = new THREE.BoxGeometry(cubeSize, cubeSize, cubeSize);
   const diceMaterial = new THREE.MeshPhongMaterial({
@@ -55,7 +54,6 @@ export function drawTransparentAnimation() {
 
   // --- 窓ユニット (外枠 + ガラス) ---
   const windowGroup = new THREE.Group();
-  // 💡 サイズを0.7倍に変更 (350 * 0.7 = 245)
   const glassSize = 245;
 
   // 1. すりガラス
@@ -91,13 +89,13 @@ export function drawTransparentAnimation() {
   const glassPane = new THREE.Mesh(new THREE.PlaneGeometry(glassSize, glassSize), glassMaterial);
   windowGroup.add(glassPane);
 
-  // 2. 外枠 (こちらもサイズ調整)
+  // 2. 外枠
   const frameMaterial = new THREE.MeshPhongMaterial({ 
     color: 0x888888, 
     shininess: 80 
   });
-  const fT = 12; // 厚みも少しスリムに調整
-  const fD = 25; // 奥行き
+  const fT = 12; 
+  const fD = 25; 
 
   const topF = new THREE.Mesh(new THREE.BoxGeometry(glassSize + fT * 2, fT, fD), frameMaterial);
   topF.position.y = glassSize / 2 + fT / 2;
@@ -122,33 +120,16 @@ export function drawTransparentAnimation() {
   const controlsContainer = document.createElement('div');
   controlsContainer.className = 'transparent-controls';
   controlsContainer.style.cssText = `
-    position: absolute;
-    bottom: 20px;
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 50;
-    display: flex;
-    gap: 15px;
-    width: 100%;
-    justify-content: center;
+    position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
+    z-index: 50; display: flex; gap: 15px; width: 100%; justify-content: center;
   `;
 
   const buttonStyles = `
-    width: 25%;
-    min-width: 120px;
-    max-width: 180px;
-    padding: 12px 0;
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    border-radius: 30px;
-    color: white;
-    cursor: pointer;
-    font-weight: bold;
-    backdrop-filter: blur(5px);
-    transition: all 0.4s;
-    box-sizing: border-box;
-    text-align: center;
-    letter-spacing: 1px;
+    width: 25%; min-width: 120px; max-width: 180px; padding: 12px 0;
+    background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 30px; color: white; cursor: pointer; font-weight: bold;
+    backdrop-filter: blur(5px); transition: all 0.4s; box-sizing: border-box;
+    text-align: center; letter-spacing: 1px;
   `;
 
   const transBtn = document.createElement('button');
@@ -165,23 +146,43 @@ export function drawTransparentAnimation() {
 
   // --- アニメーション関数 ---
   const makeTransparent = () => {
-    gsap.to(glassMaterial.uniforms.uFrost, {
-      value: 0.0,
-      duration: 1.5,
-      ease: 'power2.inOut'
-    });
+    gsap.to(glassMaterial.uniforms.uFrost, { value: 0.0, duration: 2.0, ease: 'power2.inOut' });
   };
 
   const makeOpaque = () => {
-    gsap.to(glassMaterial.uniforms.uFrost, {
-      value: 1.0,
-      duration: 1.5,
-      ease: 'power2.inOut'
-    });
+    gsap.to(glassMaterial.uniforms.uFrost, { value: 1.0, duration: 2.0, ease: 'power2.inOut' });
   };
 
   transBtn.addEventListener('click', makeTransparent);
   opaqueBtn.addEventListener('click', makeOpaque);
+
+  // --- 💡 修正: リサイズ関数を独立させて初期実行 ---
+  const handleResize = () => {
+    const newWidth = container.clientWidth || baseSize;
+    const newHeight = newWidth;
+
+    renderer.setSize(newWidth, newHeight);
+    camera.aspect = newWidth / newHeight;
+    camera.updateProjectionMatrix();
+
+    // ラベルのフォントサイズ調整
+    const labels = container.querySelectorAll('.label'); 
+    const newFontSize = newWidth < 450 ? "14px" : "18px";
+    labels.forEach(lbl => {
+      lbl.style.fontSize = newFontSize;
+    });
+
+    // ボタンのフォントサイズ調整
+    const newButtonFontSize = newWidth < 450 ? "10px" : "14px";
+    const buttons = controlsContainer.querySelectorAll('button');
+    buttons.forEach(btn => {
+      btn.style.fontSize = newButtonFontSize;
+    });
+  };
+
+  // 初期化時に実行
+  handleResize();
+  window.addEventListener('resize', handleResize);
 
   // --- アニメーションループ ---
   const animate = (time) => {
@@ -190,26 +191,4 @@ export function drawTransparentAnimation() {
     renderer.render(scene, camera);
   };
   animate(0);
-
-  // --- リサイズ対応 ---
-  window.addEventListener('resize', () => {
-    const newWidth = container.clientWidth || baseSize;
-    const newHeight = newWidth; 
-
-    renderer.setSize(newWidth, newHeight);
-    camera.aspect = newWidth / newHeight;
-    camera.updateProjectionMatrix();
-
-    const labels = container.querySelectorAll('.label'); 
-    const newFontSize = newWidth < 450 ? "14px" : "18px";
-    labels.forEach(lbl => {
-      lbl.style.fontSize = newFontSize;
-    });
-
-    const newButtonFontSize = newWidth < 450 ? "10px" : "14px";
-    const buttons = controlsContainer.querySelectorAll('button');
-    buttons.forEach(btn => {
-      btn.style.fontSize = newButtonFontSize;
-    });
-  });
 }

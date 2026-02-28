@@ -42,29 +42,25 @@ export function drawSteepModel() {
     const gridGeo = new THREE.PlaneGeometry(400, 400, gridRes, gridRes);
     gridGeo.rotateX(-Math.PI / 2); 
 
-    // 頂点カラーを保持するための属性を追加
     const count = gridGeo.attributes.position.count;
     gridGeo.setAttribute('color', new THREE.BufferAttribute(new Float32Array(count * 3), 3));
     
-    // マテリアルで vertexColors を有効化
     const gridMat = new THREE.MeshBasicMaterial({ 
         wireframe: true,
         transparent: true,
         opacity: 0.6,
-        vertexColors: true // 頂点ごとの色を使用
+        vertexColors: true 
     });
     const mountainGrid = new THREE.Mesh(gridGeo, gridMat);
     scene.add(mountainGrid);
 
-    // 山の変形用パラメータ
     const mountainParams = { currentHeight: 0 };
 
-    // 山の形状と色を更新する関数
     const updateMountain = () => {
         const positions = gridGeo.attributes.position.array;
         const colors = gridGeo.attributes.color.array;
-        const colorA = new THREE.Color(0x444444); // 低い部分：暗いグレー
-        const colorB = new THREE.Color(0x00ffff); // 盛り上がる部分：シアン
+        const colorA = new THREE.Color(0x444444); 
+        const colorB = new THREE.Color(0x00ffff); 
         const tempColor = new THREE.Color();
 
         for (let i = 0; i < positions.length; i += 3) {
@@ -76,7 +72,6 @@ export function drawSteepModel() {
             const h = peak * mountainParams.currentHeight;
             positions[i + 1] = h;
 
-            // 高さに基づいた色の計算 (0.0 - 1.0)
             const lerpFactor = Math.min(h / 150, 1.0);
             tempColor.lerpColors(colorA, colorB, lerpFactor);
             
@@ -88,7 +83,6 @@ export function drawSteepModel() {
         gridGeo.attributes.color.needsUpdate = true;
     };
 
-    // 初期状態の適用
     updateMountain();
 
     // --- コントロールボタンの作成 ---
@@ -149,13 +143,9 @@ export function drawSteepModel() {
             return btn;
         };
 
-        const steepBtn = createBtn('STEEP', 200);
-        const gentleBtn = createBtn('GENTLE', 80);
-        const flatBtn = createBtn('FLAT', 0);
-
-        buttonContainer.appendChild(steepBtn);
-        buttonContainer.appendChild(gentleBtn);
-        buttonContainer.appendChild(flatBtn);
+        buttonContainer.appendChild(createBtn('STEEP', 200));
+        buttonContainer.appendChild(createBtn('GENTLE', 80));
+        buttonContainer.appendChild(createBtn('FLAT', 0));
 
         return buttonContainer;
     };
@@ -163,15 +153,8 @@ export function drawSteepModel() {
     const controlsContainer = createControlButtons();
     container.appendChild(controlsContainer);
 
-    // --- レンダリングループ ---
-    function animate() {
-        requestAnimationFrame(animate);
-        renderer.render(scene, camera);
-    }
-    animate();
-
-    // --- リサイズ処理 ---
-    window.addEventListener('resize', () => {
+    // --- 💡 修正: リサイズ関数を独立させて初期実行 ---
+    const handleResize = () => {
         const newWidth = container.clientWidth || baseSize;
         const newHeight = newWidth;
 
@@ -184,5 +167,16 @@ export function drawSteepModel() {
         buttons.forEach(btn => {
             btn.style.fontSize = newButtonFontSize;
         });
-    });
+    };
+
+    // 初期化時に実行
+    handleResize();
+
+    window.addEventListener('resize', handleResize);
+
+    function animate() {
+        requestAnimationFrame(animate);
+        renderer.render(scene, camera);
+    }
+    animate();
 }

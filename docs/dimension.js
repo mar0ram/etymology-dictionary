@@ -21,7 +21,7 @@ export function drawDimensionModel() {
     // 💡 アニメーション管理用
     const animations = [];
     const labels = [];
-    let isPlaying = false; // スコープを関数全体に移動
+    let isPlaying = false; 
 
     const baseSize = 600;
     let width = container.clientWidth || baseSize;
@@ -39,11 +39,11 @@ export function drawDimensionModel() {
     container.appendChild(renderer.domElement);
 
     // --- 色とマテリアルの定義 ---
-    const colorLine = 0x00ffff; // シアン（1D）
-    const colorPlane = 0xff00ff; // マゼンタ（2D）
-    const colorSolid = 0xffaa00; // オレンジ（3D）
+    const colorLine = 0x00ffff; 
+    const colorPlane = 0xff00ff; 
+    const colorSolid = 0xffaa00; 
 
-    // --- オブジェクト作成関数 ---
+    // --- オブジェクト作成 ---
     const gridHelper = new THREE.GridHelper(400, 20, 0x444444, 0x222222);
     scene.add(gridHelper);
 
@@ -53,7 +53,7 @@ export function drawDimensionModel() {
     const dimSize = 150;
     const offset = -dimSize / 2;
 
-    // === Dimension 1: 直線 (Line) ===
+    // === Dimension 1: 直線 ===
     const lineGeo = new THREE.BoxGeometry(dimSize, 2, 2);
     lineGeo.translate(dimSize / 2, 0, 0);
     const lineMesh = new THREE.Mesh(
@@ -64,7 +64,7 @@ export function drawDimensionModel() {
     lineMesh.scale.set(0, 1, 1);
     mainGroup.add(lineMesh);
 
-    // === Dimension 2: 平面 (Plane) ===
+    // === Dimension 2: 平面 ===
     const planeBorderGeo = new THREE.BoxGeometry(dimSize, dimSize, 2);
     const planeEdges = new THREE.EdgesGeometry(planeBorderGeo);
     const planeLines = new THREE.LineSegments(
@@ -88,7 +88,7 @@ export function drawDimensionModel() {
     planeGroup.visible = false;
     mainGroup.add(planeGroup);
 
-    // === Dimension 3: 空間 (Solid/Volume) ===
+    // === Dimension 3: 空間 ===
     const boxGeo = new THREE.BoxGeometry(dimSize, dimSize, dimSize);
     const boxEdges = new THREE.EdgesGeometry(boxGeo);
     const boxLines = new THREE.LineSegments(
@@ -112,7 +112,6 @@ export function drawDimensionModel() {
     solidGroup.visible = false;
     mainGroup.add(solidGroup);
 
-
     // --- ラベル作成用ヘルパー ---
     const createLabel = (id, text, top, left, color) => {
         const div = document.createElement("div");
@@ -123,7 +122,7 @@ export function drawDimensionModel() {
         div.style.left = left;
         div.style.transform = "translate(-50%, -50%)";
         div.style.color = color;
-        div.style.fontSize = width < 450 ? "14px" : "18px";
+        div.style.fontSize = "18px"; // 初期値
         div.style.fontWeight = "bold";
         div.style.fontFamily = "'Courier New', sans-serif";
         div.style.pointerEvents = "none";
@@ -137,40 +136,31 @@ export function drawDimensionModel() {
         return div;
     };
 
-    // --- ラベル位置の調整 ---
     const label1 = createLabel("lbl-d1", "1D<br><span style='font-size:0.7em'>直線 / 測定観点：長さ</span>", "60%", "20%", "#00ffff");
     const label2 = createLabel("lbl-d2", "2D<br><span style='font-size:0.7em'>平面 / 測定観点：面積</span>", "10%", "20%", "#ff00ff");
     const label3 = createLabel("lbl-d3", "3D<br><span style='font-size:0.7em'>空間 / 測定観点：体積</span>", "10%", "80%", "#ffaa00");
 
-
     // --- アニメーション (GSAP Timeline) ---
     const tl = gsap.timeline({ repeat: -1, repeatDelay: 2, paused: true });
 
-    // 0. 初期状態リセット
     tl.set(lineMesh.scale, { x: 0 })
         .set(planeGroup.scale, { y: 0 })
         .set(solidGroup.scale, { z: 0 })
         .set([planeGroup, solidGroup], { visible: false })
         .set([label1, label2, label3], { opacity: 0 });
 
-    // 1. Dimension 1: 線を描く
     tl.to(lineMesh.scale, { x: 1, duration: 1.5, ease: "power2.inOut" })
         .to(label1, { opacity: 1, duration: 0.5 }, "-=1.0");
 
-    // 2. Dimension 2: 線を上に伸ばして面にする
     tl.set(planeGroup, { visible: true })
         .to(planeGroup.scale, { y: 1, duration: 1.5, ease: "power2.inOut" })
         .to(label2, { opacity: 1, duration: 0.5 }, "-=1.0");
 
-    // 3. Dimension 3: 面を手前に伸ばして立体にする
     tl.set(solidGroup, { visible: true })
         .to(solidGroup.scale, { z: 1, duration: 1.5, ease: "power2.inOut" })
         .to(label3, { opacity: 1, duration: 0.5 }, "-=1.0");
 
-    // 4. 回転演出
     tl.to(mainGroup.rotation, { y: Math.PI / 2, duration: 2, ease: "power1.inOut" });
-
-    // 5. フェードアウト
     tl.to([mainGroup.scale, label1, label2, label3], { opacity: 0, duration: 1 });
 
     animations.push(tl);
@@ -180,47 +170,21 @@ export function drawDimensionModel() {
         const buttonContainer = document.createElement('div');
         buttonContainer.className = 'dimension-controls';
         buttonContainer.style.cssText = `
-            position: absolute;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 50;
-            display: flex;
-            gap: 15px;
-            width: 100%;
-            justify-content: center;
+            position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
+            z-index: 50; display: flex; gap: 15px; width: 100%; justify-content: center;
         `;
 
         const buttonStyles = `
-            width: 25%;
-            min-width: 100px;
-            max-width: 160px;
-            padding: 12px 0;
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            border-radius: 30px;
-            color: white;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: bold;
-            backdrop-filter: blur(5px);
-            transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
-            box-sizing: border-box;
-            text-align: center;
-            letter-spacing: 1px;
+            width: 25%; min-width: 100px; max-width: 160px; padding: 12px 0;
+            background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 30px; color: white; cursor: pointer; font-size: 14px; font-weight: bold;
+            backdrop-filter: blur(5px); transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+            box-sizing: border-box; text-align: center; letter-spacing: 1px;
         `;
 
         const playBtn = document.createElement('button');
         playBtn.textContent = 'PLAY';
         playBtn.style.cssText = buttonStyles;
-        playBtn.addEventListener('mouseover', () => {
-            playBtn.style.background = 'rgba(255, 255, 255, 0.2)';
-            playBtn.style.borderColor = 'rgba(255, 255, 255, 0.8)';
-        });
-        playBtn.addEventListener('mouseout', () => {
-            playBtn.style.background = 'rgba(255, 255, 255, 0.1)';
-            playBtn.style.borderColor = 'rgba(255, 255, 255, 0.3)';
-        });
         playBtn.addEventListener('click', () => {
             if (!isPlaying) {
                 tl.play();
@@ -236,20 +200,11 @@ export function drawDimensionModel() {
         const resetBtn = document.createElement('button');
         resetBtn.textContent = 'RESET';
         resetBtn.style.cssText = buttonStyles;
-        resetBtn.addEventListener('mouseover', () => {
-            resetBtn.style.background = 'rgba(255, 255, 255, 0.2)';
-            resetBtn.style.borderColor = 'rgba(255, 255, 255, 0.8)';
-        });
-        resetBtn.addEventListener('mouseout', () => {
-            resetBtn.style.background = 'rgba(255, 255, 255, 0.1)';
-            resetBtn.style.borderColor = 'rgba(255, 255, 255, 0.3)';
-        });
         resetBtn.addEventListener('click', () => {
             tl.pause();
             tl.seek(0);
             isPlaying = false;
             playBtn.textContent = 'PLAY';
-            // 初期状態を確実に表示
             lineMesh.scale.set(0, 1, 1);
             planeGroup.scale.set(1, 0, 1);
             solidGroup.scale.set(1, 1, 0);
@@ -257,7 +212,7 @@ export function drawDimensionModel() {
             solidGroup.visible = false;
             mainGroup.scale.set(1, 1, 1);
             mainGroup.rotation.set(0, 0, 0);
-            scene.rotation.set(0, 0, 0); // グリッドの回転をリセット
+            scene.rotation.set(0, 0, 0);
             label1.style.opacity = 0;
             label2.style.opacity = 0;
             label3.style.opacity = 0;
@@ -266,14 +221,40 @@ export function drawDimensionModel() {
 
         buttonContainer.appendChild(playBtn);
         buttonContainer.appendChild(resetBtn);
-
         return buttonContainer;
     };
 
     const controlsContainer = createControlButtons();
     container.appendChild(controlsContainer);
 
-    // --- レンダリングループ ---
+    // --- 💡 修正: リサイズ関数を独立させて初期実行 ---
+    const handleResize = () => {
+        const newWidth = container.clientWidth || baseSize;
+        const newHeight = newWidth;
+
+        renderer.setSize(newWidth, newHeight);
+        camera.aspect = newWidth / newHeight;
+        camera.updateProjectionMatrix();
+
+        // ラベルのフォントサイズ調整
+        const newFontSize = newWidth < 450 ? "14px" : "18px";
+        labels.forEach(lbl => {
+            lbl.style.fontSize = newFontSize;
+        });
+
+        // ボタンのフォントサイズ調整
+        const newButtonFontSize = newWidth < 450 ? "10px" : "14px";
+        const buttons = controlsContainer.querySelectorAll('button');
+        buttons.forEach(btn => {
+            btn.style.fontSize = newButtonFontSize;
+        });
+    };
+
+    // 初期化の最後で実行
+    handleResize();
+
+    window.addEventListener('resize', handleResize);
+
     function animate() {
         requestAnimationFrame(animate);
         if (isPlaying) {
@@ -282,26 +263,4 @@ export function drawDimensionModel() {
         renderer.render(scene, camera);
     }
     animate();
-
-    // --- リサイズ処理 ---
-    window.addEventListener('resize', () => {
-        const newWidth = container.clientWidth || baseSize;
-        const newHeight = newWidth;
-
-        renderer.setSize(newWidth, newHeight);
-        camera.aspect = newWidth / newHeight;
-        camera.updateProjectionMatrix();
-
-        const newFontSize = newWidth < 450 ? "14px" : "18px";
-        labels.forEach(lbl => {
-            lbl.style.fontSize = newFontSize;
-        });
-
-        // ✅ JSによるピクセル単位の幅計算を廃止し、レスポンシブなCSS設定に一任
-        const newButtonFontSize = newWidth < 450 ? "10px" : "14px";
-        const buttons = controlsContainer.querySelectorAll('button');
-        buttons.forEach(btn => {
-            btn.style.fontSize = newButtonFontSize;
-        });
-    });
 }
