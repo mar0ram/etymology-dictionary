@@ -1,5 +1,4 @@
 import { THREE } from './three.js';
-import { gsap } from './gsap.js';
 
 export function drawPrecedeModel() {
     // コンテナ要素の取得

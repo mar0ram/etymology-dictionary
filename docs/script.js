@@ -9,6 +9,7 @@ import { drawScatterAnimation } from './scatter.js';
 import { drawTransparentAnimation } from './transparent.js';
 import { drawSteepModel } from './steep.js';
 import  { drawPrecedeModel } from './precede.js';
+import { drawEpidemicModel } from './epidemic.js';
 
 let data = [];
 let dataLoaded = false;
@@ -244,8 +245,10 @@ function doSearch() {
             }
             targetPanel.appendChild(sectionDiv);
         });
-
+        
         results.appendChild(div);
+        
+        insertSampleImages();
 
         const configs = [
             { sel: ".tropic", func: drawEclipticModel },
@@ -258,7 +261,8 @@ function doSearch() {
             { sel: ".scatter", func: drawScatterAnimation },
             { sel: ".transparent", func: drawTransparentAnimation },
             { sel: ".steep", func: drawSteepModel },
-            { sel: ".precede", func: drawPrecedeModel }
+            { sel: ".precede", func: drawPrecedeModel },
+            { sel: ".epidemic", func: drawEpidemicModel }
         ];
 
         configs.forEach(config => {
@@ -267,8 +271,6 @@ function doSearch() {
                 startAnimation(target, config.func);
             }
         });
-
-        insertSampleImages();
     });
 }
 
