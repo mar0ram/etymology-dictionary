@@ -2,14 +2,12 @@ import { THREE } from './three.js';
 import { gsap } from './gsap.js';
 
 export function drawEpidemicModel() {
-    // --- 1. コンテナ要素の取得 ---
     const container = document.querySelector(".epidemic");
     if (!container) return;
 
-    // --- 2. 初期化 ---
     const oldCanvas = container.querySelector("canvas");
     if (oldCanvas) oldCanvas.remove();
-    const oldControls = container.querySelector(".epidemic-controls");
+    const oldControls = container.querySelector(".dimension-controls");
     if (oldControls) oldControls.remove();
 
     container.style.backgroundColor = '#02040a'; 
@@ -25,14 +23,13 @@ export function drawEpidemicModel() {
 
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(45, width / height, 1, 1000);
-    camera.position.set(0, 0, 500);
+    camera.position.set(0, 0, 370);
 
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     renderer.setSize(width, height);
     renderer.setPixelRatio(window.devicePixelRatio);
     container.appendChild(renderer.domElement);
 
-    // --- 3. 2D世界地図の作成 ---
     const textureLoader = new THREE.TextureLoader();
     const mapTexture = textureLoader.load('https://threejs.org/examples/textures/planets/earth_atmos_2048.jpg'); 
     
@@ -57,7 +54,6 @@ export function drawEpidemicModel() {
         { name: "Athens", x: 39, y: 63 }
     ];
 
-    // --- 4. サイバーパンク円の作成 ---
     const createInfectionCircle = (point, size, color) => {
         const group = new THREE.Group();
         const fillGeo = new THREE.CircleGeometry(size, 32);
@@ -91,17 +87,16 @@ export function drawEpidemicModel() {
         activeCircles = [];
     };
 
-    // --- 5. コントロールボタンの作成 ---
     const createControlButtons = () => {
         const buttonContainer = document.createElement('div');
-        buttonContainer.className = 'epidemic-controls';
+        buttonContainer.className = 'dimension-controls';
         buttonContainer.style.cssText = `
-            position: absolute; bottom: 0px; left: 50%; transform: translateX(-50%);
+            position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
             z-index: 50; display: flex; gap: 15px; width: 100%; justify-content: center;
         `;
 
         const buttonStyles = `
-            width: 35%; min-width: 100px; max-width: 160px; padding: 12px 0;
+            width: 35%; min-width: 120px; max-width: 180px; padding: 12px 0;
             background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.3);
             border-radius: 30px; color: white; cursor: pointer; font-size: 14px; font-weight: bold;
             backdrop-filter: blur(5px); transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
@@ -141,11 +136,9 @@ export function drawEpidemicModel() {
 
                     let cumulativeDelay = 0;
                     selectedPoints.forEach((point, i) => {
-                        // 💡 最初の要素（i === 0）は遅延を加算せず、そのまま実行（delay 0）
                         if (i > 0) {
                             cumulativeDelay += 500 + Math.random() * 500;
                         }
-
                         setTimeout(() => {
                             if (currentType !== 'pandemic') return;
                             const color = colors[i % colors.length];
@@ -175,13 +168,8 @@ export function drawEpidemicModel() {
     const controlsContainer = createControlButtons();
     container.appendChild(controlsContainer);
 
-    function animate() {
-        requestAnimationFrame(animate);
-        renderer.render(scene, camera);
-    }
-    animate();
-
-    window.addEventListener('resize', () => {
+    // 💡【修正の肝】リサイズ処理を関数として独立させる
+    const handleResize = () => {
         const newWidth = container.clientWidth || baseSize;
         const newHeight = newWidth * 0.6;
         renderer.setSize(newWidth, newHeight);
@@ -193,5 +181,16 @@ export function drawEpidemicModel() {
         buttons.forEach(btn => {
             btn.style.fontSize = newButtonFontSize;
         });
-    });
+    };
+
+    // 初期化の最後で実行し、現在のサイズに合わせる
+    handleResize();
+
+    window.addEventListener('resize', handleResize);
+
+    function animate() {
+        requestAnimationFrame(animate);
+        renderer.render(scene, camera);
+    }
+    animate();
 }
