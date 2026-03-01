@@ -252,12 +252,105 @@ body {
 
 .sample_image {
     display: flex;
-    justify-content: center;
-    
+    flex-direction: column;
+    width: 100%;
+    max-width: 500px;
+    margin: 20px auto;
+    font-family: sans-serif;
+
+    /* アコーディオンのボタン部分 */
+    .accordion-trigger {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        /* 右側にアイコン用のスペースを確保 */
+        padding: 2px 48px 2px 24px;
+        background-color: #ffffff;
+        color: #333;
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 600;
+        letter-spacing: 0.05em;
+        transition: all 0.3s ease;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        user-select: none;
+    }
+
+    .accordion-trigger:hover {
+        background-color: #f8f9fa;
+        border-color: #ccc;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+
+    /* --- アイコン作成ここから --- */
+    /* 2本の線の共通スタイル */
+    .accordion-trigger::before,
+    .accordion-trigger::after {
+        content: '';
+        position: absolute;
+        top: 50%;
+        right: 20px; /* 右からの位置 */
+        width: 16px;  /* 線の長さ（完璧に合わせる） */
+        height: 2px;  /* 線の太さ */
+        background-color: currentColor; /* 文字と同じ色 */
+        transition: transform 0.3s ease;
+        border-radius: 1px; /* 線の端を少し丸くして柔らかく */
+    }
+
+    /* 初期状態（＋） */
+    .accordion-trigger::before {
+        transform: translateY(-50%) rotate(0deg); /* 横線 */
+    }
+    .accordion-trigger::after {
+        transform: translateY(-50%) rotate(90deg); /* 縦線（横線を90度回す） */
+    }
+    /* --- アイコン作成ここまで --- */
+
+    /* コンテンツ部分 */
+    .accordion-content {
+        display: grid;
+        grid-template-rows: 0fr;
+        transition: grid-template-rows 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        overflow: hidden;
+    }
+
     img {
-        margin-top: 10px;
+        min-height: 0;
         width: 100%;
-        border-radius:10px;
+        margin-top: 15px;
+        border-radius: 12px;
+        box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        transition: opacity 0.4s ease;
+        opacity: 0;
+    }
+
+    /* アクティブ時のスタイル変更 */
+    &.is-active {
+        .accordion-trigger {
+            background-color: #333;
+            color: #fff;
+            border-color: #333;
+        }
+
+        /* --- 開いた時のアイコン（×） --- */
+        /* 2本の線をそれぞれ45度ずつ回転させる */
+        .accordion-trigger::before {
+            transform: translateY(-50%) rotate(45deg);
+        }
+        .accordion-trigger::after {
+            transform: translateY(-50%) rotate(135deg); /* 90 + 45 */
+        }
+
+        .accordion-content {
+            grid-template-rows: 1fr;
+        }
+
+        img {
+            opacity: 1;
+        }
     }
 }
 

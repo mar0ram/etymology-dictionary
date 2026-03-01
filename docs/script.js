@@ -280,31 +280,41 @@ function startAnimation(container, drawFunc) {
     drawFunc();
 }
 
+
 /**
- * クラス名に基づいて<img>要素を挿入する関数
- * 要素が存在しない場合は何もしません。
+ * クラス名に基づいて<img>要素を挿入し、洗練されたアコーディオンにする関数
  */
 function insertSampleImages() {
-  // 「sample_image」クラスを持つすべてのdiv要素を取得
   const targetElements = document.querySelectorAll('div.sample_image');
 
-  // 要素が0個（取得できない）場合は、ここで処理を終了
   if (targetElements.length === 0) {
     return;
   }
 
-  // 要素が存在する場合のみ、以下の処理を実行
   targetElements.forEach((el) => {
-    // classListから2つ目のクラス名（インデックス1）を取得
     const imageName = el.classList[1];
 
-    // 2つ目のクラス名が存在する場合のみ実行
     if (imageName) {
+      // トリガーとなるspan
+      const trigger = document.createElement('span');
+      trigger.classList.add('accordion-trigger');
+      trigger.textContent = '画像を表示'; // 指定のテキストに変更
+
+      // コンテンツ（画像）を包むspan
+      const content = document.createElement('span');
+      content.classList.add('accordion-content');
+
       const img = document.createElement('img');
       img.src = `./sample_images/${imageName}.png`;
       img.alt = imageName;
       
-      el.appendChild(img);
+      content.appendChild(img);
+      el.appendChild(trigger);
+      el.appendChild(content);
+
+      trigger.addEventListener('click', () => {
+        el.classList.toggle('is-active');
+      });
     }
   });
 }
