@@ -10,6 +10,32 @@ export function drawEpidemicModel() {
     const oldControls = container.querySelector(".dimension-controls");
     if (oldControls) oldControls.remove();
 
+    // 案C: パルスアニメーション用のCSSを動的に追加
+    if (!document.getElementById('epidemic-button-styles')) {
+        const style = document.createElement('style');
+        style.id = 'epidemic-button-styles';
+        style.textContent = `
+            @keyframes epidemic-pulse {
+                0% {
+                    box-shadow: 0 0 5px rgba(0, 255, 255, 0.2), inset 0px 3px 8px rgba(0, 0, 0, 0.4);
+                    background: rgba(255, 255, 255, 0.2);
+                    border-color: rgba(255, 255, 255, 0.5);
+                }
+                50% {
+                    box-shadow: 0 0 20px rgba(0, 255, 255, 0.6), inset 0px 3px 8px rgba(0, 0, 0, 0.6);
+                    background: rgba(255, 255, 255, 0.4);
+                    border-color: rgba(255, 255, 255, 1);
+                }
+                100% {
+                    box-shadow: 0 0 5px rgba(0, 255, 255, 0.2), inset 0px 3px 8px rgba(0, 0, 0, 0.4);
+                    background: rgba(255, 255, 255, 0.2);
+                    border-color: rgba(255, 255, 255, 0.5);
+                }
+            }
+        `;
+        document.head.appendChild(style);
+    }
+
     container.style.backgroundColor = '#02040a'; 
     container.style.overflow = "hidden";
     container.style.position = "relative";
@@ -103,15 +129,42 @@ export function drawEpidemicModel() {
             box-sizing: border-box; text-align: center; letter-spacing: 1px;
         `;
 
+        // ボタンのON/OFF状態の見た目を一括で更新する関数
+        const updateButtonVisuals = () => {
+            const btns = buttonContainer.querySelectorAll('button');
+            btns.forEach(b => {
+                if (b.dataset.type === currentType) {
+                    // ON（アクティブ）状態：パルスアニメーションを適用
+                    b.style.animation = 'epidemic-pulse 2s infinite ease-in-out';
+                } else {
+                    // OFF状態：通常デザインに戻し、アニメーションを解除
+                    b.style.animation = 'none';
+                    b.style.background = 'rgba(255, 255, 255, 0.1)';
+                    b.style.borderColor = 'rgba(255, 255, 255, 0.3)';
+                    b.style.boxShadow = 'none';
+                }
+            });
+        };
+
         const createBtn = (label, type) => {
             const btn = document.createElement('button');
             btn.textContent = label;
             btn.style.cssText = buttonStyles;
+            btn.dataset.type = type; 
             
             btn.addEventListener('click', () => {
-                if (currentType === type) return;
+                // すでにアクティブなボタン（偶数回目）が押された場合は取り消し
+                if (currentType === type) {
+                    clearCircles();
+                    currentType = null;
+                    updateButtonVisuals();
+                    return;
+                }
+                
+                // 奇数回目のクリック、または別のボタンへの切り替え
                 clearCircles();
                 currentType = type;
+                updateButtonVisuals();
 
                 if (type === 'epidemic') {
                     const point = historicalPoints[Math.floor(Math.random() * historicalPoints.length)];
@@ -148,13 +201,18 @@ export function drawEpidemicModel() {
                 }
             });
 
+            // ホバーエフェクトはOFF状態の時のみ適用する
             btn.addEventListener('mouseover', () => {
-                btn.style.background = 'rgba(255, 255, 255, 0.2)';
-                btn.style.borderColor = 'rgba(255, 255, 255, 0.8)';
+                if (currentType !== type) {
+                    btn.style.background = 'rgba(255, 255, 255, 0.2)';
+                    btn.style.borderColor = 'rgba(255, 255, 255, 0.8)';
+                }
             });
             btn.addEventListener('mouseout', () => {
-                btn.style.background = 'rgba(255, 255, 255, 0.1)';
-                btn.style.borderColor = 'rgba(255, 255, 255, 0.3)';
+                if (currentType !== type) {
+                    btn.style.background = 'rgba(255, 255, 255, 0.1)';
+                    btn.style.borderColor = 'rgba(255, 255, 255, 0.3)';
+                }
             });
 
             return btn;

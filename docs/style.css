@@ -144,7 +144,7 @@ body {
 }
 
 .entry .head {
-    font-size: 32px;
+    font-size: 24px;
     font-weight: 800;
     margin-bottom: 50px;
     color: #FFFFFF;
@@ -472,7 +472,7 @@ body {
     }
 
     .entry .head {
-        font-size: 20px;
+        font-size: 18px;
         margin-bottom: 15px;
     }
 
