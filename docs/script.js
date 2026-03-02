@@ -45,64 +45,71 @@ function prependEntry(text = '現代英語に関わるさまざまな言語') {
     const treeWrapper = document.createElement('div');
     treeWrapper.style.width = '100%';
     treeWrapper.innerHTML = `
-        <svg viewBox="0 0 580 760" style="width: 100%; height: auto; display: block; margin: 15px 0;">
+        <svg viewBox="0 0 960 760" style="width: 100%; height: auto; display: block; margin: 15px 0;">
             <g stroke="currentColor" stroke-width="1.5" fill="none">
-                                <path d="M 290 55 L 130 110" />
-                <path d="M 290 55 L 290 110" />
-                <path d="M 290 55 L 450 210" />
-
-                                <path d="M 130 155 L 140 320" />
-                <path d="M 130 155 L 60 440" />
-                <path d="M 290 155 L 290 210" />
-
-                                <path d="M 450 255 L 450 320" />
-
-                                <path d="M 140 365 L 170 440" />
-                <path d="M 450 365 L 310 440" />
-                <path d="M 450 365 L 510 440" />
-                <path d="M 450 365 L 410 560" />
-
-                                <path d="M 170 485 L 170 560" />
-                <path d="M 310 485 L 310 560" />
-                <path d="M 510 485 L 510 560" />
-
-                                <path d="M 170 605 L 170 680" />
-            </g>
-            <g fill="currentColor" text-anchor="middle" font-family="sans-serif">
-                                <g font-size="16">
-                    <text x="290" y="40" font-weight="bold">印欧祖語</text>
-                    <text x="130" y="130">ゲルマン祖語</text>
-                    <text x="290" y="130">古代ギリシャ語</text>
-                    <text x="290" y="230">古典ギリシャ語</text>
-                    <text x="450" y="230">古典ラテン語</text>
-                    <text x="140" y="340">古英語</text>
-                    <text x="450" y="340">後期ラテン語</text>
-                    <text x="60" y="460">古ノルド語</text>
-                    <text x="170" y="460">中英語</text>
-                    <text x="310" y="460">古フランス語</text>
-                    <text x="510" y="460">中世ラテン語</text>
-                    <text x="170" y="580">近代英語</text>
-                    <text x="410" y="580">イタリア語</text>
-                    <text x="310" y="580">フランス語</text>
-                    <text x="510" y="580">近代ラテン語</text>
-                    <text x="170" y="700">現代英語</text>
-                </g>
+                                <path d="M 40 380 L 160 380" />
+                <path d="M 160 180 L 160 580" />
                 
-                                <g font-size="11">
-                    <text x="130" y="150">（原始ゲルマン語）</text>
-                    <text x="290" y="150">（前9世紀–前6世紀）</text>
-                    <text x="290" y="250">（前5世紀–前4世紀）</text>
-                    <text x="450" y="250">（前1世紀–3世紀）</text>
-                    <text x="140" y="360">（約450年–1150年）</text>
-                    <text x="450" y="360">（3世紀–6世紀）</text>
-                    <text x="60" y="480">（800年–1350年）</text>
-                    <text x="170" y="480">（約1150年–1500年）</text>
-                    <text x="310" y="480">（9世紀–14世紀）</text>
-                    <text x="510" y="480">（7世紀–15世紀）</text>
-                    <text x="170" y="600">（約1500年–1700年）</text>
-                    <text x="310" y="600">（14世紀–現代）</text>
-                    <text x="510" y="600">（16世紀–現代）</text>
-                    <text x="170" y="720">（1700年–現代）</text>
+                                <path d="M 160 180 L 320 180" />
+                <path d="M 320 80 L 320 280" />
+                <path d="M 320 80 L 940 80" />                 <path d="M 320 180 L 940 180" />                 <path d="M 320 280 L 460 280" />                                 <path d="M 160 380 L 620 380" />                                 <path d="M 160 580 L 320 580" />
+                <path d="M 320 480 L 320 580" />
+                <path d="M 320 480 L 940 480" />                 <path d="M 320 580 L 780 580" />                 
+                                <path d="M 480 580 L 480 680" />
+                <path d="M 480 680 L 780 680" />             </g>
+            <g fill="currentColor" text-anchor="middle" font-family="sans-serif">
+                                <g font-size="20">
+                    <text x="80" y="372" font-weight="bold">印欧祖語</text>
+                    
+                    <text x="240" y="172">ゲルマン祖語</text>
+                    <text x="240" y="372">古代ギリシャ語</text>
+                    <text x="240" y="572">原始イタリック語</text>
+                    
+                    <text x="400" y="72">フランク語</text>
+                    <text x="400" y="172">古英語</text>
+                    <text x="400" y="272">古ノルド語</text>
+                    <text x="400" y="372">古典ギリシャ語</text>
+                    <text x="400" y="472">古典ラテン語</text>
+                    <text x="400" y="572">俗ラテン語</text>
+
+                    <text x="560" y="172">中英語</text>
+                    <text x="560" y="372">中世ギリシャ語</text>
+                    <text x="560" y="472">後期ラテン語</text>
+                    <text x="560" y="572">古フランス語</text>
+
+                    <text x="720" y="172">近代英語</text>
+                    <text x="720" y="472">中世ラテン語</text>
+                    <text x="720" y="572">フランス語</text>
+                    <text x="720" y="672">イタリア語</text>
+
+                    <text x="880" y="72">オランダ語</text>
+                    <text x="880" y="172">現代英語</text>
+                    <text x="880" y="472">近代ラテン語</text>
+                </g>
+                <g font-size="17" fill="#777777">
+                    <text x="240" y="206">（原始ゲルマン語）</text>
+                    <text x="240" y="406">前9c.～前4c.</text>
+                    <text x="240" y="606">前2千年紀～前1千年紀</text>
+                    
+                    <text x="400" y="96">5c.～9c.</text>
+                    <text x="400" y="206">約450年～1100年</text>
+                    <text x="400" y="306">700年～1350年</text>
+                    <text x="400" y="406">前5c.～前4c.</text>
+                    <text x="400" y="506">前1c.～3c.</text>
+                    <text x="400" y="606">前1c.～9c.</text>
+
+                    <text x="560" y="206">約1100年～1500年</text>
+                    <text x="560" y="406">4c.～15c.</text>
+                    <text x="560" y="506">3c.～6c.</text>
+                    <text x="560" y="606">9c.～14c.</text>
+
+                    <text x="720" y="206">約1500年～1900年</text>
+                    <text x="720" y="506">7c.～15c.</text>
+                    <text x="720" y="606">14c.～現代</text>
+                    <text x="720" y="696">14c.～現代</text>
+
+                    <text x="880" y="206">1900年～現代</text>
+                    <text x="880" y="506">16c.～現代</text>
                 </g>
             </g>
         </svg>
@@ -115,11 +122,11 @@ function prependEntry(text = '現代英語に関わるさまざまな言語') {
     explanations.style.fontSize = '14px';
     explanations.innerHTML = `
         <ul style="list-style-type: disc; padding-left: 20px;">
-            <li><strong>印欧祖語:</strong> ヨーロッパからインドに至る多数の言語の共通の祖先と推定される言語。文字記録はなく、比較言語学を用いて理論的に再建されています。</li>
-            <li><strong>ゲルマン祖語:</strong> 英語、ドイツ語、北欧諸語などゲルマン語派の共通祖先。紀元前1千年紀ごろに話されていたとされ、現在のゲルマン系言語の基礎となっています。</li>
-            <li><strong>ギリシャ語:</strong> 古代から現代まで数千年にわたり記録が途切れることなく残る言語。西洋の哲学、科学、文学、そして学術用語に極めて大きな影響を与えました。</li>
-            <li><strong>ラテン語:</strong> 古代ローマ帝国の公用語であり、フランス語やイタリア語などロマンス諸語の祖先。中世以降もヨーロッパの学問・宗教における共通語として機能し続けました。</li>
-            <li><strong>古ノルド語:</strong> ヴァイキング時代から中世にかけて、主にスカンディナヴィア周辺で話されていた北ゲルマン語。現代のノルウェー語、スウェーデン語、デンマーク語などの直接の祖先です。</li>
+            <li><strong>印欧祖語:</strong> ヨーロッパからインドに至る多数の言語の共通の祖先と推定される言語。文字記録はなく、比較言語学を用いて理論的に再建されている。</li>
+            <li><strong>ゲルマン祖語:</strong> 英語、ドイツ語、北欧諸語などゲルマン語派の共通祖先。紀元前1千年紀ごろに話されていたとされ、現在のゲルマン系言語の基礎となっている。</li>
+            <li><strong>ギリシャ語:</strong> 古代から現代まで数千年にわたり記録が途切れることなく残る言語。西洋の哲学、科学、文学、そして学術用語に極めて大きな影響を与えた。</li>
+            <li><strong>ラテン語:</strong> 古代ローマ帝国の公用語であり、フランス語やイタリア語などロマンス諸語の祖先。中世以降もヨーロッパの学問・宗教における共通語として機能し続けた。</li>
+            <li><strong>古ノルド語:</strong> ヴァイキング時代から中世にかけて、主にスカンディナヴィア周辺で話されていた北ゲルマン語。現代のノルウェー語、スウェーデン語、デンマーク語などの直接の祖先。</li>
         </ul>
     `;
     entry.appendChild(explanations);
