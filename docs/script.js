@@ -8,7 +8,7 @@ import { drawTenseLineModel } from "./tense.js";
 import { drawScatterAnimation } from './scatter.js';
 import { drawTransparentAnimation } from './transparent.js';
 import { drawSteepModel } from './steep.js';
-import  { drawPrecedeModel } from './precede.js';
+import { drawPrecedeModel } from './precede.js';
 import { drawEpidemicModel } from './epidemic.js';
 
 let data = [];
@@ -41,6 +41,103 @@ function prependEntry(text = 'number. word') {
     head.textContent = text;
 
     entry.appendChild(head);
+
+    const treeWrapper = document.createElement('div');
+    treeWrapper.style.width = '100%';
+    treeWrapper.innerHTML = `
+        <svg viewBox="0 0 1024 550" style="width: 100%; height: auto; display: block; margin: 15px 0;">
+            <g stroke="currentColor" stroke-width="1.5" fill="none">
+                                <path d="M 500 40 L 200 80" />
+                <path d="M 500 40 L 500 80" />
+                <path d="M 500 40 L 800 160" />
+
+                                <path d="M 200 125 L 200 240" />
+                <path d="M 200 125 L 80 320" />
+
+                                <path d="M 500 125 L 500 160" />
+
+                                <path d="M 800 205 L 800 240" />
+
+                                <path d="M 200 285 L 200 320" />
+
+                                <path d="M 800 285 L 800 320" />
+                <path d="M 800 285 L 940 320" />
+                <path d="M 800 285 L 650 400" />
+
+                                <path d="M 200 365 L 200 400" />
+
+                                <path d="M 800 365 L 800 400" />
+
+                                <path d="M 940 365 L 940 400" />
+
+                                <path d="M 200 445 L 200 480" />
+            </g>
+            <g font-size="14" fill="currentColor" text-anchor="middle" font-family="sans-serif">
+                                <text x="500" y="30" font-weight="bold">印欧祖語</text>
+                
+                                <text x="200" y="100">ゲルマン祖語</text>
+                <text x="200" y="118" font-size="11">（原始ゲルマン語）</text>
+                
+                <text x="500" y="100">古代ギリシャ語</text>
+                <text x="500" y="118" font-size="11">（前9世紀–前6世紀）</text>
+                
+                                <text x="500" y="180">古典ギリシャ語</text>
+                <text x="500" y="198" font-size="11">（前5世紀–前4世紀）</text>
+
+                <text x="800" y="180">古典ラテン語</text>
+                <text x="800" y="198" font-size="11">（前1世紀–3世紀）</text>
+                
+                                <text x="200" y="260">古英語</text>
+                <text x="200" y="278" font-size="11">（約450年–1150年）</text>
+
+                <text x="800" y="260">後期ラテン語</text>
+                <text x="800" y="278" font-size="11">（3世紀–6世紀）</text>
+                
+                                <text x="80" y="340">古ノルド語</text>
+                <text x="80" y="358" font-size="11">（800年–1350年）</text>
+
+                <text x="200" y="340">中英語</text>
+                <text x="200" y="358" font-size="11">（約1150年–1500年）</text>
+
+                <text x="800" y="340">古フランス語</text>
+                <text x="800" y="358" font-size="11">（9世紀–14世紀）</text>
+
+                <text x="940" y="340">中世ラテン語</text>
+                <text x="940" y="358" font-size="11">（7世紀–15世紀）</text>
+                
+                                <text x="200" y="420">近代英語</text>
+                <text x="200" y="438" font-size="11">（約1500年–1700年）</text>
+
+                <text x="650" y="420">イタリア語</text>
+
+                <text x="800" y="420">フランス語</text>
+                <text x="800" y="438" font-size="11">（14世紀–現代）</text>
+
+                <text x="940" y="420">近代ラテン語</text>
+                <text x="940" y="438" font-size="11">（16世紀–現代）</text>
+                
+                                <text x="200" y="500">現代英語</text>
+                <text x="200" y="518" font-size="11">（1700年–現代）</text>
+            </g>
+        </svg>
+    `;
+    entry.appendChild(treeWrapper);
+
+    const explanations = document.createElement('div');
+    explanations.style.margin = '15px 0';
+    explanations.style.lineHeight = '1.6';
+    explanations.style.fontSize = '14px';
+    explanations.innerHTML = `
+        <ul style="list-style-type: disc; padding-left: 20px;">
+            <li><strong>印欧祖語:</strong> ヨーロッパからインドに至る多数の言語の共通の祖先と推定される言語。文字記録はなく、比較言語学を用いて理論的に再建されている。</li>
+            <li><strong>ゲルマン祖語:</strong> 英語、ドイツ語、北欧諸語などゲルマン語派の共通祖先。紀元前1千年紀ごろに話されていたとされ、現在のゲルマン系言語の基礎となっている。</li>
+            <li><strong>ギリシャ語:</strong> 古代から現代まで数千年にわたり記録が途切れることなく残る言語。西洋の哲学、科学、文学、そして学術用語に極めて大きな影響を与えた。</li>
+            <li><strong>ラテン語:</strong> 古代ローマ帝国の公用語であり、フランス語やイタリア語などロマンス諸語の祖先。中世以降もヨーロッパの学問・宗教における共通語として機能し続けた。</li>
+            <li><strong>古ノルド語:</strong> ヴァイキング時代から中世にかけて、主にスカンディナヴィア周辺で話されていた北ゲルマン語。現代のノルウェー語、スウェーデン語、デンマーク語などの直接の祖先。</li>
+        </ul>
+    `;
+    entry.appendChild(explanations);
+
     results.prepend(entry);
 }
 prependEntry();
@@ -61,7 +158,6 @@ clearBtn.addEventListener("click", () => {
     searchBox.focus(); // 検索窓にフォーカスを戻す（次の入力を促す）
     results.innerHTML = "";
     prependEntry();
-
     resetZoom(); // ズームリセット関数を実行
 });
 
@@ -245,9 +341,8 @@ function doSearch() {
             }
             targetPanel.appendChild(sectionDiv);
         });
-        
         results.appendChild(div);
-        
+
         insertSampleImages();
 
         const configs = [
@@ -274,49 +369,45 @@ function doSearch() {
     });
 }
 
-
 function startAnimation(container, drawFunc) {
     if (!container) return;
     drawFunc();
 }
 
-
-/**
- * クラス名に基づいて<img>要素を挿入し、洗練されたアコーディオンにする関数
- */
+/*クラス名に基づいて<img>要素を挿入し、洗練されたアコーディオンにする関数*/
 function insertSampleImages() {
-  const targetElements = document.querySelectorAll('div.sample_image');
+    const targetElements = document.querySelectorAll('div.sample_image');
 
-  if (targetElements.length === 0) {
-    return;
-  }
-
-  targetElements.forEach((el) => {
-    const imageName = el.classList[1];
-
-    if (imageName) {
-      // トリガーとなるspan
-      const trigger = document.createElement('span');
-      trigger.classList.add('accordion-trigger');
-      trigger.textContent = '画像を表示'; // 指定のテキストに変更
-
-      // コンテンツ（画像）を包むspan
-      const content = document.createElement('span');
-      content.classList.add('accordion-content');
-
-      const img = document.createElement('img');
-      img.src = `./sample_images/${imageName}.png`;
-      img.alt = imageName;
-      
-      content.appendChild(img);
-      el.appendChild(trigger);
-      el.appendChild(content);
-
-      trigger.addEventListener('click', () => {
-        el.classList.toggle('is-active');
-      });
+    if (targetElements.length === 0) {
+        return;
     }
-  });
+
+    targetElements.forEach((el) => {
+        const imageName = el.classList[1];
+
+        if (imageName) {
+            // トリガーとなるspan
+            const trigger = document.createElement('span');
+            trigger.classList.add('accordion-trigger');
+            trigger.textContent = '画像を表示'; // 指定のテキストに変更
+
+            // コンテンツ（画像）を包むspan
+            const content = document.createElement('span');
+            content.classList.add('accordion-content');
+
+            const img = document.createElement('img');
+            img.src = `./sample_images/${imageName}.png`;
+            img.alt = imageName;
+
+            content.appendChild(img);
+            el.appendChild(trigger);
+            el.appendChild(content);
+
+            trigger.addEventListener('click', () => {
+                el.classList.toggle('is-active');
+            });
+        }
+    });
 }
 
 
