@@ -1,4 +1,5 @@
 import { THREE } from './three.js';
+import { gsap } from './gsap.js'; // 💡 GSAPを追加
 
 export function drawArcticModel() {
     const container = document.querySelector('.arctic');
@@ -210,28 +211,112 @@ export function drawArcticModel() {
             z-index: 50; display: flex; gap: 15px; width: 100%; justify-content: center;
         `;
 
+        // 💡 GSAPアニメーション用に position と overflow を追加
         const buttonStyles = `
             width: 25%; min-width: 100px; max-width: 160px; padding: 12px 0;
             background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.3);
             border-radius: 30px; color: white; cursor: pointer; font-size: 14px; font-weight: bold;
             backdrop-filter: blur(5px); transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
             box-sizing: border-box; text-align: center; letter-spacing: 1px;
+            position: relative; overflow: hidden;
         `;
 
         const toggleBtn = document.createElement('button');
-        toggleBtn.textContent = 'Twinkling';
         toggleBtn.style.cssText = buttonStyles;
+
+        // 💡 スライドアニメーション用に内部構造を作成
+        const dummy = document.createElement('span');
+        dummy.textContent = 'Twinkling';
+        dummy.style.visibility = 'hidden';
+        toggleBtn.appendChild(dummy);
+        
+        const activeText = document.createElement('span');
+        activeText.className = 'active-text';
+        activeText.textContent = 'Twinkling';
+        activeText.style.position = 'absolute';
+        activeText.style.left = '0';
+        activeText.style.width = '100%';
+        activeText.style.top = '50%';
+        activeText.style.transform = 'translateY(-50%)';
+        toggleBtn.appendChild(activeText);
+
+        // 💡 テキストスライドとボタンスタイルの更新を行う関数
+        const updateToggleVisuals = (targetText, isActive) => {
+            const currentSpan = toggleBtn.querySelector('.active-text');
+            
+            if (currentSpan && currentSpan.textContent !== targetText) {
+                currentSpan.classList.remove('active-text');
+                
+                const newSpan = document.createElement('span');
+                newSpan.className = 'active-text';
+                newSpan.textContent = targetText;
+                newSpan.style.position = 'absolute';
+                newSpan.style.left = '0';
+                newSpan.style.width = '100%';
+                newSpan.style.top = '50%';
+                
+                // 新しいテキストを下から待機させる
+                gsap.set(newSpan, { yPercent: -50, y: 20, opacity: 0 });
+                toggleBtn.appendChild(newSpan);
+                
+                // 現在のテキストを上へフェードアウト
+                gsap.to(currentSpan, { 
+                    yPercent: -50, y: -20, opacity: 0, duration: 0.3, ease: "power2.inOut", 
+                    onComplete: () => currentSpan.remove() 
+                });
+                // 新しいテキストを下から中央へフェードイン
+                gsap.to(newSpan, { 
+                    yPercent: -50, y: 0, opacity: 1, duration: 0.3, ease: "power2.inOut" 
+                });
+            }
+
+            if (isActive) {
+                toggleBtn.style.background = 'rgba(255, 255, 255, 0.4)';
+                toggleBtn.style.borderColor = 'rgba(255, 255, 255, 1)';
+            } else {
+                toggleBtn.style.background = 'rgba(255, 255, 255, 0.1)';
+                toggleBtn.style.borderColor = 'rgba(255, 255, 255, 0.3)';
+            }
+        };
+
         toggleBtn.addEventListener('click', () => {
             state.isTwinklingEnabled = !state.isTwinklingEnabled;
-            toggleBtn.textContent = state.isTwinklingEnabled ? 'STOP' : 'Twinkling';
+            updateToggleVisuals(state.isTwinklingEnabled ? 'STOP' : 'Twinkling', state.isTwinklingEnabled);
+        });
+
+        // Toggleボタンのホバーエフェクト
+        toggleBtn.addEventListener('mouseover', () => {
+            if (!state.isTwinklingEnabled) {
+                toggleBtn.style.background = 'rgba(255, 255, 255, 0.2)';
+                toggleBtn.style.borderColor = 'rgba(255, 255, 255, 0.8)';
+            }
+        });
+        toggleBtn.addEventListener('mouseout', () => {
+            if (!state.isTwinklingEnabled) {
+                toggleBtn.style.background = 'rgba(255, 255, 255, 0.1)';
+                toggleBtn.style.borderColor = 'rgba(255, 255, 255, 0.3)';
+            }
         });
 
         const resetBtn = document.createElement('button');
-        resetBtn.textContent = '↻ Reset';
+        resetBtn.textContent = 'Reset';
         resetBtn.style.cssText = buttonStyles;
         resetBtn.addEventListener('click', () => {
-            state.isTwinklingEnabled = false;
-            toggleBtn.textContent = 'Twinkling';
+            if (state.isTwinklingEnabled) {
+                state.isTwinklingEnabled = false;
+                // 💡 リセット時もアニメーションしてTwinklingに戻す
+                updateToggleVisuals('Twinkling', false);
+            }
+        });
+
+        // Resetボタンのホバーエフェクト（Toggleに合わせた統一感のため追加）
+        resetBtn.addEventListener('mouseover', () => {
+            resetBtn.style.background = 'rgba(255, 255, 255, 0.2)';
+            resetBtn.style.borderColor = 'rgba(255, 255, 255, 0.8)';
+        });
+        resetBtn.addEventListener('mouseout', () => {
+            resetBtn.style.background = 'rgba(255, 255, 255, 0.1)';
+            resetBtn.style.borderColor = 'rgba(255, 255, 255, 0.3)';
         });
 
         buttonContainer.appendChild(toggleBtn);

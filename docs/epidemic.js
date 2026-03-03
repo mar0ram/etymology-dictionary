@@ -10,32 +10,6 @@ export function drawEpidemicModel() {
     const oldControls = container.querySelector(".dimension-controls");
     if (oldControls) oldControls.remove();
 
-    // 案C: パルスアニメーション用のCSSを動的に追加
-    if (!document.getElementById('epidemic-button-styles')) {
-        const style = document.createElement('style');
-        style.id = 'epidemic-button-styles';
-        style.textContent = `
-            @keyframes epidemic-pulse {
-                0% {
-                    box-shadow: 0 0 5px rgba(0, 255, 255, 0.2), inset 0px 3px 8px rgba(0, 0, 0, 0.4);
-                    background: rgba(255, 255, 255, 0.2);
-                    border-color: rgba(255, 255, 255, 0.5);
-                }
-                50% {
-                    box-shadow: 0 0 20px rgba(0, 255, 255, 0.6), inset 0px 3px 8px rgba(0, 0, 0, 0.6);
-                    background: rgba(255, 255, 255, 0.4);
-                    border-color: rgba(255, 255, 255, 1);
-                }
-                100% {
-                    box-shadow: 0 0 5px rgba(0, 255, 255, 0.2), inset 0px 3px 8px rgba(0, 0, 0, 0.4);
-                    background: rgba(255, 255, 255, 0.2);
-                    border-color: rgba(255, 255, 255, 0.5);
-                }
-            }
-        `;
-        document.head.appendChild(style);
-    }
-
     container.style.backgroundColor = '#02040a'; 
     container.style.overflow = "hidden";
     container.style.position = "relative";
@@ -127,18 +101,50 @@ export function drawEpidemicModel() {
             border-radius: 30px; color: white; cursor: pointer; font-size: 14px; font-weight: bold;
             backdrop-filter: blur(5px); transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
             box-sizing: border-box; text-align: center; letter-spacing: 1px;
+            position: relative; overflow: hidden;
         `;
 
-        // ボタンのON/OFF状態の見た目を一括で更新する関数
+        // ボタンのON/OFF状態の見た目とテキストを一括で更新する関数
         const updateButtonVisuals = () => {
             const btns = buttonContainer.querySelectorAll('button');
             btns.forEach(b => {
+                const targetText = (b.dataset.type === currentType) ? 'STOP' : b.dataset.originalLabel;
+                const activeSpan = b.querySelector('.active-text');
+                
+                // テキストが変更される場合のみスライドアニメーションを実行
+                if (activeSpan && activeSpan.textContent !== targetText) {
+                    activeSpan.classList.remove('active-text'); // 次の検索に引っかからないようにクラスを外す
+                    
+                    const newSpan = document.createElement('span');
+                    newSpan.className = 'active-text';
+                    newSpan.textContent = targetText;
+                    newSpan.style.position = 'absolute';
+                    newSpan.style.left = '0';
+                    newSpan.style.width = '100%';
+                    newSpan.style.top = '50%';
+                    
+                    // 新しいテキストを下から待機させる
+                    gsap.set(newSpan, { yPercent: -50, y: 20, opacity: 0 });
+                    b.appendChild(newSpan);
+                    
+                    // 現在のテキストを上へフェードアウトしながらスライド
+                    gsap.to(activeSpan, { 
+                        yPercent: -50, y: -20, opacity: 0, duration: 0.3, ease: "power2.inOut", 
+                        onComplete: () => activeSpan.remove() 
+                    });
+                    // 新しいテキストを下から中央へフェードインしながらスライド
+                    gsap.to(newSpan, { 
+                        yPercent: -50, y: 0, opacity: 1, duration: 0.3, ease: "power2.inOut" 
+                    });
+                }
+
                 if (b.dataset.type === currentType) {
-                    // ON（アクティブ）状態：パルスアニメーションを適用
-                    b.style.animation = 'epidemic-pulse 2s infinite ease-in-out';
+                    // ON（アクティブ）状態：明るめの背景色を固定
+                    b.style.background = 'rgba(255, 255, 255, 0.4)';
+                    b.style.borderColor = 'rgba(255, 255, 255, 1)';
+                    b.style.boxShadow = 'none';
                 } else {
-                    // OFF状態：通常デザインに戻し、アニメーションを解除
-                    b.style.animation = 'none';
+                    // OFF状態：通常デザインに戻す
                     b.style.background = 'rgba(255, 255, 255, 0.1)';
                     b.style.borderColor = 'rgba(255, 255, 255, 0.3)';
                     b.style.boxShadow = 'none';
@@ -148,9 +154,27 @@ export function drawEpidemicModel() {
 
         const createBtn = (label, type) => {
             const btn = document.createElement('button');
-            btn.textContent = label;
             btn.style.cssText = buttonStyles;
             btn.dataset.type = type; 
+            btn.dataset.originalLabel = label; // 元のテキストを記憶させておく
+            
+            // スライドアニメーション用に内部構造を作成
+            // ボタンの高さを維持するための不可視のダミーテキスト
+            const dummy = document.createElement('span');
+            dummy.textContent = label;
+            dummy.style.visibility = 'hidden';
+            btn.appendChild(dummy);
+            
+            // 実際に表示・アニメーションするテキスト（初期状態）
+            const activeText = document.createElement('span');
+            activeText.className = 'active-text';
+            activeText.textContent = label;
+            activeText.style.position = 'absolute';
+            activeText.style.left = '0';
+            activeText.style.width = '100%';
+            activeText.style.top = '50%';
+            activeText.style.transform = 'translateY(-50%)';
+            btn.appendChild(activeText);
             
             btn.addEventListener('click', () => {
                 // すでにアクティブなボタン（偶数回目）が押された場合は取り消し

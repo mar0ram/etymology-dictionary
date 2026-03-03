@@ -1,4 +1,5 @@
 import { THREE } from './three.js';
+import { gsap } from './gsap.js'; // 💡 GSAPを追加
 
 export function drawFiberModel() {
     const container = document.querySelector(".fiber");
@@ -173,35 +174,129 @@ export function drawFiberModel() {
             z-index: 50; display: flex; gap: 15px; width: 100%; justify-content: center;
         `;
 
+        // 💡 GSAPアニメーション用に position と overflow を追加
         const buttonStyles = `
             width: 25%; min-width: 100px; max-width: 160px; padding: 12px 0;
             background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.3);
             border-radius: 30px; color: white; cursor: pointer; font-size: 14px; font-weight: bold;
             backdrop-filter: blur(5px); transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
             box-sizing: border-box; text-align: center; letter-spacing: 1px;
+            position: relative; overflow: hidden;
         `;
 
+        // 💡 テキストスライドアニメーション関数
+        const animateButtonText = (btnElement, newText) => {
+            const currentSpan = btnElement.querySelector('.active-text');
+            if (currentSpan && currentSpan.textContent !== newText) {
+                currentSpan.classList.remove('active-text');
+                
+                const newSpan = document.createElement('span');
+                newSpan.className = 'active-text';
+                newSpan.textContent = newText;
+                newSpan.style.position = 'absolute';
+                newSpan.style.left = '0';
+                newSpan.style.width = '100%';
+                newSpan.style.top = '50%';
+                
+                // 新しいテキストを下から待機させる
+                gsap.set(newSpan, { yPercent: -50, y: 20, opacity: 0 });
+                btnElement.appendChild(newSpan);
+                
+                // 現在のテキストを上へフェードアウト
+                gsap.to(currentSpan, { 
+                    yPercent: -50, y: -20, opacity: 0, duration: 0.3, ease: "power2.inOut", 
+                    onComplete: () => currentSpan.remove() 
+                });
+                // 新しいテキストを下から中央へフェードイン
+                gsap.to(newSpan, { 
+                    yPercent: -50, y: 0, opacity: 1, duration: 0.3, ease: "power2.inOut" 
+                });
+            }
+        };
+
+        // --- PLAY/PAUSEボタン ---
         const playBtn = document.createElement('button');
-        playBtn.textContent = 'PLAY';
         playBtn.style.cssText = buttonStyles;
+        
+        // 内部構造を作成
+        const playDummy = document.createElement('span');
+        playDummy.textContent = 'PLAY';
+        playDummy.style.visibility = 'hidden';
+        playBtn.appendChild(playDummy);
+        
+        const playActive = document.createElement('span');
+        playActive.className = 'active-text';
+        playActive.textContent = 'PLAY';
+        playActive.style.position = 'absolute';
+        playActive.style.left = '0';
+        playActive.style.width = '100%';
+        playActive.style.top = '50%';
+        playActive.style.transform = 'translateY(-50%)';
+        playBtn.appendChild(playActive);
+
         playBtn.addEventListener('click', () => {
             if (!isPlaying) {
                 isPlaying = true;
-                playBtn.textContent = 'PAUSE';
+                animateButtonText(playBtn, 'PAUSE');
+                playBtn.style.background = 'rgba(255, 255, 255, 0.4)';
+                playBtn.style.borderColor = 'rgba(255, 255, 255, 1)';
             } else {
                 isPlaying = false;
                 pausedTime += (Date.now() - animationStartTime) / 1000;
                 animationStartTime = null;
-                playBtn.textContent = 'PLAY';
+                animateButtonText(playBtn, 'PLAY');
+                playBtn.style.background = 'rgba(255, 255, 255, 0.1)';
+                playBtn.style.borderColor = 'rgba(255, 255, 255, 0.3)';
             }
         });
 
+        playBtn.addEventListener('mouseover', () => {
+            if (!isPlaying) {
+                playBtn.style.background = 'rgba(255, 255, 255, 0.2)';
+                playBtn.style.borderColor = 'rgba(255, 255, 255, 0.8)';
+            }
+        });
+        playBtn.addEventListener('mouseout', () => {
+            if (!isPlaying) {
+                playBtn.style.background = 'rgba(255, 255, 255, 0.1)';
+                playBtn.style.borderColor = 'rgba(255, 255, 255, 0.3)';
+            }
+        });
+
+        // --- RESETボタン ---
         const resetBtn = document.createElement('button');
-        resetBtn.textContent = 'RESET';
         resetBtn.style.cssText = buttonStyles;
+        
+        // 内部構造を作成
+        const resetDummy = document.createElement('span');
+        resetDummy.textContent = 'RESET';
+        resetDummy.style.visibility = 'hidden';
+        resetBtn.appendChild(resetDummy);
+        
+        const resetActive = document.createElement('span');
+        resetActive.className = 'active-text';
+        resetActive.textContent = 'RESET';
+        resetActive.style.position = 'absolute';
+        resetActive.style.left = '0';
+        resetActive.style.width = '100%';
+        resetActive.style.top = '50%';
+        resetActive.style.transform = 'translateY(-50%)';
+        resetBtn.appendChild(resetActive);
+
         resetBtn.addEventListener('click', () => {
             resetAnimation();
-            playBtn.textContent = 'PLAY';
+            animateButtonText(playBtn, 'PLAY'); // テキストをPLAYに戻す
+            playBtn.style.background = 'rgba(255, 255, 255, 0.1)';
+            playBtn.style.borderColor = 'rgba(255, 255, 255, 0.3)';
+        });
+
+        resetBtn.addEventListener('mouseover', () => {
+            resetBtn.style.background = 'rgba(255, 255, 255, 0.2)';
+            resetBtn.style.borderColor = 'rgba(255, 255, 255, 0.8)';
+        });
+        resetBtn.addEventListener('mouseout', () => {
+            resetBtn.style.background = 'rgba(255, 255, 255, 0.1)';
+            resetBtn.style.borderColor = 'rgba(255, 255, 255, 0.3)';
         });
 
         buttonContainer.appendChild(playBtn);

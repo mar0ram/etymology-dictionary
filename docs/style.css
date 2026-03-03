@@ -240,6 +240,33 @@ body {
     line-height: 0;
 }
 
+/* 音声アイコンを囲む外枠 */
+.audio_box {
+    vertical-align: middle; /* 縦方向の中央揃え */
+}
+
+/* スマホでのタップに最適化したボタンデザイン */
+.audio_button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 25px;      /* 指でタップしやすいサイズに拡大 */
+    height: 25px;
+    border-radius: 50%; /* 完全な円形 */
+    background-color: #ffffff; /* 清潔感のある白背景 */
+    border: 1px solid rgba(0, 7, 209, 0.15); /* アイコンの色に合わせた淡い枠線 */
+    box-shadow: 0 2px 6px rgba(0, 7, 209, 0.15); /* ふんわりとした上品な影 */
+    -webkit-tap-highlight-color: transparent; /* スマホ特有のタップ時のグレー/青の半透明枠を消す（重要） */
+    transition: transform 0.1s ease, box-shadow 0.1s ease, background-color 0.1s ease;
+}
+
+/* タップした瞬間のフィードバック（スマホではこれが最重要） */
+.audio_button:active {
+    transform: scale(0.92); /* 物理ボタンのようにスッと沈み込む */
+    box-shadow: 0 1px 2px rgba(0, 7, 209, 0.05); /* 押し込まれたように影を小さくする */
+    background-color: #bfd0fd; /* タップした瞬間にほんのり青く光る */
+}
+
 .arrow {
     display: inline-block;
     margin: 0 6px;
@@ -338,10 +365,10 @@ body {
         /* --- 開いた時のアイコン（×） --- */
         /* 2本の線をそれぞれ45度ずつ回転させる */
         .accordion-trigger::before {
-            transform: translateY(-50%) rotate(45deg);
+            transform: translateY(-50%) rotate(315deg);
         }
         .accordion-trigger::after {
-            transform: translateY(-50%) rotate(135deg); /* 90 + 45 */
+            transform: translateY(-50%) rotate(405deg); /* 90 + 45 */
         }
 
         .accordion-content {

@@ -32,19 +32,19 @@ const clearBtn = document.getElementById("clearBtn"); // 💡 クリアボタン
 const viewportMeta = document.querySelector("meta[name=viewport]");
 
 function prependEntry(text = '現代英語に関わるさまざまな言語') {
-    const entry = document.createElement('div');
-    entry.className = 'entry';
+    const entry = document.createElement('div');
+    entry.className = 'entry';
 
-    const head = document.createElement('div');
-    head.className = 'head';
-    head.id = 'head';
-    head.textContent = text;
+    const head = document.createElement('div');
+    head.className = 'head';
+    head.id = 'head';
+    head.textContent = text;
 
-    entry.appendChild(head);
+    entry.appendChild(head);
 
-    const treeWrapper = document.createElement('div');
-    treeWrapper.style.width = '100%';
-    treeWrapper.innerHTML = `
+    const treeWrapper = document.createElement('div');
+    treeWrapper.style.width = '100%';
+    treeWrapper.innerHTML = `
         <svg viewBox="0 0 960 760" style="width: 100%; height: auto; display: block; margin: 15px 0;">
             <g stroke="currentColor" stroke-width="1.5" fill="none">
                                 <path d="M 40 380 L 160 380" />
@@ -114,13 +114,13 @@ function prependEntry(text = '現代英語に関わるさまざまな言語') {
             </g>
         </svg>
     `;
-    entry.appendChild(treeWrapper);
+    entry.appendChild(treeWrapper);
 
-    const explanations = document.createElement('div');
-    explanations.style.margin = '15px 0';
-    explanations.style.lineHeight = '1.6';
-    explanations.style.fontSize = '14px';
-    explanations.innerHTML = `
+    const explanations = document.createElement('div');
+    explanations.style.margin = '15px 0';
+    explanations.style.lineHeight = '1.6';
+    explanations.style.fontSize = '14px';
+    explanations.innerHTML = `
         <ul style="list-style-type: disc; padding-left: 17px;">
             <li><strong>印欧祖語:</strong> ヨーロッパからインドに至る多数の言語の共通の祖先と推定される言語。文字記録はなく、比較言語学を用いて理論的に再建されている。</li>
             <li><strong>ゲルマン祖語:</strong> 英語、ドイツ語、北欧諸語などゲルマン語派の共通祖先。紀元前1千年紀ごろに話されていたとされ、現在のゲルマン系言語の基礎となっている。</li>
@@ -129,9 +129,9 @@ function prependEntry(text = '現代英語に関わるさまざまな言語') {
             <li><strong>古ノルド語:</strong> ヴァイキング時代から中世にかけて、主にスカンディナヴィア周辺で話されていた北ゲルマン語。現代のノルウェー語、スウェーデン語、デンマーク語などの直接の祖先。</li>
         </ul>
     `;
-    entry.appendChild(explanations);
+    entry.appendChild(explanations);
 
-    results.prepend(entry);
+    results.prepend(entry);
 }
 prependEntry();
 
@@ -318,18 +318,14 @@ function doSearch() {
                     if (p) contentDiv.innerHTML += `<div class="p">${p}</div>`;
                     i++;
                 }
-            } else if (hKey.startsWith("h6")) {
-                let i = 1;
-                while (item[`period${i}`] || item[`meaning${i}`]) {
-                    const per = nl2br(item[`period${i}`] || "");
-                    const mean = nl2br(item[`meaning${i}`] || "");
-                    if (per || mean)
-                        contentDiv.innerHTML += `<div class="period-meaning"><span class="period">${per}</span><span class="meaning">${mean}</span></div>`;
-                    i++;
-                }
             } else {
                 childKeys.forEach(k => {
-                    contentDiv.innerHTML += `<div>${nl2br(item[k])}</div>`;
+                    let text = item[k];
+                    // 💡 「i2」の場合のみ、<b>と<span class="ml">の間にdiv要素（プレースホルダー）を挿入
+                    if (k === "i2") {
+                        text = text.replace(/<\/b>(\r?\n)?<span class="ml">/, `</b><div id="audio-box-${item.num}" class="audio_box" style="display:inline-block; margin: 0 10px;"></div>$1<span class="ml">`);
+                    }
+                    contentDiv.innerHTML += `<div>${nl2br(text)}</div>`;
                 });
             }
             targetPanel.appendChild(sectionDiv);
@@ -359,7 +355,89 @@ function doSearch() {
                 startAnimation(target, config.func);
             }
         });
+
+        // 💡 最後に非同期で音声をAPIから取得し、先ほどのdiv内にアイコンを生成
+        fetchAndSetAudio(item.word, item.num);
     });
+}
+
+// 💡 Wikimedia Commons APIから音声を取得し、該当のdiv要素内にアイコンを描画する関数
+async function fetchAndSetAudio(word, num) {
+    try {
+        const safeWord = word.replace(/ /g, '_');
+
+        // 検索するファイル名の候補（アメリカ英語を優先、次に一般英語、それぞれoggとmp3）
+        const titles = `File:En-us-${safeWord}.ogg|File:En-us-${safeWord}.mp3|File:En-${safeWord}.ogg|File:En-${safeWord}.mp3`;
+        const apiUrl = `https://commons.wikimedia.org/w/api.php?action=query&titles=${encodeURIComponent(titles)}&prop=imageinfo&iiprop=url&format=json&origin=*`;
+
+        const response = await fetch(apiUrl);
+        if (!response.ok) return;
+
+        const data = await response.json();
+        const pages = data.query.pages;
+        let audioUrl = "";
+
+        // APIから返ってきたファイルリストの中から、実在する音声URLを抽出
+        for (const pageId in pages) {
+            // "-1" は「ファイルが存在しない」ことを示す
+            if (pageId !== "-1" && pages[pageId].imageinfo && pages[pageId].imageinfo.length > 0) {
+                const url = pages[pageId].imageinfo[0].url;
+
+                // 「-us-」が含まれる米発音を優先してセット
+                if (url.toLowerCase().includes('-us-')) {
+                    audioUrl = url;
+                    break;
+                } else if (!audioUrl) {
+                    audioUrl = url;
+                }
+            }
+        }
+
+        // 音声データが見つかった場合のみアイコンを表示
+        if (audioUrl) {
+            const audioBox = document.getElementById(`audio-box-${num}`);
+            if (audioBox) {
+                // 連打防止のため、onclick属性を外し、JS側でイベントリスナーを設定する形に変更
+                audioBox.innerHTML = `<span class="audio_button" style="cursor:pointer;"><i class="fa-solid fa-volume-high fa-rotate-by fa-sm" style="color: rgb(0, 7, 209); --fa-rotate-angle: 340deg;"></i></span>`;
+
+                const btn = audioBox.querySelector('.audio_button');
+                
+                const audio = new Audio(audioUrl);
+                audio.preload = 'auto';
+
+                btn.addEventListener('click', function () {
+                    // すでに無効化されている（再生中）場合は処理を抜ける
+                    if (btn.style.pointerEvents === 'none') return;
+
+                    // タップを無効化し、少し半透明にして再生中であることを視覚的に示す
+                    btn.style.pointerEvents = 'none';
+                    btn.style.opacity = '0.5';
+
+                    audio.currentTime = 0;
+
+                    // 再生終了時にタップを有効化して元の濃さに戻す
+                    audio.onended = () => {
+                        btn.style.pointerEvents = 'auto';
+                        btn.style.opacity = '1';
+                    };
+
+                    // エラー時も元に戻す（無効化されっぱなしを防ぐ）
+                    audio.onerror = () => {
+                        btn.style.pointerEvents = 'auto';
+                        btn.style.opacity = '1';
+                    };
+
+                    // 再生開始（失敗した場合も元に戻す）
+                    audio.play().catch(() => {
+                        btn.style.pointerEvents = 'auto';
+                        btn.style.opacity = '1';
+                    });
+                });
+            }
+        }
+    } catch (error) {
+        // 音声がない場合やエラー時はプレースホルダーのdivは空のまま（アイコン非表示）
+    }
 }
 
 function startAnimation(container, drawFunc) {
