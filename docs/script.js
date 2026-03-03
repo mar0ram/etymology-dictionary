@@ -86,12 +86,12 @@ function prependEntry(text = '現代英語に関わるさまざまな言語') {
                     <text x="880" y="172">現代英語</text>
                     <text x="880" y="472">近代ラテン語</text>
                 </g>
-                <g font-size="17" fill="#777777">
+                <g font-size="17" fill="#a0a0a0">
                     <text x="240" y="206">（原始ゲルマン語）</text>
                     <text x="240" y="406">前9c.～前4c.</text>
                     <text x="240" y="606">前2千年紀～前1千年紀</text>
                     
-                    <text x="400" y="96">5c.～9c.</text>
+                    <text x="400" y="106">5c.～9c.</text>
                     <text x="400" y="206">約450年～1100年</text>
                     <text x="400" y="306">700年～1350年</text>
                     <text x="400" y="406">前5c.～前4c.</text>
@@ -106,7 +106,7 @@ function prependEntry(text = '現代英語に関わるさまざまな言語') {
                     <text x="720" y="206">約1500年～1900年</text>
                     <text x="720" y="506">7c.～15c.</text>
                     <text x="720" y="606">14c.～現代</text>
-                    <text x="720" y="696">14c.～現代</text>
+                    <text x="720" y="706">14c.～現代</text>
 
                     <text x="880" y="206">1900年～現代</text>
                     <text x="880" y="506">16c.～現代</text>
