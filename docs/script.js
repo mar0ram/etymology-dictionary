@@ -121,7 +121,7 @@ function prependEntry(text = '現代英語に関わるさまざまな言語') {
     explanations.style.lineHeight = '1.6';
     explanations.style.fontSize = '14px';
     explanations.innerHTML = `
-        <ul style="list-style-type: disc; padding-left: 20px;">
+        <ul style="list-style-type: disc; padding-left: 17px;">
             <li><strong>印欧祖語:</strong> ヨーロッパからインドに至る多数の言語の共通の祖先と推定される言語。文字記録はなく、比較言語学を用いて理論的に再建されている。</li>
             <li><strong>ゲルマン祖語:</strong> 英語、ドイツ語、北欧諸語などゲルマン語派の共通祖先。紀元前1千年紀ごろに話されていたとされ、現在のゲルマン系言語の基礎となっている。</li>
             <li><strong>ギリシャ語:</strong> 古代から現代まで数千年にわたり記録が途切れることなく残る言語。西洋の哲学、科学、文学、そして学術用語に極めて大きな影響を与えた。</li>
