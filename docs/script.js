@@ -365,9 +365,8 @@ function doSearch() {
 // ※呼び出し元を fetchAndSetAudio(word, num, partOfSpeech) となるよう調整してください
 async function fetchAndSetAudio(word, num, partOfSpeech = "") {
     try {
-        // ★取得したご自身のAPIキーに書き換えてください
-        const API_KEY = "74a8b9a7-6973-4b74-b19d-1425e02f3912";
-        const apiUrl = `https://www.dictionaryapi.com/api/v3/references/collegiate/json/${encodeURIComponent(word)}?key=${API_KEY}`;
+        const k = "74a8b9a7-6973-4b74-b19d-1425e02f3912";
+        const apiUrl = `https://www.dictionaryapi.com/api/v3/references/collegiate/json/${encodeURIComponent(word)}?key=${k}`;
 
         const response = await fetch(apiUrl);
         if (!response.ok) return;
