@@ -14,6 +14,11 @@ os.makedirs("docs", exist_ok=True)
 df = pd.read_excel(EXCEL_PATH)
 
 # 2. JSON 用データ生成
+# 💡 num, word, partOfSpeech が JSON の先頭に並ぶように列順を調整
+first_cols = [c for c in ["num", "word", "partOfSpeech"] if c in df.columns]
+other_cols = [c for c in df.columns if c not in first_cols]
+df = df[first_cols + other_cols]
+
 # セルが空の場合は空文字にする
 data_list = df.fillna("").to_dict(orient="records")
 with open(JSON_OUT, "w", encoding="utf-8") as f:

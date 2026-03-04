@@ -45,75 +45,75 @@ function prependEntry(text = '現代英語に関わるさまざまな言語') {
     const treeWrapper = document.createElement('div');
     treeWrapper.style.width = '100%';
     treeWrapper.innerHTML = `
-        <svg viewBox="0 0 960 760" style="width: 100%; height: auto; display: block; margin: 15px 0;">
-            <g stroke="currentColor" stroke-width="1.5" fill="none">
-                                <path d="M 40 380 L 160 380" />
-                <path d="M 160 180 L 160 580" />
-                
-                                <path d="M 160 180 L 320 180" />
-                <path d="M 320 80 L 320 280" />
-                <path d="M 320 80 L 940 80" />                 <path d="M 320 180 L 940 180" />                 <path d="M 320 280 L 460 280" />                                 <path d="M 160 380 L 620 380" />                                 <path d="M 160 580 L 320 580" />
-                <path d="M 320 480 L 320 580" />
-                <path d="M 320 480 L 940 480" />                 <path d="M 320 580 L 780 580" />                 
-                                <path d="M 480 580 L 480 680" />
-                <path d="M 480 680 L 780 680" />             </g>
-            <g fill="currentColor" text-anchor="middle" font-family="sans-serif">
-                                <g font-size="20">
-                    <text x="80" y="372" font-weight="bold">印欧祖語</text>
-                    
-                    <text x="240" y="172">ゲルマン祖語</text>
-                    <text x="240" y="372">古代ギリシャ語</text>
-                    <text x="240" y="572">原始イタリック語</text>
-                    
-                    <text x="400" y="72">フランク語</text>
-                    <text x="400" y="172">古英語</text>
-                    <text x="400" y="272">古ノルド語</text>
-                    <text x="400" y="372">古典ギリシャ語</text>
-                    <text x="400" y="472">古典ラテン語</text>
-                    <text x="400" y="572">俗ラテン語</text>
+        <svg viewBox="0 0 960 760" style="width: 100%; height: auto; display: block; margin: 15px 0;">
+            <g stroke="currentColor" stroke-width="1.5" fill="none">
+                                <path d="M 40 380 L 160 380" />
+                <path d="M 160 180 L 160 580" />
+                
+                                <path d="M 160 180 L 320 180" />
+                <path d="M 320 80 L 320 280" />
+                <path d="M 320 80 L 940 80" />                <path d="M 320 180 L 940 180" />                <path d="M 320 280 L 460 280" />                                <path d="M 160 380 L 620 380" />                                <path d="M 160 580 L 320 580" />
+                <path d="M 320 480 L 320 580" />
+                <path d="M 320 480 L 940 480" />                <path d="M 320 580 L 780 580" />                
+                                <path d="M 480 580 L 480 680" />
+                <path d="M 480 680 L 780 680" />            </g>
+            <g fill="currentColor" text-anchor="middle" font-family="sans-serif">
+                                <g font-size="20">
+                    <text x="80" y="372" font-weight="bold">印欧祖語</text>
+                    
+                    <text x="240" y="172">ゲルマン祖語</text>
+                    <text x="240" y="372">古代ギリシャ語</text>
+                    <text x="240" y="572">原始イタリック語</text>
+                    
+                    <text x="400" y="72">フランク語</text>
+                    <text x="400" y="172">古英語</text>
+                    <text x="400" y="272">古ノルド語</text>
+                    <text x="400" y="372">古典ギリシャ語</text>
+                    <text x="400" y="472">古典ラテン語</text>
+                    <text x="400" y="572">俗ラテン語</text>
 
-                    <text x="560" y="172">中英語</text>
-                    <text x="560" y="372">中世ギリシャ語</text>
-                    <text x="560" y="472">後期ラテン語</text>
-                    <text x="560" y="572">古フランス語</text>
+                    <text x="560" y="172">中英語</text>
+                    <text x="560" y="372">中世ギリシャ語</text>
+                    <text x="560" y="472">後期ラテン語</text>
+                    <text x="560" y="572">古フランス語</text>
 
-                    <text x="720" y="172">近代英語</text>
-                    <text x="720" y="472">中世ラテン語</text>
-                    <text x="720" y="572">フランス語</text>
-                    <text x="720" y="672">イタリア語</text>
+                    <text x="720" y="172">近代英語</text>
+                    <text x="720" y="472">中世ラテン語</text>
+                    <text x="720" y="572">フランス語</text>
+                    <text x="720" y="672">イタリア語</text>
 
-                    <text x="880" y="72">オランダ語</text>
-                    <text x="880" y="172">現代英語</text>
-                    <text x="880" y="472">近代ラテン語</text>
-                </g>
-                <g font-size="17" fill="#a0a0a0">
-                    <text x="240" y="206">（原始ゲルマン語）</text>
-                    <text x="240" y="406">前9c.～前4c.</text>
-                    <text x="240" y="606">前2千年紀～前1千年紀</text>
-                    
-                    <text x="400" y="106">5c.～9c.</text>
-                    <text x="400" y="206">約450年～1100年</text>
-                    <text x="400" y="306">700年～1350年</text>
-                    <text x="400" y="406">前5c.～前4c.</text>
-                    <text x="400" y="506">前1c.～3c.</text>
-                    <text x="400" y="606">前1c.～9c.</text>
+                    <text x="880" y="72">オランダ語</text>
+                    <text x="880" y="172">現代英語</text>
+                    <text x="880" y="472">近代ラテン語</text>
+                </g>
+                <g font-size="17" fill="#a0a0a0">
+                    <text x="240" y="206">（原始ゲルマン語）</text>
+                    <text x="240" y="406">前9c.～前4c.</text>
+                    <text x="240" y="606">前2千年紀～前1千年紀</text>
+                    
+                    <text x="400" y="106">5c.～9c.</text>
+                    <text x="400" y="206">約450年～1100年</text>
+                    <text x="400" y="306">700年～1350年</text>
+                    <text x="400" y="406">前5c.～前4c.</text>
+                    <text x="400" y="506">前1c.～3c.</text>
+                    <text x="400" y="606">前1c.～9c.</text>
 
-                    <text x="560" y="206">約1100年～1500年</text>
-                    <text x="560" y="406">4c.～15c.</text>
-                    <text x="560" y="506">3c.～6c.</text>
-                    <text x="560" y="606">9c.～14c.</text>
+                    <text x="560" y="206">約1100年～1500年</text>
+                    <text x="560" y="406">4c.～15c.</text>
+                    <text x="560" y="506">3c.～6c.</text>
+                    <text x="560" y="606">9c.～14c.</text>
 
-                    <text x="720" y="206">約1500年～1900年</text>
-                    <text x="720" y="506">7c.～15c.</text>
-                    <text x="720" y="606">14c.～現代</text>
-                    <text x="720" y="706">14c.～現代</text>
+                    <text x="720" y="206">約1500年～1900年</text>
+                    <text x="720" y="506">7c.～15c.</text>
+                    <text x="720" y="606">14c.～現代</text>
+                    <text x="720" y="706">14c.～現代</text>
 
-                    <text x="880" y="206">1900年～現代</text>
-                    <text x="880" y="506">16c.～現代</text>
-                </g>
-            </g>
-        </svg>
-    `;
+                    <text x="880" y="206">1900年～現代</text>
+                    <text x="880" y="506">16c.～現代</text>
+                </g>
+            </g>
+        </svg>
+    `;
     entry.appendChild(treeWrapper);
 
     const explanations = document.createElement('div');
@@ -121,14 +121,14 @@ function prependEntry(text = '現代英語に関わるさまざまな言語') {
     explanations.style.lineHeight = '1.6';
     explanations.style.fontSize = '14px';
     explanations.innerHTML = `
-        <ul style="list-style-type: disc; padding-left: 17px;">
-            <li><strong>印欧祖語:</strong> ヨーロッパからインドに至る多数の言語の共通の祖先と推定される言語。文字記録はなく、比較言語学を用いて理論的に再建されている。</li>
-            <li><strong>ゲルマン祖語:</strong> 英語、ドイツ語、北欧諸語などゲルマン語派の共通祖先。紀元前1千年紀ごろに話されていたとされ、現在のゲルマン系言語の基礎となっている。</li>
-            <li><strong>ギリシャ語:</strong> 古代から現代まで数千年にわたり記録が途切れることなく残る言語。西洋の哲学、科学、文学、そして学術用語に極めて大きな影響を与えた。</li>
-            <li><strong>ラテン語:</strong> 古代ローマ帝国の公用語であり、フランス語やイタリア語などロマンス諸語の祖先。中世以降もヨーロッパの学問・宗教における共通語として機能し続けた。</li>
-            <li><strong>古ノルド語:</strong> ヴァイキング時代から中世にかけて、主にスカンディナヴィア周辺で話されていた北ゲルマン語。現代のノルウェー語、スウェーデン語、デンマーク語などの直接の祖先。</li>
-        </ul>
-    `;
+        <ul style="list-style-type: disc; padding-left: 17px;">
+            <li><strong>印欧祖語:</strong> ヨーロッパからインドに至る多数の言語の共通の祖先と推定される言語。文字記録はなく、比較言語学を用いて理論的に再建されている。</li>
+            <li><strong>ゲルマン祖語:</strong> 英語、ドイツ語、北欧諸語などゲルマン語派の共通祖先。紀元前1千年紀ごろに話されていたとされ、現在のゲルマン系言語の基礎となっている。</li>
+            <li><strong>ギリシャ語:</strong> 古代から現代まで数千年にわたり記録が途切れることなく残る言語。西洋の哲学、科学、文学、そして学術用語に極めて大きな影響を与えた。</li>
+            <li><strong>ラテン語:</strong> 古代ローマ帝国の公用語であり、フランス語やイタリア語などロマンス諸語の祖先。中世以降もヨーロッパの学問・宗教における共通語として機能し続けた。</li>
+            <li><strong>古ノルド語:</strong> ヴァイキング時代から中世にかけて、主にスカンディナヴィア周辺で話されていた北ゲルマン語。現代のノルウェー語、スウェーデン語、デンマーク語などの直接の祖先。</li>
+        </ul>
+    `;
     entry.appendChild(explanations);
 
     results.prepend(entry);
@@ -357,40 +357,59 @@ function doSearch() {
         });
 
         // 💡 最後に非同期で音声をAPIから取得し、先ほどのdiv内にアイコンを生成
-        fetchAndSetAudio(item.word, item.num);
+        fetchAndSetAudio(item.word, item.num, item.partOfSpeech);
     });
 }
 
-// 💡 Wikimedia Commons APIから音声を取得し、該当のdiv要素内にアイコンを描画する関数
-async function fetchAndSetAudio(word, num) {
+// 💡 Merriam-Webster APIから音声を取得し、該当のdiv要素内にアイコンを描画する関数
+// ※呼び出し元を fetchAndSetAudio(word, num, partOfSpeech) となるよう調整してください
+async function fetchAndSetAudio(word, num, partOfSpeech = "") {
     try {
-        const safeWord = word.replace(/ /g, '_');
-
-        // 検索するファイル名の候補（アメリカ英語を優先、次に一般英語、それぞれoggとmp3）
-        const titles = `File:En-us-${safeWord}.ogg|File:En-us-${safeWord}.mp3|File:En-${safeWord}.ogg|File:En-${safeWord}.mp3`;
-        const apiUrl = `https://commons.wikimedia.org/w/api.php?action=query&titles=${encodeURIComponent(titles)}&prop=imageinfo&iiprop=url&format=json&origin=*`;
+        // ★取得したご自身のAPIキーに書き換えてください
+        const API_KEY = "74a8b9a7-6973-4b74-b19d-1425e02f3912";
+        const apiUrl = `https://www.dictionaryapi.com/api/v3/references/collegiate/json/${encodeURIComponent(word)}?key=${API_KEY}`;
 
         const response = await fetch(apiUrl);
         if (!response.ok) return;
 
         const data = await response.json();
-        const pages = data.query.pages;
-        let audioUrl = "";
+        let audioFileName = "";
 
-        // APIから返ってきたファイルリストの中から、実在する音声URLを抽出
-        for (const pageId in pages) {
-            // "-1" は「ファイルが存在しない」ことを示す
-            if (pageId !== "-1" && pages[pageId].imageinfo && pages[pageId].imageinfo.length > 0) {
-                const url = pages[pageId].imageinfo[0].url;
+        // Merriam-WebsterのJSONから音声ファイル名（暗号のような文字列）を抽出
+        if (Array.isArray(data) && data.length > 0 && typeof data[0] === 'object') {
+            let targetEntry = data[0]; // デフォルトは一番最初の検索結果
 
-                // 「-us-」が含まれる米発音を優先してセット
-                if (url.toLowerCase().includes('-us-')) {
-                    audioUrl = url;
-                    break;
-                } else if (!audioUrl) {
-                    audioUrl = url;
+            // エクセルから取得した品詞(partOfSpeech)の指定がある場合、一致するものを探す
+            if (partOfSpeech) {
+                const searchPos = partOfSpeech.trim().toLowerCase();
+                const matchedEntry = data.find(entry => {
+                    if (!entry.fl) return false;
+                    const fl = entry.fl.toLowerCase();
+                    // M-W特有の「transitive verb」などにもヒットさせるため、includesを使用
+                    return fl === searchPos || fl.includes(searchPos);
+                });
+
+                if (matchedEntry) {
+                    targetEntry = matchedEntry;
                 }
             }
+
+            // 発音データ(prs)と音声データ(sound.audio)が存在するかチェック
+            if (targetEntry.hwi && targetEntry.hwi.prs && targetEntry.hwi.prs.length > 0 && targetEntry.hwi.prs[0].sound) {
+                audioFileName = targetEntry.hwi.prs[0].sound.audio;
+            }
+        }
+
+        let audioUrl = "";
+
+        // ファイル名からMerriam-Websterの仕様に従って mp3 の URL を組み立てる
+        if (audioFileName) {
+            let subdir = audioFileName.charAt(0);
+            if (audioFileName.startsWith("bix")) subdir = "bix";
+            else if (audioFileName.startsWith("gg")) subdir = "gg";
+            else if (/^[^a-zA-Z]/.test(subdir)) subdir = "number"; // 数字や記号で始まる場合
+
+            audioUrl = `https://media.merriam-webster.com/audio/prons/en/us/mp3/${subdir}/${audioFileName}.mp3`;
         }
 
         // 音声データが見つかった場合のみアイコンを表示
@@ -401,7 +420,7 @@ async function fetchAndSetAudio(word, num) {
                 audioBox.innerHTML = `<span class="audio_button" style="cursor:pointer;"><i class="fa-solid fa-volume-high fa-rotate-by fa-sm" style="color: rgb(0, 7, 209); --fa-rotate-angle: 340deg;"></i></span>`;
 
                 const btn = audioBox.querySelector('.audio_button');
-                
+
                 const audio = new Audio(audioUrl);
                 audio.preload = 'auto';
 
@@ -480,21 +499,3 @@ function insertSampleImages() {
         }
     });
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
