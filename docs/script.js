@@ -122,12 +122,13 @@ function prependEntry(text = '現代英語に関わるさまざまな言語') {
     explanations.style.fontSize = '14px';
     explanations.innerHTML = `
         <ul style="list-style-type: disc; padding-left: 17px;">
-            <li><strong>印欧祖語:</strong> ヨーロッパからインドに至る多数の言語の共通の祖先と推定される言語。文字記録はなく、比較言語学を用いて理論的に再建されている。</li>
-            <li><strong>ゲルマン祖語:</strong> 英語、ドイツ語、北欧諸語などゲルマン語派の共通祖先。紀元前1千年紀ごろに話されていたとされ、現在のゲルマン系言語の基礎となっている。</li>
-            <li><strong>ギリシャ語:</strong> 古代から現代まで数千年にわたり記録が途切れることなく残る言語。西洋の哲学、科学、文学、そして学術用語に極めて大きな影響を与えた。</li>
-            <li><strong>ラテン語:</strong> 古代ローマ帝国の公用語であり、フランス語やイタリア語などロマンス諸語の祖先。中世以降もヨーロッパの学問・宗教における共通語として機能し続けた。</li>
-            <li><strong>古ノルド語:</strong> ヴァイキング時代から中世にかけて、主にスカンディナヴィア周辺で話されていた北ゲルマン語。現代のノルウェー語、スウェーデン語、デンマーク語などの直接の祖先。</li>
-        </ul>
+            <li><strong>印欧祖語:</strong> ヨーロッパからインドに至る多数の言語の共通の祖先と推定される言語。文字記録はなく、比較言語学を用いて理論的に再建されている。</li>
+            <li><strong>ゲルマン祖語:</strong> 英語、ドイツ語、北欧諸語などゲルマン語派の共通祖先。紀元前1千年紀ごろに話されていたとされ、現在のゲルマン系言語の基礎となっている。</li>
+            <li><strong>ギリシャ語:</strong> 古代から現代まで数千年にわたり記録が途切れることなく残る言語。西洋の哲学、科学、文学、そして学術用語に極めて大きな影響を与えた。</li>
+            <li><strong>ラテン語:</strong> 古代ローマ帝国の公用語であり、フランス語やイタリア語などロマンス諸語の祖先。中世以降もヨーロッパの学問・宗教における共通語として機能し続けた。</li>
+            <li><strong>古ノルド語:</strong> ヴァイキング時代から中世にかけて、主にスカンディナヴィア周辺で話されていた北ゲルマン語。現代のノルウェー語、スウェーデン語、デンマーク語などの直接の祖先。</li>
+            <li><strong>フランク語:</strong> 古代後期から中世初期にかけてフランク人によって話されていた西ゲルマン語。古フランス語の語彙や発音に多大な影響を与え、現代のオランダ語などフランケン語群の基礎となった。</li>
+        </ul>
     `;
     entry.appendChild(explanations);
 
@@ -332,6 +333,8 @@ function doSearch() {
         });
         results.appendChild(div);
 
+        // 💡 最後に非同期で音声をAPIから取得し、先ほどのdiv内にアイコンを生成
+        fetchAndSetAudio(item.word, item.num, item.partOfSpeech);
         insertSampleImages();
 
         const configs = [
@@ -355,9 +358,6 @@ function doSearch() {
                 startAnimation(target, config.func);
             }
         });
-
-        // 💡 最後に非同期で音声をAPIから取得し、先ほどのdiv内にアイコンを生成
-        fetchAndSetAudio(item.word, item.num, item.partOfSpeech);
     });
 }
 
