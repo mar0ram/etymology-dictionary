@@ -416,7 +416,7 @@ async function fetchAndSetAudio(word, num, partOfSpeech = "") {
             const audioBox = document.getElementById(`audio-box-${num}`);
             if (audioBox) {
                 // 連打防止のため、onclick属性を外し、JS側でイベントリスナーを設定する形に変更
-                audioBox.innerHTML = `<span class="audio_button" style="cursor:pointer;"><i class="fa-solid fa-volume-high fa-rotate-by fa-sm" style="color: rgb(0, 7, 209); --fa-rotate-angle: 340deg;"></i></span>`;
+                audioBox.innerHTML = `<span class="audio_button" style="cursor:pointer;"><i class="fa-solid fa-volume-high fa-rotate-by fa-sm" style="color: #ffffff; --fa-rotate-angle: 340deg;"></i></span>`;
 
                 const btn = audioBox.querySelector('.audio_button');
 
