@@ -1,6 +1,6 @@
 /* --- 1. 基本設定：ディープモード（暗い背景に白い情報パネル） --- */
 body {
-    font-family:"M PLUS Rounded 1c", sans-serif;
+    font-family: "M PLUS Rounded 1c", sans-serif;
     font-weight: 400;
     /* ダークテーマの基調色（思考と集中を促す） */
     background-color: #121212;
@@ -10,6 +10,25 @@ body {
     padding: 0;
     line-height: 1.6;
     font-feature-settings: "palt";
+}
+
+footer {
+    text-align: center;
+    padding: 20px 0;
+    background-color: #1E1E1E;
+    color: #777777;
+    font-size: 0.6em;
+
+    img {
+        display: inline-block;
+        vertical-align: middle;
+        margin-top: 10px;
+        opacity: 0.8;/
+    }
+
+    img:hover {
+        opacity: 1;
+    }
 }
 
 .none {
@@ -242,7 +261,8 @@ body {
 
 /* 音声アイコンを囲む外枠 */
 .audio_box {
-    vertical-align: middle; /* 縦方向の中央揃え */
+    vertical-align: middle;
+    /* 縦方向の中央揃え */
 }
 
 /* スマホでのタップに最適化したボタンデザイン */
@@ -255,15 +275,19 @@ body {
     background-color: #333333;
     border: 1.5px solid rgba(255, 255, 255);
     box-shadow: 0 2px 6px rgba(0, 7, 209, 0.15);
-    -webkit-tap-highlight-color: transparent; /* スマホ特有のタップ時のグレー/青の半透明枠を消す（重要） */
+    -webkit-tap-highlight-color: transparent;
+    /* スマホ特有のタップ時のグレー/青の半透明枠を消す（重要） */
     transition: transform 0.1s ease, box-shadow 0.1s ease, background-color 0.1s ease;
 }
 
 /* タップした瞬間のフィードバック（スマホではこれが最重要） */
 .audio_button:active {
-    transform: scale(0.92); /* 物理ボタンのようにスッと沈み込む */
-    box-shadow: 0 1px 2px rgba(0, 7, 209, 0.05); /* 押し込まれたように影を小さくする */
-    background-color: #bfd0fd; /* タップした瞬間にほんのり青く光る */
+    transform: scale(0.92);
+    /* 物理ボタンのようにスッと沈み込む */
+    box-shadow: 0 1px 2px rgba(0, 7, 209, 0.05);
+    /* 押し込まれたように影を小さくする */
+    background-color: #bfd0fd;
+    /* タップした瞬間にほんのり青く光る */
 }
 
 .arrow {
@@ -307,7 +331,7 @@ body {
     .accordion-trigger:hover {
         background-color: #f8f9fa;
         border-color: #ccc;
-        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     }
 
     /* --- アイコン作成ここから --- */
@@ -317,21 +341,30 @@ body {
         content: '';
         position: absolute;
         top: 50%;
-        right: 20px; /* 右からの位置 */
-        width: 16px;  /* 線の長さ（完璧に合わせる） */
-        height: 1px;  /* 線の太さ */
-        background-color: currentColor; /* 文字と同じ色 */
+        right: 20px;
+        /* 右からの位置 */
+        width: 16px;
+        /* 線の長さ（完璧に合わせる） */
+        height: 1px;
+        /* 線の太さ */
+        background-color: currentColor;
+        /* 文字と同じ色 */
         transition: transform 0.3s ease;
-        border-radius: 1px; /* 線の端を少し丸くして柔らかく */
+        border-radius: 1px;
+        /* 線の端を少し丸くして柔らかく */
     }
 
     /* 初期状態（＋） */
     .accordion-trigger::before {
-        transform: translateY(-50%) rotate(0deg); /* 横線 */
+        transform: translateY(-50%) rotate(0deg);
+        /* 横線 */
     }
+
     .accordion-trigger::after {
-        transform: translateY(-50%) rotate(90deg); /* 縦線（横線を90度回す） */
+        transform: translateY(-50%) rotate(90deg);
+        /* 縦線（横線を90度回す） */
     }
+
     /* --- アイコン作成ここまで --- */
 
     /* コンテンツ部分 */
@@ -347,7 +380,7 @@ body {
         width: 100%;
         margin-top: 15px;
         border-radius: 12px;
-        box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
         transition: opacity 0.4s ease;
         opacity: 0;
     }
@@ -365,8 +398,10 @@ body {
         .accordion-trigger::before {
             transform: translateY(-50%) rotate(315deg);
         }
+
         .accordion-trigger::after {
-            transform: translateY(-50%) rotate(405deg); /* 90 + 45 */
+            transform: translateY(-50%) rotate(405deg);
+            /* 90 + 45 */
         }
 
         .accordion-content {

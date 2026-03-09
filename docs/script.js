@@ -121,14 +121,32 @@ function prependEntry(text = '現代英語に関わるさまざまな言語') {
     explanations.style.lineHeight = '1.6';
     explanations.style.fontSize = '14px';
     explanations.innerHTML = `
-        <ul style="list-style-type: disc; padding-left: 17px;">
-            <li><strong>印欧祖語:</strong> ヨーロッパからインドに至る多数の言語の共通の祖先と推定される言語。文字記録はなく、比較言語学を用いて理論的に再建されている。</li>
-            <li><strong>ゲルマン祖語:</strong> 英語、ドイツ語、北欧諸語などゲルマン語派の共通祖先。紀元前1千年紀ごろに話されていたとされ、現在のゲルマン系言語の基礎となっている。</li>
-            <li><strong>ギリシャ語:</strong> 古代から現代まで数千年にわたり記録が途切れることなく残る言語。西洋の哲学、科学、文学、そして学術用語に極めて大きな影響を与えた。</li>
-            <li><strong>ラテン語:</strong> 古代ローマ帝国の公用語であり、フランス語やイタリア語などロマンス諸語の祖先。中世以降もヨーロッパの学問・宗教における共通語として機能し続けた。</li>
-            <li><strong>古ノルド語:</strong> ヴァイキング時代から中世にかけて、主にスカンディナヴィア周辺で話されていた北ゲルマン語。現代のノルウェー語、スウェーデン語、デンマーク語などの直接の祖先。</li>
-            <li><strong>フランク語:</strong> 古代後期から中世初期にかけてフランク人によって話されていた西ゲルマン語。古フランス語の語彙や発音に多大な影響を与え、現代のオランダ語などフランケン語群の基礎となった。</li>
-        </ul>
+  <ul style="list-style-type: none; padding-left: 17px;">
+        <li style="margin-bottom: 16px;">
+            <strong style="display: block; margin-bottom: 4px; background: linear-gradient(transparent 75%, rgba(0, 164, 183, 0.7) 75%); width: fit-content;">印欧祖語</strong>
+            <div style="padding-left: 1em;">ヨーロッパからインドに至る多数の言語の共通の祖先と推定される言語。文字記録はなく、比較言語学を用いて理論的に再建されている。</div>
+        </li>
+        <li style="margin-bottom: 16px;">
+            <strong style="display: block; margin-bottom: 4px; background: linear-gradient(transparent 75%, rgba(0, 164, 183, 0.7) 75%); width: fit-content;">ゲルマン祖語</strong>
+            <div style="padding-left: 1em;">英語、ドイツ語、北欧諸語などゲルマン語派の共通祖先。紀元前1千年紀ごろに話されていたとされ、現在のゲルマン系言語の基礎となっている。</div>
+        </li>
+        <li style="margin-bottom: 16px;">
+            <strong style="display: block; margin-bottom: 4px; background: linear-gradient(transparent 75%, rgba(0, 164, 183, 0.7) 75%); width: fit-content;">ギリシャ語</strong>
+            <div style="padding-left: 1em;">古代から現代まで数千年にわたり記録が途切れることなく残る言語。西洋の哲学、科学、文学、そして学術用語に極めて大きな影響を与えた。</div>
+        </li>
+        <li style="margin-bottom: 16px;">
+            <strong style="display: block; margin-bottom: 4px; background: linear-gradient(transparent 75%, rgba(0, 164, 183, 0.7) 75%); width: fit-content;">ラテン語</strong>
+            <div style="padding-left: 1em;">古代ローマ帝国の公用語であり、フランス語やイタリア語などロマンス諸語の祖先。中世以降もヨーロッパの学問・宗教における共通語として機能し続けた。</div>
+        </li>
+        <li style="margin-bottom: 16px;">
+            <strong style="display: block; margin-bottom: 4px; background: linear-gradient(transparent 75%, rgba(0, 164, 183, 0.7) 75%); width: fit-content;">古ノルド語</strong>
+            <div style="padding-left: 1em;">ヴァイキング時代から中世にかけて、主にスカンディナヴィア周辺で話されていた北ゲルマン語。現代のノルウェー語、スウェーデン語、デンマーク語などの直接の祖先。</div>
+        </li>
+        <li style="margin-bottom: 16px;">
+            <strong style="display: block; margin-bottom: 4px; background: linear-gradient(transparent 75%, rgba(0, 164, 183, 0.7) 75%); width: fit-content;">フランク語</strong>
+            <div style="padding-left: 1em;">古代後期から中世初期にかけてフランク人によって話されていた西ゲルマン語。古フランス語の語彙や発音に多大な影響を与え、現代のオランダ語などフランケン語群の基礎となった。</div>
+        </li>
+    </ul>
     `;
     entry.appendChild(explanations);
 
