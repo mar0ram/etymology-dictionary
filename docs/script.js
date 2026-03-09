@@ -478,7 +478,7 @@ function insertSampleImages() {
             // トリガーとなるspan
             const trigger = document.createElement('span');
             trigger.classList.add('accordion-trigger');
-            trigger.textContent = '画像を表示'; // 指定のテキストに変更
+            trigger.textContent = 'イメージを表示'; // 指定のテキストに変更
 
             // コンテンツ（画像）を包むspan
             const content = document.createElement('span');
