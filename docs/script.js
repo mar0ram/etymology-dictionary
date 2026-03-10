@@ -321,7 +321,7 @@ function doSearch() {
             sectionDiv.className = `section ${hKey}`;
 
             sectionDiv.innerHTML = `<div class="subtitle">${item[hKey]}</div>
-                                    <div class="content"></div>`;
+            <div class="content"></div>`;
 
             const contentDiv = sectionDiv.querySelector(".content");
 
@@ -344,6 +344,14 @@ function doSearch() {
                     if (k === "i2") {
                         text = text.replace(/<\/b>(\r?\n)?<span class="ml">/, `</b><div id="audio-box-${item.num}" class="audio_box" style="display:inline-block; margin: 0 10px;"></div>$1<span class="ml">`);
                     }
+
+                    // 💡 追加部分：h3のrelated項目で<span class="ml">を持つ場合のみアコーディオン化
+                    if (hKey === "h3" && k.startsWith("related")) {
+                        if (text.includes('<span class="ml">')) {
+                            text = text.replace(/(<b>.*?<\/b>)(\r?\n)?/, '<details><summary style="cursor: pointer;">$1</summary>') + '</details>';
+                        }
+                    }
+
                     contentDiv.innerHTML += `<div>${nl2br(text)}</div>`;
                 });
             }

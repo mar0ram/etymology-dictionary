@@ -439,6 +439,90 @@ footer {
     content: "";
 }
 
+/* --- アコーディオン（h3関連語）のカスタムデザイン --- */
+
+/* 1. デフォルトの三角アイコンを非表示にする（全ブラウザ対応） */
+.section.h3 details summary::-webkit-details-marker {
+    display: none;
+    /* Webkit系 (Chrome, Safari, Edge) */
+}
+
+.section.h3 details summary {
+    list-style: none;
+    /* Firefox, 標準 */
+
+    /* 2. カスタムアイコンのための準備 */
+    position: relative;
+    padding-right: 2.5em;
+    /* 右側にアイコン分のスペースを確保 */
+    cursor: pointer;
+    /* カーソルをポインターに */
+    display: block;
+    /* 横幅いっぱいにクリック反応を持たせる */
+}
+
+.section.h3 .content div {
+    padding-top: 0.5em;
+    padding-bottom: 0.5em;
+    border-bottom: 1.5px solid #eee;
+}
+
+/* 3. 洗練された矢印アイコン（∨）を作成（擬似要素 ::after） */
+.section.h3 details summary::after {
+    content: '';
+    /* テキストは空 */
+    position: absolute;
+    right: 1em;
+    /* 右端からの位置 */
+    top: 50%;
+    /* 中央配置 */
+
+    /* 矢印（∨）の形状を描画（細めの線で） */
+    width: 0.6em;
+    height: 0.6em;
+    border-right: 2px solid #888;
+    /* 矢印の色 */
+    border-bottom: 2px solid #888;
+
+    /* 初期状態：下向き矢印（∨） */
+    transform: translateY(-70%) rotate(45deg);
+
+    /* アニメーションの設定（0.3秒かけて滑らかに） */
+    transition: transform 0.3s ease, border-color 0.3s ease;
+}
+
+/* ホバー時の矢印の色を少し濃くする（洗練さを出す） */
+.section.h3 details summary:hover::after {
+    border-color: #555;
+}
+
+/* 4. 展開時（[open]）のアイコンの状態（∧へ回転） */
+.section.h3 details[open] summary::after {
+    /* 展開状態：上向き矢印（∧）へ180度回転 */
+    transform: translateY(-30%) rotate(225deg);
+    border-color: #444;
+    /* 展開時は色を濃く */
+}
+
+/* 5. 展開されるコンテンツ（span.ml）のアニメーション（オプション） */
+.section.h3 details[open] .ml {
+    /* 閉じた状態からパッと開くのではなく、少しふわっと表示させる（CSSのみでは限界があるため簡易的） */
+    animation: fade-in 0.4s ease;
+}
+
+@keyframes fade-in {
+    from {
+        opacity: 0;
+        transform: translateY(-5px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+
 /* --- 8. h5 tag/p (詳細タグ/記述) --- */
 .section.h5 .content .tag {
     font-weight: 700;
