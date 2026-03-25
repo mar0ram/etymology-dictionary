@@ -6,6 +6,7 @@ import os
 EXCEL_PATH = "data/etymology.xlsx"
 JSON_OUT = "docs/data.json"
 HTML_OUT = "docs/dictionary.html"
+IMAGE_DIR = "docs/sample_images"  # 画像フォルダのパスをdocs配下に修正
 
 # 保存先ディレクトリの作成
 os.makedirs("docs", exist_ok=True)
@@ -23,6 +24,21 @@ df = df[first_cols + other_cols]
 data_list = df.fillna("").to_dict(orient="records")
 with open(JSON_OUT, "w", encoding="utf-8") as f:
     json.dump(data_list, f, ensure_ascii=False, indent=2)
+
+# --- sample_imageの存在チェック ---
+for item in data_list:
+    i1_val = str(item.get("i1", ""))
+    i2_val = str(item.get("i2", ""))
+
+    if "sample_image" in i1_val or "sample_image" in i2_val:
+        word_val = item.get("word", "")
+        if word_val:
+            image_path = os.path.join(IMAGE_DIR, f"{word_val}.png")
+            if not os.path.exists(image_path):
+                print(
+                    f"⚠️ 警告: {word_val} の 'sample_image' 指定がありますが、{image_path} が見つかりません。"
+                )
+# -----------------------------------
 
 # 3. HTML 生成
 html_output = "<!DOCTYPE html>\n<html lang='ja'>\n<head>\n"
