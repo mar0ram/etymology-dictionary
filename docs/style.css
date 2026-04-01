@@ -35,14 +35,6 @@ footer {
     display: none;
 }
 
-.section.h2 b, .section.h4 b {
-    margin-bottom: 6px;
-    padding: 2px;
-    border-radius: 5px;
-    display: inline-block;
-    background-color: #fff;
-}
-
 /* --- 2. 検索エリア：シャープで目立つ検索バー --- */
 .search-container {
     width: 95%;
@@ -267,10 +259,32 @@ footer {
     line-height: 0;
 }
 
+.arrow {
+    display: inline-block;
+    margin: 0 6px;
+    color: #7e7e7e;
+}
+
+.obsolete {
+    color: #989898;
+}
+
 /* 音声アイコンを囲む外枠 */
 .audio_box {
     vertical-align: middle;
     /* 縦方向の中央揃え */
+}
+
+.w {
+    display: block;
+}
+
+.section.h2 b, .section.h4 b {
+    margin-bottom: 6px;
+    padding: 2px;
+    border-radius: 5px;
+    display: inline-block;
+    background-color: #fff;
 }
 
 /* スマホでのタップに最適化したボタンデザイン */
@@ -282,6 +296,7 @@ footer {
     height: 25px;
     background-color: #333333;
     border: 1.5px solid rgba(255, 255, 255);
+    border-radius: 5px;
     box-shadow: 0 2px 6px rgba(0, 7, 209, 0.15);
     -webkit-tap-highlight-color: transparent;
     /* スマホ特有のタップ時のグレー/青の半透明枠を消す（重要） */
@@ -298,15 +313,6 @@ footer {
     /* タップした瞬間にほんのり青く光る */
 }
 
-.arrow {
-    display: inline-block;
-    margin: 0 6px;
-    color: #7e7e7e;
-}
-
-.obsolete {
-    color: #989898;
-}
 
 .sample_image {
     display: flex;

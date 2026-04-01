@@ -342,7 +342,7 @@ function doSearch() {
                     let text = item[k];
                     // 💡 「i2」の場合のみ、<b>と<span class="ml">の間にdiv要素（プレースホルダー）を挿入
                     if (k === "i2") {
-                        text = text.replace(/<\/b>(\r?\n)?<span class="ml">/, `</b><div id="audio-box-${item.num}" class="audio_box" style="display:inline-block; margin: 0 10px;"></div>$1<span class="ml">`);
+                        text = text.replace(/<\/span>(\r?\n)?<span class="ml">/, `</b></span><div id="audio-box-${item.num}" class="audio_box" style="display:inline-block; margin: 0 10px;"></div>$1<span class="ml">`);
                     }
 
                     // 💡 追加部分：h3のrelated項目で<span class="ml">を持つ場合のみアコーディオン化
