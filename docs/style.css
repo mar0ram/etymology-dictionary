@@ -1,14 +1,13 @@
 /* --- 1. 基本設定：ディープモード（暗い背景に白い情報パネル） --- */
 body {
-    font-family: "M PLUS Rounded 1c", sans-serif;
-    font-weight: 500;
-    /* ダークテーマの基調色（思考と集中を促す） */
-    background-color: #121212;
-    color: #E0E0E0;
-    /* 明るいテキスト色 */
     margin: 0;
     padding: 0;
-    line-height: 1.6;
+    color: #efefef;
+    background-color: #121212;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-size: 16px;
+    font-weight: 400;
+    line-height: 1.55;
     font-feature-settings: "palt";
 }
 
@@ -164,7 +163,7 @@ footer {
 
 .entry .head {
     font-size: 24px;
-    font-weight: 800;
+    font-weight: 700;
     margin-bottom: 50px;
     color: #FFFFFF;
     border-bottom: 3px solid #00aac0;
@@ -201,7 +200,7 @@ footer {
     margin-bottom: 25px;
     position: relative;
     padding: 15px;
-    background-color: #cccccc;
+    background-color: #efefef;
     border-radius: 8px;
     box-shadow: 0 4px 10px rgba(218, 218, 218, 0.3);
 }
@@ -226,7 +225,7 @@ footer {
     font-size: 18px;
     font-weight: 700;
     margin-bottom: 20px;
-    color: #333333;
+    color: #000000;
     border-bottom: 1px dashed #000000;
     padding-bottom: 5px;
 }
@@ -235,7 +234,7 @@ footer {
 .content {
     padding-left: 0;
     font-size: 15px;
-    color: #333333;
+    color: #000000;
 }
 
 .content div:not(:has(button)) {
@@ -297,7 +296,7 @@ footer {
 }
 
 .obsolete {
-    color: #777777;
+    color: #989898;
 }
 
 .sample_image {
@@ -317,8 +316,8 @@ footer {
         /* 右側にアイコン用のスペースを確保 */
         padding: 2px 48px 2px 24px;
         background-color: #ffffff;
-        color: #333;
-        /* border: 1px solid #e0e0e0; */
+        color: #060606;
+        border: 1px solid #a6a6a6;
         border-radius: 5px;
         cursor: pointer;
         font-size: 12px;
@@ -416,13 +415,13 @@ footer {
 
 /* --- 7. h1 partN (語源パーツ) - 左パネルに配置 --- */
 .section.h1 {
-    background-color: #cccccc;
+    background-color: #efefef;
 }
 
 .section.h1 .content {
     display: block;
     font-size: 16px;
-    color: #E0E0E0;
+    color: #efefef;
     line-height: 1.6;
 }
 
@@ -526,7 +525,7 @@ footer {
 /* --- 8. h5 tag/p (詳細タグ/記述) --- */
 .section.h5 .content .tag {
     font-weight: 700;
-    color: #E0E0E0;
+    color: #efefef;
     display: inline-block;
     background-color: #333333;
     padding: 3px 8px;
