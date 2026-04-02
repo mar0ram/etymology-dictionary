@@ -26,11 +26,14 @@ with open(JSON_OUT, "w", encoding="utf-8") as f:
     json.dump(data_list, f, ensure_ascii=False, indent=2)
 
 # --- sample_imageの存在チェック ---
+sample_image_count = 0  # <--- 追記: カウント用変数を初期化
+
 for item in data_list:
     i1_val = str(item.get("i1", ""))
     i2_val = str(item.get("i2", ""))
 
     if "sample_image" in i1_val or "sample_image" in i2_val:
+        sample_image_count += 1  # <--- 追記: 対象が見つかるたびにカウントアップ
         word_val = item.get("word", "")
         if word_val:
             image_path = os.path.join(IMAGE_DIR, f"{word_val}.png")
@@ -38,6 +41,8 @@ for item in data_list:
                 print(
                     f"⚠️ 警告: {word_val} の 'sample_image' 指定がありますが、{image_path} が見つかりません。"
                 )
+
+print(f"ℹ️ sample_imageの総数: {sample_image_count}個")  # <--- 追記: 最後に合計数を出力
 # -----------------------------------
 
 # 3. HTML 生成
