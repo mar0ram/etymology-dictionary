@@ -10,7 +10,7 @@ body {
     letter-spacing: 0.02em;
     line-height: 1.55;
     text-autospace: ideograph-alpha;
-    /* font-kerning: normal; */
+    font-kerning: normal;
     /* font-feature-settings: "palt"; */
 }
 
