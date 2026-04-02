@@ -92,18 +92,18 @@ function prependEntry(text = '現代英語に関わるさまざまな言語') {
                     <text x="240" y="606">前2千年紀～前1千年紀</text>
                     
                     <text x="400" y="106">5c.～9c.</text>
-                    <text x="400" y="206">約450年～1100年</text>
+                    <text x="400" y="206">450年～1100年</text>
                     <text x="400" y="306">700年～1350年</text>
                     <text x="400" y="406">前5c.～前4c.</text>
                     <text x="400" y="506">前1c.～3c.</text>
                     <text x="400" y="606">前1c.～9c.</text>
 
-                    <text x="560" y="206">約1100年～1500年</text>
+                    <text x="560" y="206">1100年～1500年</text>
                     <text x="560" y="406">4c.～15c.</text>
                     <text x="560" y="506">3c.～6c.</text>
                     <text x="560" y="606">9c.～14c.</text>
 
-                    <text x="720" y="206">約1500年～1900年</text>
+                    <text x="720" y="206">1500年～1900年</text>
                     <text x="720" y="506">7c.～15c.</text>
                     <text x="720" y="606">14c.～現代</text>
                     <text x="720" y="706">14c.～現代</text>
