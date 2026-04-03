@@ -43,6 +43,22 @@ for item in data_list:
                 )
 
 print(f"ℹ️ sample_imageの総数: {sample_image_count}個")  # <--- 追記: 最後に合計数を出力
+
+# --- 画像ファイルはあるのに、i1とi2の中にsample_imageの要素がないものをPrintする ---
+if os.path.exists(IMAGE_DIR):
+    for filename in os.listdir(IMAGE_DIR):
+        if filename.endswith(".png"):
+            # 「～.png」の「～」の部分を抜き出す
+            extracted_name = filename[:-4]
+            
+            for item in data_list:
+                if item.get("word", "") == extracted_name:
+                    i1_val = str(item.get("i1", ""))
+                    i2_val = str(item.get("i2", ""))
+                    # i1とi2の中にsample_imageの要素がないか判定
+                    if "sample_image" not in i1_val and "sample_image" not in i2_val:
+                        print(f"⚠️ 警告: 画像ファイル '{filename}' は存在しますが、i1とi2の中にsample_imageの要素がありません。")
+                    break
 # -----------------------------------
 
 # 3. HTML 生成
