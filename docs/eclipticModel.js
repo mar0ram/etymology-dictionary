@@ -180,6 +180,49 @@ export function drawEclipticModel() {
         scene.add(beamMesh);
         const ringMat = new THREE.MeshBasicMaterial({ color: beamColor, transparent: true, opacity: 0 });
         let ringMesh = null;
+
+        const beamDir = targetPos.clone().sub(sunPos).normalize();
+        const perpDir = new THREE.Vector3(-beamDir.y, beamDir.x, 0);
+        const whiteLineGeo = new THREE.CylinderGeometry(0.8, 0.8, earthRadius * 2.5, 8);
+        const whiteLineMat = new THREE.MeshBasicMaterial({ color: "#ffffff", transparent: true, opacity: 0 });
+        const whiteLineMesh = new THREE.Mesh(whiteLineGeo, whiteLineMat);
+        whiteLineMesh.position.copy(targetPos);
+        whiteLineMesh.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), perpDir);
+        scene.add(whiteLineMesh);
+
+        // --- 直角マークの追加 ---
+        const markSize = 11;
+        const v1 = sunPos.clone().sub(targetPos).normalize(); // 太陽方向ベクトル
+        let v2 = perpDir.clone();
+        if (v2.y < 0) v2.negate(); // 北極側（上側）にマークを表示する
+        
+        const p1 = targetPos.clone().add(v1.clone().multiplyScalar(markSize));
+        const p2 = p1.clone().add(v2.clone().multiplyScalar(markSize));
+        const p3 = targetPos.clone().add(v2.clone().multiplyScalar(markSize));
+        
+        const markMat = new THREE.MeshBasicMaterial({ color: "#ffffff", transparent: true, opacity: 0 });
+        const markGroup = new THREE.Group();
+        
+        const dist1 = p1.distanceTo(p2);
+        const geo1 = new THREE.CylinderGeometry(0.5, 0.5, dist1, 4);
+        geo1.rotateX(-Math.PI / 2);
+        geo1.translate(0, 0, dist1 / 2);
+        const mesh1 = new THREE.Mesh(geo1, markMat);
+        mesh1.position.copy(p1);
+        mesh1.lookAt(p2);
+        
+        const dist2 = p2.distanceTo(p3);
+        const geo2 = new THREE.CylinderGeometry(0.5, 0.5, dist2, 4);
+        geo2.rotateX(-Math.PI / 2);
+        geo2.translate(0, 0, dist2 / 2);
+        const mesh2 = new THREE.Mesh(geo2, markMat);
+        mesh2.position.copy(p2);
+        mesh2.lookAt(p3);
+        
+        markGroup.add(mesh1, mesh2);
+        scene.add(markGroup);
+        // ------------------------
+
         const state = { beamScale: 0, arc: 0 };
         const tl = gsap.timeline({
             repeat: -1, repeatDelay: 0.5, paused: true,
@@ -192,11 +235,12 @@ export function drawEclipticModel() {
             }
         });
         tl.set(state, { beamScale: 0, arc: 0 });
-        tl.set([beamMat, ringMat], { opacity: 0 });
+        tl.set([beamMat, ringMat, whiteLineMat, markMat], { opacity: 0 });
         tl.to(state, {
             beamScale: 1, duration: 0.5,
             onStart: () => { beamMat.opacity = 1; },
-            onUpdate: () => { beamMesh.scale.z = state.beamScale; }
+            onUpdate: () => { beamMesh.scale.z = state.beamScale; },
+            onComplete: () => { whiteLineMat.opacity = 1; markMat.opacity = 1; }
         });
         tl.to(state, {
             arc: Math.PI * 2, duration: 8, ease: "none",
@@ -217,7 +261,7 @@ export function drawEclipticModel() {
                 }
             }
         });
-        tl.to([beamMat, ringMat], {
+        tl.to([beamMat, ringMat, whiteLineMat, markMat], {
             opacity: 0, duration: 0.5,
             onComplete: () => {
                 if (ringMesh) {
@@ -393,7 +437,7 @@ export function drawEclipticModel() {
     createLabel("黄道", "68%", "58%", "#f6e05e");
     createLabel("北回帰線<br>tropic", "51%", "65%", "#ff7700");
     createLabel("南回帰線<br>tropic", "62%", "40%", "#ff7700");
-    createLabel("熱帯", "50%", "40%", "#00ed24");
+    createLabel("熱帯", "50%", "38%", "#00ed24");
     createLabel("夏至点", "32%", "93%", "#ffffff");
     createLabel("冬至点", "67%", "11%", "#ffffff");
     createLabel("※本来は地球が太陽の周りをまわっているが、<br>　わかりやすくするために地球を中心に描いている。", "7%", "50%", "#ffffff");
