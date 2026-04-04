@@ -223,7 +223,7 @@ export function drawEclipticModel() {
         scene.add(markGroup);
         // ------------------------
 
-        const state = { beamScale: 0, arc: 0 };
+        const state = { beamScale: 0, whiteLineScale: 0, arc: 0 };
         const tl = gsap.timeline({
             repeat: -1, repeatDelay: 0.5, paused: true,
             onRepeat: () => {
@@ -234,13 +234,18 @@ export function drawEclipticModel() {
                 }
             }
         });
-        tl.set(state, { beamScale: 0, arc: 0 });
+        tl.set(state, { beamScale: 0, whiteLineScale: 0, arc: 0 });
         tl.set([beamMat, ringMat, whiteLineMat, markMat], { opacity: 0 });
+        tl.set(whiteLineMesh.scale, { y: 0 });
         tl.to(state, {
             beamScale: 1, duration: 0.5,
             onStart: () => { beamMat.opacity = 1; },
             onUpdate: () => { beamMesh.scale.z = state.beamScale; },
             onComplete: () => { whiteLineMat.opacity = 1; markMat.opacity = 1; }
+        });
+        tl.to(state, {
+            whiteLineScale: 1, duration: 0.3,
+            onUpdate: () => { whiteLineMesh.scale.y = state.whiteLineScale; }
         });
         tl.to(state, {
             arc: Math.PI * 2, duration: 8, ease: "none",

@@ -10,6 +10,8 @@ import { drawTransparentAnimation } from './transparent.js';
 import { drawSteepModel } from './steep.js';
 import { drawPrecedeModel } from './precede.js';
 import { drawEpidemicModel } from './epidemic.js';
+import { setupTearAnimation } from './tear.js';
+import { setupWarnAnimation } from './warn.js';
 
 let data = [];
 let dataLoaded = false;
@@ -375,7 +377,9 @@ function doSearch() {
             { sel: ".transparent", func: drawTransparentAnimation },
             { sel: ".steep", func: drawSteepModel },
             { sel: ".precede", func: drawPrecedeModel },
-            { sel: ".epidemic", func: drawEpidemicModel }
+            { sel: ".epidemic", func: drawEpidemicModel },
+            { sel: ".tear", func: setupTearAnimation },
+            { sel: ".warn", func: setupWarnAnimation },
         ];
 
         configs.forEach(config => {
