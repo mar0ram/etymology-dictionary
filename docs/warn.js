@@ -84,7 +84,7 @@ export function setupWarnAnimation() {
     const screen = document.createElement("div");
     screen.className = "warn-screen";
     // 後ろのテキストが見えるように背景を透過（半透明の黒）に変更
-    screen.style.backgroundColor = "rgba(0, 0, 0, 0.6)";
+    screen.style.backgroundColor = "rgba(0, 0, 0, 0.85)";
     screen.style.position = "absolute";
     screen.style.overflow = "hidden";
     screen.style.display = "flex";
@@ -103,7 +103,7 @@ export function setupWarnAnimation() {
     glow.style.left = "0";
     glow.style.width = "100%";
     glow.style.height = "100%";
-    glow.style.background = "radial-gradient(circle, rgba(139,0,0,0.8) 0%, rgba(0,0,0,0) 80%)";
+    glow.style.background = "radial-gradient(circle, rgba(139,0,0,0.8) 0%, rgba(0,0,0,0) 0%)";
     glow.style.opacity = "0";
     screen.appendChild(glow);
 
