@@ -1,6 +1,7 @@
-import pandas as pd
-import json
 import os
+import json
+import re
+import pandas as pd
 
 # --- 設定 ---
 EXCEL_PATH = "data/etymology.xlsx"
@@ -27,20 +28,25 @@ with open(JSON_OUT, "w", encoding="utf-8") as f:
 
 # --- sample_imageの存在チェック ---
 sample_image_count = 0  # <--- 追記: カウント用変数を初期化
+used_image_classes = set()  # 画像ディレクトリとの逆引きチェック用
 
 for item in data_list:
     i1_val = str(item.get("i1", ""))
     i2_val = str(item.get("i2", ""))
 
-    if "sample_image" in i1_val or "sample_image" in i2_val:
+    # 正規表現で class="sample_image クラス名" からクラス名を抽出
+    found_classes = re.findall(r'class="sample_image\s+([^"]+)"', i1_val) + re.findall(
+        r'class="sample_image\s+([^"]+)"', i2_val
+    )
+
+    for class_name in found_classes:
         sample_image_count += 1  # <--- 追記: 対象が見つかるたびにカウントアップ
-        word_val = item.get("word", "")
-        if word_val:
-            image_path = os.path.join(IMAGE_DIR, f"{word_val}.png")
-            if not os.path.exists(image_path):
-                print(
-                    f"⚠️ 警告: {word_val} の 'sample_image' 指定がありますが、{image_path} が見つかりません。"
-                )
+        used_image_classes.add(class_name)
+        image_path = os.path.join(IMAGE_DIR, f"{class_name}.png")
+        if not os.path.exists(image_path):
+            print(
+                f"⚠️ 警告: '{class_name}' の 'sample_image' 指定がありますが、{image_path} が見つかりません。"
+            )
 
 print(f"ℹ️ sample_imageの総数: {sample_image_count}個")  # <--- 追記: 最後に合計数を出力
 
@@ -50,15 +56,12 @@ if os.path.exists(IMAGE_DIR):
         if filename.endswith(".png"):
             # 「～.png」の「～」の部分を抜き出す
             extracted_name = filename[:-4]
-            
-            for item in data_list:
-                if item.get("word", "") == extracted_name:
-                    i1_val = str(item.get("i1", ""))
-                    i2_val = str(item.get("i2", ""))
-                    # i1とi2の中にsample_imageの要素がないか判定
-                    if "sample_image" not in i1_val and "sample_image" not in i2_val:
-                        print(f"⚠️ 警告: 画像ファイル '{filename}' は存在しますが、i1とi2の中にsample_imageの要素がありません。")
-                    break
+
+            # i1とi2の中から抽出されたクラス名一覧の中に、画像ファイル名が含まれているか判定
+            if extracted_name not in used_image_classes:
+                print(
+                    f"⚠️ 警告: 画像ファイル '{filename}' は存在しますが、Excel内に <div class=\"sample_image {extracted_name}\"></div> がありません。"
+                )
 # -----------------------------------
 
 # 3. HTML 生成
