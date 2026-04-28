@@ -267,10 +267,15 @@ function doSearch() {
         return;
     }
 
-    // 改行→HTML
+    // 改行→HTML および記号の余白調整用スパン付与
     const nl2br = (text) => {
         if (!text) return "";
-        return text.replace(/\r?\n/g, "<br>");
+        let html = text.replace(/\r?\n/g, "<br>");
+        html = html.replace(/([「（【［])/g, '<span class="margin-left-only">$1</span>');
+        html = html.replace(/([」）】］])/g, '<span class="margin-right-bracket">$1</span>'); // 閉じ括弧用
+        html = html.replace(/([、。])/g, '<span class="margin-right-punctuation">$1</span>'); // 句読点用
+        html = html.replace(/([・])/g, '<span class="margin-both">$1</span>');
+        return html;
     };
 
     // 結果描画（新しい左右パネル構造に対応させる必要があります）

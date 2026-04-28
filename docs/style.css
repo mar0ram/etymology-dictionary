@@ -4,11 +4,11 @@ body {
     padding: 0;
     color: #efefef;
     background-color: #121212;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-family: YakuHanJPs, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     font-size: 16px;
     font-weight: 400;
-    letter-spacing: 0.02em;
-    line-height: 1.55;
+    letter-spacing: 0.03em;
+    line-height: 1.6;
     text-autospace: ideograph-alpha;
     font-kerning: normal;
     /* font-feature-settings: "palt"; */
@@ -258,6 +258,39 @@ footer {
     background-color: #fff;
     border-color: #ccc;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    text-align: justify;
+    text-justify: inter-ideograph; /* 日本語と英語が混ざった文章の文字間隔を自然に調整 */
+    word-break: normal; /* 英単語の途中での折り返しを防ぐ */
+    overflow-wrap: break-word; /* 要素幅を超える長すぎる英単語がある場合のみ折り返す */
+    line-break: strict; /* 禁則処理をより厳密に行い、可能な限り行内に収める */
+    hanging-punctuation: allow-end; /* 行末の句読点を枠外に「ぶら下げて」1行に収める（主にSafari/iOS用） */
+}
+
+/* 「 （ はマージンレフト */
+.margin-left-only {
+    margin-left: 0.3em;
+    margin-right: 0.1em;
+    display: inline;
+}
+
+/* 」 ） はマージンライト（閉じ括弧用） */
+.margin-right-bracket {
+    margin-right: 0.3em; /* お好みの数値に変更 */
+    margin-left: 0.1em;
+    display: inline;
+}
+
+/* 、 。 はマージンライト（句読点用） */
+.margin-right-punctuation {
+    margin-right: 0.01em; /* お好みの数値に変更 */
+    display: inline;
+}
+
+/* ・ は左右のマージン */
+.margin-both {
+    margin-left: 0.1em;
+    margin-right: 0.1em;
+    display: inline;
 }
 
 .spacer {
@@ -328,7 +361,7 @@ footer {
     display: flex;
     flex-direction: column;
     width: 100%;
-    max-width: 500px;
+    /* max-width: 500px; */
     margin: 20px auto;
     font-family: sans-serif;
 
