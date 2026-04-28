@@ -518,6 +518,41 @@ function insertSampleImages() {
             img.src = `./sample_images/${imageName}.png`;
             img.alt = imageName;
 
+            // 画像クリック時の拡大表示処理を追加
+            img.addEventListener('click', (e) => {
+                e.stopPropagation(); // アコーディオンの開閉などへのイベント伝播を防ぐ
+
+                // モーダルの背景要素を作成
+                const modal = document.createElement('div');
+                modal.style.position = 'fixed';
+                modal.style.top = '0';
+                modal.style.left = '0';
+                modal.style.width = '100vw';
+                modal.style.height = '100vh';
+                modal.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
+                modal.style.display = 'flex';
+                modal.style.justifyContent = 'center';
+                modal.style.alignItems = 'center';
+                modal.style.zIndex = '9999';
+                modal.style.cursor = 'pointer';
+
+                // 拡大画像要素を作成
+                const modalImg = document.createElement('img');
+                modalImg.src = img.src;
+                modalImg.style.maxWidth = '95%';
+                modalImg.style.maxHeight = '95%';
+                modalImg.style.objectFit = 'contain'; // サイズ比を保つ
+
+                // 画面に追加
+                modal.appendChild(modalImg);
+                document.body.appendChild(modal);
+
+                // 画面のどこかをタップ・クリックしたら拡大表示を解除
+                modal.addEventListener('click', () => {
+                    document.body.removeChild(modal);
+                });
+            });
+
             content.appendChild(img);
             el.appendChild(trigger);
             el.appendChild(content);
