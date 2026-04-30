@@ -159,7 +159,7 @@ prependEntry();
 // 💡 検索窓への入力監視 (×ボタンの表示/非表示切り替え)
 searchBox.addEventListener("input", () => {
     if (searchBox.value.length > 0) {
-        clearBtn.style.display = "block";
+        clearBtn.style.display = "flex";
     } else {
         clearBtn.style.display = "none";
     }
@@ -327,8 +327,14 @@ function doSearch() {
             const sectionDiv = document.createElement("div");
             sectionDiv.className = `section ${hKey}`;
 
-            sectionDiv.innerHTML = `<div class="subtitle">${item[hKey]}</div>
-            <div class="content"></div>`;
+            // 💡 h5の場合のみdetails/summary形式を適用（マークは非表示化）
+            if (hKey.startsWith("h5")) {
+                sectionDiv.innerHTML = `<details><summary class="subtitle" style="cursor: pointer; list-style: none;">${item[hKey]}</summary>
+                <div class="content"></div></details>`;
+            } else {
+                sectionDiv.innerHTML = `<div class="subtitle">${item[hKey]}</div>
+                <div class="content"></div>`;
+            }
 
             const contentDiv = sectionDiv.querySelector(".content");
 
