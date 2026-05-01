@@ -221,6 +221,53 @@ searchBox.addEventListener("keydown", (e) => {
     }
 });
 
+// h3/h5のdetails/summary形式の開閉にアニメーションを追加する関数
+function setupDetailsAnimation(container) {
+    container.querySelectorAll('.section.h3 details, .section.h5 details').forEach(details => {
+        const summary = details.querySelector('summary');
+        const content = details.querySelector('.ml') || details.querySelector('.content');
+
+        if (!summary || !content) return;
+
+        let isAnimating = false;
+
+        summary.addEventListener('click', (e) => {
+            e.preventDefault();
+            
+            if (isAnimating) return;
+            isAnimating = true;
+
+            if (details.open) {
+                const animation = content.animate(
+                    [
+                        { opacity: 1, maxHeight: '1000px' },
+                        { opacity: 0, maxHeight: '0px' }
+                    ],
+                    { duration: 700, easing: 'ease-out' }
+                );
+
+                animation.onfinish = () => {
+                    details.removeAttribute('open');
+                    isAnimating = false;
+                };
+            } else {
+                details.setAttribute('open', 'true');
+                const animation = content.animate(
+                    [
+                        { opacity: 0, maxHeight: '0px' },
+                        { opacity: 1, maxHeight: '1000px' }
+                    ],
+                    { duration: 700, easing: 'ease-out' }
+                );
+
+                animation.onfinish = () => {
+                    isAnimating = false;
+                };
+            }
+        });
+    });
+}
+
 function doSearch() {
     const raw = searchBox.value.trim();
     const query = raw.toLowerCase();
@@ -399,6 +446,9 @@ function doSearch() {
                 startAnimation(target, config.func);
             }
         });
+
+        // 定義した開閉アニメーション関数を実行
+        setupDetailsAnimation(div);
     });
 }
 
