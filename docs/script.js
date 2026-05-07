@@ -221,51 +221,10 @@ searchBox.addEventListener("keydown", (e) => {
     }
 });
 
-// h3/h5のdetails/summary形式の開閉にアニメーションを追加する関数
-function setupDetailsAnimation(container) {
-    container.querySelectorAll('.section.h3 details, .section.h5 details').forEach(details => {
-        const summary = details.querySelector('summary');
-        const content = details.querySelector('.ml') || details.querySelector('.content');
-
-        if (!summary || !content) return;
-
-        let isAnimating = false;
-
-        summary.addEventListener('click', (e) => {
-            e.preventDefault();
-            
-            if (isAnimating) return;
-            isAnimating = true;
-
-            if (details.open) {
-                const animation = content.animate(
-                    [
-                        { opacity: 1, maxHeight: '1000px' },
-                        { opacity: 0, maxHeight: '0px' }
-                    ],
-                    { duration: 700, easing: 'ease-out' }
-                );
-
-                animation.onfinish = () => {
-                    details.removeAttribute('open');
-                    isAnimating = false;
-                };
-            } else {
-                details.setAttribute('open', 'true');
-                const animation = content.animate(
-                    [
-                        { opacity: 0, maxHeight: '0px' },
-                        { opacity: 1, maxHeight: '1000px' }
-                    ],
-                    { duration: 700, easing: 'ease-out' }
-                );
-
-                animation.onfinish = () => {
-                    isAnimating = false;
-                };
-            }
-        });
-    });
+// 単語イメージのアニメーション実行
+function startAnimation(container, drawFunc) {
+    if (!container) return;
+    drawFunc();
 }
 
 function doSearch() {
@@ -549,12 +508,141 @@ async function fetchAndSetAudio(word, num, partOfSpeech = "") {
     }
 }
 
-function startAnimation(container, drawFunc) {
-    if (!container) return;
-    drawFunc();
+
+// 共通のアニメーション関数
+function playAccordionAnimation(content, isOpening, triggerElement, initialTop, onFinish) {
+    content.style.overflow = 'hidden';
+
+    const style = window.getComputedStyle(content);
+    const marginTop = style.marginTop;
+    const marginBottom = style.marginBottom;
+    const paddingTop = style.paddingTop;
+    const paddingBottom = style.paddingBottom;
+
+    const br = content.previousElementSibling;
+    const hasBr = br && br.tagName === 'BR';
+
+    let brHeight = 0;
+    if (hasBr) {
+        brHeight = br.getBoundingClientRect().height || (isOpening ? 16 : 0);
+        br.style.display = 'none';
+    }
+
+    const adjustedMarginTop = hasBr ? `calc(${marginTop} + ${brHeight}px)` : marginTop;
+
+    // スクロール位置を固定するロジック
+    let lastTop = initialTop;
+    let isAnimatingScroll = true;
+
+    // ユーザーが手動でスクロールした場合は追従を解除する
+    const cancelScrollFix = () => { isAnimatingScroll = false; };
+    window.addEventListener('wheel', cancelScrollFix, { passive: true });
+    window.addEventListener('touchmove', cancelScrollFix, { passive: true });
+
+    const maintainScroll = () => {
+        if (!isAnimatingScroll) return;
+        const currentTop = triggerElement.getBoundingClientRect().top;
+        const diff = currentTop - lastTop;
+        
+        // 0.5px以上のズレが生じた場合のみスクロール位置を補正する（微小なガタつき防止）
+        if (Math.abs(diff) > 0.5) {
+            window.scrollBy(0, diff);
+            lastTop = triggerElement.getBoundingClientRect().top; // 実際のスクロール後の位置で更新
+        }
+        requestAnimationFrame(maintainScroll);
+    };
+    requestAnimationFrame(maintainScroll);
+
+    const keyframes = isOpening 
+        ? [
+            { 
+                opacity: 0, 
+                maxHeight: '0px',
+                marginTop: '0px',
+                marginBottom: '0px',
+                paddingTop: '0px',
+                paddingBottom: '0px'
+            },
+            { 
+                opacity: 1, 
+                maxHeight: content.scrollHeight + 'px',
+                marginTop: adjustedMarginTop,
+                marginBottom: marginBottom,
+                paddingTop: paddingTop,
+                paddingBottom: paddingBottom
+            }
+        ]
+        : [
+            { 
+                opacity: 1, 
+                maxHeight: content.scrollHeight + 'px',
+                marginTop: adjustedMarginTop,
+                marginBottom: marginBottom,
+                paddingTop: paddingTop,
+                paddingBottom: paddingBottom
+            },
+            { 
+                opacity: 0, 
+                maxHeight: '0px',
+                marginTop: '0px',
+                marginBottom: '0px',
+                paddingTop: '0px',
+                paddingBottom: '0px'
+            }
+        ];
+
+    const animation = content.animate(keyframes, { duration: 700, easing: 'ease-out' });
+
+    animation.onfinish = () => {
+        content.style.overflow = '';
+        if (hasBr) {
+            br.style.display = ''; // <br>の表示を元に戻す
+        }
+
+        // スクロール固定の解除とイベントリスナーの削除
+        isAnimatingScroll = false;
+        window.removeEventListener('wheel', cancelScrollFix);
+        window.removeEventListener('touchmove', cancelScrollFix);
+
+        if (onFinish) onFinish();
+    };
 }
 
-/*クラス名に基づいて<img>要素を挿入し、洗練されたアコーディオンにする関数*/
+// h3/h5のdetails/summary形式の開閉処理
+function setupDetailsAnimation(container) {
+    container.querySelectorAll('.section.h3 details, .section.h5 details').forEach(details => {
+        const summary = details.querySelector('summary');
+        const content = details.querySelector('.ml') || details.querySelector('.content');
+
+        if (!summary || !content) return;
+
+        let isAnimating = false;
+
+        summary.addEventListener('click', (e) => {
+            e.preventDefault();
+            
+            if (isAnimating) return;
+            isAnimating = true;
+
+            // クリック直後のトリガー要素のY座標を取得
+            const initialTop = summary.getBoundingClientRect().top;
+
+            if (details.open) {
+                playAccordionAnimation(content, false, summary, initialTop, () => {
+                    details.removeAttribute('open');
+                    isAnimating = false;
+                });
+            } else {
+                details.setAttribute('open', 'true');
+                playAccordionAnimation(content, true, summary, initialTop, () => {
+                    isAnimating = false;
+                });
+            }
+        });
+    });
+}
+
+// サンプル画像のアコーディオン開閉処理
 function insertSampleImages() {
     const targetElements = document.querySelectorAll('div.sample_image');
 
@@ -574,6 +662,7 @@ function insertSampleImages() {
             // コンテンツ（画像）を包むspan
             const content = document.createElement('span');
             content.classList.add('accordion-content');
+            content.style.display = 'none'; // 初期状態は非表示にする
 
             const img = document.createElement('img');
             img.src = `./sample_images/${imageName}.png`;
@@ -608,9 +697,14 @@ function insertSampleImages() {
                 modal.appendChild(modalImg);
                 document.body.appendChild(modal);
 
+                // 拡大時は画面のスクロールを禁止
+                document.body.style.overflow = 'hidden';
+
                 // 画面のどこかをタップ・クリックしたら拡大表示を解除
                 modal.addEventListener('click', () => {
                     document.body.removeChild(modal);
+                    // スクロール禁止を解除
+                    document.body.style.overflow = '';
                 });
             });
 
@@ -618,8 +712,30 @@ function insertSampleImages() {
             el.appendChild(trigger);
             el.appendChild(content);
 
-            trigger.addEventListener('click', () => {
-                el.classList.toggle('is-active');
+            let isAnimating = false;
+
+            trigger.addEventListener('click', (e) => {
+                e.preventDefault();
+                
+                if (isAnimating) return;
+                isAnimating = true;
+
+                // クリック直後のトリガー要素のY座標を取得
+                const initialTop = trigger.getBoundingClientRect().top;
+
+                if (el.classList.contains('is-active')) {
+                    playAccordionAnimation(content, false, trigger, initialTop, () => {
+                        el.classList.remove('is-active');
+                        content.style.display = 'none';
+                        isAnimating = false;
+                    });
+                } else {
+                    el.classList.add('is-active');
+                    content.style.display = '';
+                    playAccordionAnimation(content, true, trigger, initialTop, () => {
+                        isAnimating = false;
+                    });
+                }
             });
         }
     });
