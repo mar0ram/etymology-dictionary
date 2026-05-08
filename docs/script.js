@@ -33,14 +33,176 @@ const results = document.getElementById("results");
 const clearBtn = document.getElementById("clearBtn"); // 💡 クリアボタンの要素を取得
 const viewportMeta = document.querySelector("meta[name=viewport]");
 
-function prependEntry(text = '現代英語に関わるさまざまな言語') {
+function prependEntry() {
+    // === ここからカレンダー表エントリの作成 ===
+    const calendarEntry = document.createElement('div');
+    calendarEntry.className = 'entry';
+
+    const calendarHead = document.createElement('div');
+    calendarHead.className = 'head';
+    calendarHead.textContent = 'カレンダー表';
+    calendarEntry.appendChild(calendarHead);
+
+    const tableWrapper = document.createElement('div');
+    tableWrapper.style.width = '100%';
+    tableWrapper.style.margin = '15px 0';
+    tableWrapper.style.overflowX = 'auto';
+
+    const table = document.createElement('table');
+    table.style.width = '100%';
+    table.style.borderCollapse = 'collapse';
+    table.style.backgroundColor = 'transparent';
+    table.style.tableLayout = 'fixed';
+
+    const rows = ['1900', '1000', 'NS', '長文'];
+    const monthsPage1 = ['5月', '6月', '7月', '8月'];
+    const monthsPage2 = ['9月', '10月', '11月', '12月'];
+
+    // 行タップ時の背景色を定義
+    const rowColors = [
+        'rgba(0, 123, 255, 0.15)', // 1900: 透明度の高い青色
+        'rgba(255, 215, 0, 0.25)', // 1000: 透明度の高い黄色
+        'rgba(255, 0, 0, 0.15)',   // NS: 透明度の高い赤色
+        'rgba(0, 128, 0, 0.15)'    // 長文: 透明度の高い緑色
+    ];
+
+    const cellData = [
+        ['<span class="calender_bgc calender_bgc_1900">~800</span><br>100問<br>テスト', '<span class="calender_bgc calender_bgc_1900">~800</span><br>50問<br>テスト<br><span class="calender_bgc calender_bgc_1900">801~</span><br>新：30<br>復：30', '<span class="calender_bgc calender_bgc_1900">~800</span><br>100問<br>テスト<br><span class="calender_bgc calender_bgc_1900">801~</span><br>新：30<br>復：30', '<span class="calender_bgc calender_bgc_1900">~800</span><br>100問<br>テスト<br><span class="calender_bgc calender_bgc_1900">801~</span><br>新：30<br>復：30', '<span class="calender_bgc calender_bgc_1900">~1500</span><br>100問<br>テスト', '<span class="calender_bgc calender_bgc_1900">~1500</span><br>100問<br>テスト', '<span class="calender_bgc calender_bgc_1900">~1500</span><br>100問<br>テスト', '<span class="calender_bgc calender_bgc_1900">~1500</span><br>100問<br>テスト'], // 1900
+        ['<span class="calender_bgc calender_bgc_1000">1000</span><br>新：33<br>復：33', '<span class="calender_bgc calender_bgc_1000">1000</span><br>新：33<br>復：33', '<span class="calender_bgc calender_bgc_1000">1000</span><br>新：33<br>復：33', '<span class="calender_bgc calender_bgc_1000">1000</span><br>新：33<br>復：33', '<span class="calender_bgc calender_bgc_1000">1000</span><br>新：33<br>復：33', '<span class="calender_bgc calender_bgc_1000">1000</span><br>新：33<br>復：33', '<span class="calender_bgc calender_bgc_1000">1000</span><br>新：33<br>復：33', '<span class="calender_bgc calender_bgc_1000">1000</span><br>新：33<br>復：33'], // 1000
+        ['<span class="calender_bgc calender_bgc_NS">文法</span><br><span class="calender_bgc calender_bgc_NS">語法</span>', '', '', '', '', '', '', ''], // NS
+        ['', '', '<span class="calender_bgc calender_bgc_reading">300語</span><br>週１題<br><span class="calender_bgc calender_bgc_reading">500語</span><br>週１題', '<span class="calender_bgc calender_bgc_reading">300語</span><br>週１題<br><span class="calender_bgc calender_bgc_reading">500語</span><br>週１題', '', '', '', '']  // 長文
+    ];
+
+    let isPage2 = false;
+
+    function renderTable() {
+        table.innerHTML = '';
+        const currentMonths = isPage2 ? monthsPage2 : monthsPage1;
+        const colOffset = isPage2 ? 4 : 0;
+
+        const thead = document.createElement('thead');
+        const headerRow = document.createElement('tr');
+        
+        const thCorner = document.createElement('th');
+        thCorner.style.border = '1px solid #ccc';
+        thCorner.style.padding = '8px';
+        thCorner.style.textAlign = 'center';
+        thCorner.style.width = '20%';
+        
+       const btnToggle = document.createElement('button');
+        btnToggle.innerHTML = '<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" style="display: block; margin: auto;"><polyline points="9 18 15 12 9 6"></polyline></svg>';
+        btnToggle.style.transition = 'transform 0.3s ease';
+        btnToggle.style.backgroundColor = 'white';
+        btnToggle.style.border = 'none';
+        btnToggle.style.borderRadius = '6px';
+        btnToggle.style.padding = '4px';
+        btnToggle.style.cursor = 'pointer';
+        btnToggle.style.color = '#121212';
+        
+        btnToggle.style.transform = isPage2 ? 'rotate(0deg)' : 'rotate(180deg)';
+        btnToggle.onclick = (e) => {
+            e.stopPropagation();
+            isPage2 = !isPage2;
+            renderTable();
+        };
+
+        requestAnimationFrame(() => {
+            btnToggle.style.transform = isPage2 ? 'rotate(180deg)' : 'rotate(0deg)';
+        });
+
+        thCorner.appendChild(btnToggle);
+        headerRow.appendChild(thCorner);
+
+        currentMonths.forEach((m, i) => {
+            const th = document.createElement('th');
+            th.textContent = m;
+            th.style.border = '1px solid #ccc';
+            th.style.padding = '8px';
+            th.style.cursor = 'pointer';
+            th.style.width = '20%';
+            th.style.textAlign = 'center';
+            th.onclick = (e) => highlightColumn(i, e);
+            headerRow.appendChild(th);
+        });
+        thead.appendChild(headerRow);
+        table.appendChild(thead);
+
+        const tbody = document.createElement('tbody');
+        rows.forEach((rowName, rIdx) => {
+            const tr = document.createElement('tr');
+            const thRow = document.createElement('th');
+            thRow.textContent = rowName;
+            thRow.style.border = '1px solid #ccc';
+            thRow.style.padding = '8px';
+            thRow.style.cursor = 'pointer';
+            thRow.style.verticalAlign = 'middle';
+            thRow.onclick = (e) => highlightRow(rIdx, e);
+            tr.appendChild(thRow);
+
+            for (let i = 0; i < 4; i++) {
+                const td = document.createElement('td');
+                td.innerHTML = cellData[rIdx][colOffset + i];
+                td.style.border = '1px solid #ccc';
+                td.style.padding = '8px';
+                td.style.textAlign = 'center';
+                td.style.fontSize = '12px';
+                tr.appendChild(td);
+            }
+            tbody.appendChild(tr);
+        });
+        table.appendChild(tbody);
+    }
+
+    function clearHighlight() {
+        const cells = table.querySelectorAll('th, td');
+        cells.forEach(cell => {
+            cell.style.backgroundColor = 'transparent';
+        });
+    }
+
+    function highlightRow(rIdx, event) {
+        if(event) event.stopPropagation();
+        clearHighlight();
+        const tr = table.querySelectorAll('tbody tr')[rIdx];
+        if (tr) {
+            const cells = tr.querySelectorAll('th, td');
+            cells.forEach(cell => {
+                // 行インデックスに対応する色を適用
+                cell.style.backgroundColor = rowColors[rIdx];
+            });
+        }
+    }
+
+    function highlightColumn(cIdx, event) {
+        if(event) event.stopPropagation();
+        clearHighlight();
+        const th = table.querySelectorAll('thead th')[cIdx + 1];
+        if (th) th.style.backgroundColor = 'rgba(255, 255, 255, 0.15)';
+        const tbodyRows = table.querySelectorAll('tbody tr');
+        tbodyRows.forEach(tr => {
+            const td = tr.querySelectorAll('td')[cIdx];
+            if (td) td.style.backgroundColor = 'rgba(255, 255, 255, 0.15)';
+        });
+    }
+
+    document.addEventListener('click', () => {
+        clearHighlight();
+    });
+
+    renderTable();
+    tableWrapper.appendChild(table);
+    calendarEntry.appendChild(tableWrapper);
+    // === カレンダー表エントリの作成ここまで ===
+
+
+    // === ここから元のエントリの作成 ===
     const entry = document.createElement('div');
     entry.className = 'entry';
 
     const head = document.createElement('div');
     head.className = 'head';
     head.id = 'head';
-    head.textContent = text;
+    head.textContent = '現代英語に関わるさまざまな言語';
 
     entry.appendChild(head);
 
@@ -49,10 +211,10 @@ function prependEntry(text = '現代英語に関わるさまざまな言語') {
     treeWrapper.innerHTML = `
         <svg viewBox="0 0 960 760" style="width: 100%; height: auto; display: block; margin: 15px 0;">
             <g stroke="currentColor" stroke-width="1.5" fill="none">
-                                <path d="M 40 380 L 160 380" />
+                <path d="M 40 380 L 160 380" />
                 <path d="M 160 180 L 160 580" />
                 
-                                <path d="M 160 180 L 320 180" />
+                <path d="M 160 180 L 320 180" />
                 <path d="M 320 80 L 320 280" />
                 <path d="M 320 80 L 940 80" />                <path d="M 320 180 L 940 180" />                <path d="M 320 280 L 460 280" />                                <path d="M 160 380 L 620 380" />                                <path d="M 160 580 L 320 580" />
                 <path d="M 320 480 L 320 580" />
@@ -153,6 +315,7 @@ function prependEntry(text = '現代英語に関わるさまざまな言語') {
     entry.appendChild(explanations);
 
     results.prepend(entry);
+    results.prepend(calendarEntry);
 }
 prependEntry();
 

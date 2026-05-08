@@ -61,8 +61,8 @@ footer {
 
 /* ・ は左右のマージン */
 .margin-both {
-    margin-left: 0.1em;
-    margin-right: 0.1em;
+    margin-left: -0.1em;
+    margin-right: -0.1em;
     display: inline;
 }
 
@@ -200,6 +200,29 @@ footer {
     /* アクセントカラーで単語を強調 */
     padding-bottom: 15px;
     letter-spacing: 1px;
+}
+
+.calender_bgc {
+    display: inline-block;
+    margin: 7px 0px;
+    padding: 1px 6px;
+    color: #121212;
+    border-radius: 5px;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.calender_bgc_1900 {
+    background-color: #00a4b7;
+}
+.calender_bgc_1000 {
+    background-color: #dccd29;
+}
+.calender_bgc_NS {
+    background-color: #b90730;
+}
+.calender_bgc_reading {
+    background-color: #2da609;
 }
 
 /* --- 5. セクション構造：情報を左右のパネルに分割 --- */
