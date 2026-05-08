@@ -37,6 +37,35 @@ footer {
     display: none;
 }
 
+/* 「 （ はマージンレフト */
+.margin-left-only {
+    margin-left: 0.3em;
+    margin-right: 0.1em;
+    display: inline;
+}
+
+/* 」 ） はマージンライト（閉じ括弧用） */
+.margin-right-bracket {
+    margin-right: 0.3em;
+    /* お好みの数値に変更 */
+    margin-left: 0.1em;
+    display: inline;
+}
+
+/* 、 。 はマージンライト（句読点用） */
+.margin-right-punctuation {
+    margin-right: 0.01em;
+    /* お好みの数値に変更 */
+    display: inline;
+}
+
+/* ・ は左右のマージン */
+.margin-both {
+    margin-left: 0.1em;
+    margin-right: 0.1em;
+    display: inline;
+}
+
 /* --- 2. 検索エリア：シャープで目立つ検索バー --- */
 .search-container {
     width: 95%;
@@ -246,7 +275,12 @@ footer {
     overflow-wrap: break-word;
 }
 
+.w {
+    display: block;
+}
+
 .ml {
+    width: 100%;
     /* margin-left: 1.2em; */
     margin-top: 1em;
     margin-bottom: 1em;
@@ -269,35 +303,6 @@ footer {
     /* 行末の句読点を枠外に「ぶら下げて」1行に収める（主にSafari/iOS用） */
 }
 
-/* 「 （ はマージンレフト */
-.margin-left-only {
-    margin-left: 0.3em;
-    margin-right: 0.1em;
-    display: inline;
-}
-
-/* 」 ） はマージンライト（閉じ括弧用） */
-.margin-right-bracket {
-    margin-right: 0.3em;
-    /* お好みの数値に変更 */
-    margin-left: 0.1em;
-    display: inline;
-}
-
-/* 、 。 はマージンライト（句読点用） */
-.margin-right-punctuation {
-    margin-right: 0.01em;
-    /* お好みの数値に変更 */
-    display: inline;
-}
-
-/* ・ は左右のマージン */
-.margin-both {
-    margin-left: 0.1em;
-    margin-right: 0.1em;
-    display: inline;
-}
-
 .spacer {
     display: block;
     margin-bottom: 10px;
@@ -314,18 +319,9 @@ footer {
     color: #989898;
 }
 
-/* 音声アイコンを囲む外枠 */
-.audio_box {
-    vertical-align: middle;
-    /* 縦方向の中央揃え */
-}
-
-.w {
-    display: block;
-}
-
 .section.h2 b,
 .section.h4 b {
+    width: 100%;
     margin-bottom: 10px;
     padding: 2px;
     border-radius: 5px;
@@ -333,6 +329,12 @@ footer {
     background-color: #fff;
     border-color: #ccc;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* 音声アイコンを囲む外枠 */
+.audio_box {
+    vertical-align: middle;
+    /* 縦方向の中央揃え */
 }
 
 /* スマホでのタップに最適化したボタンデザイン */
@@ -360,7 +362,6 @@ footer {
     background-color: #bfd0fd;
     /* タップした瞬間にほんのり青く光る */
 }
-
 
 .sample_image {
     display: flex;
