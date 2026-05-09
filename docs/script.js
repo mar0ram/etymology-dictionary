@@ -40,7 +40,7 @@ function prependEntry() {
 
     const calendarHead = document.createElement('div');
     calendarHead.className = 'head';
-    calendarHead.textContent = 'カレンダー表';
+    calendarHead.textContent = '今後の学習計画';
     calendarEntry.appendChild(calendarHead);
 
     const tableWrapper = document.createElement('div');
@@ -67,10 +67,38 @@ function prependEntry() {
     ];
 
     const cellData = [
-        ['<span class="calender_bgc calender_bgc_1900">~800</span><br>100問<br>テスト', '<span class="calender_bgc calender_bgc_1900">~800</span><br>50問<br>テスト<br><span class="calender_bgc calender_bgc_1900">801~</span><br>新：30<br>復：30', '<span class="calender_bgc calender_bgc_1900">~800</span><br>100問<br>テスト<br><span class="calender_bgc calender_bgc_1900">801~</span><br>新：30<br>復：30', '<span class="calender_bgc calender_bgc_1900">~800</span><br>100問<br>テスト<br><span class="calender_bgc calender_bgc_1900">801~</span><br>新：30<br>復：30', '<span class="calender_bgc calender_bgc_1900">~1500</span><br>100問<br>テスト', '<span class="calender_bgc calender_bgc_1900">~1500</span><br>100問<br>テスト', '<span class="calender_bgc calender_bgc_1900">~1500</span><br>100問<br>テスト', '<span class="calender_bgc calender_bgc_1900">~1500</span><br>100問<br>テスト'], // 1900
-        ['<span class="calender_bgc calender_bgc_1000">1000</span><br>新：33<br>復：33', '<span class="calender_bgc calender_bgc_1000">1000</span><br>新：33<br>復：33', '<span class="calender_bgc calender_bgc_1000">1000</span><br>新：33<br>復：33', '<span class="calender_bgc calender_bgc_1000">1000</span><br>新：33<br>復：33', '<span class="calender_bgc calender_bgc_1000">1000</span><br>新：33<br>復：33', '<span class="calender_bgc calender_bgc_1000">1000</span><br>新：33<br>復：33', '<span class="calender_bgc calender_bgc_1000">1000</span><br>新：33<br>復：33', '<span class="calender_bgc calender_bgc_1000">1000</span><br>新：33<br>復：33'], // 1000
-        ['<span class="calender_bgc calender_bgc_NS">文法</span><br><span class="calender_bgc calender_bgc_NS">語法</span>', '', '', '', '', '', '', ''], // NS
-        ['', '', '<span class="calender_bgc calender_bgc_reading">300語</span><br>週１題<br><span class="calender_bgc calender_bgc_reading">500語</span><br>週１題', '<span class="calender_bgc calender_bgc_reading">300語</span><br>週１題<br><span class="calender_bgc calender_bgc_reading">500語</span><br>週１題', '', '', '', '']  // 長文
+        ['<span class="calender_bgc calender_bgc_1900">~800</span><br>100問<br>テスト',
+            '<span class="calender_bgc calender_bgc_1900">~800</span><br><span class="calender_day">月</span>～<span class="calender_day">木</span><br>50問テスト<br><span class="calender_day">金</span><br>復習テスト<br><span class="calender_bgc calender_bgc_1900">801~</span><br><span class="calender_day">月</span>～<span class="calender_day">金</span><br>新：30<br>復：30<br><span class="calender_day calender_text_red">土</span><br>100問テスト<br><span class="calender_day calender_text_red">日</span><br>100問テスト',
+            '<span class="calender_bgc calender_bgc_1900">~800</span><br><span class="calender_day">月</span>～<span class="calender_day">木</span><br>50問テスト<br><span class="calender_day">金</span><br>復習テスト<br><span class="calender_bgc calender_bgc_1900">801~</span><br><span class="calender_day">月</span>～<span class="calender_day">金</span><br>新：30<br>復：30<br><span class="calender_day calender_text_red">土</span><br>100問テスト<br><span class="calender_day calender_text_red">日</span><br>100問テスト',
+            '<span class="calender_bgc calender_bgc_1900">~800</span><br><span class="calender_day">月</span>～<span class="calender_day">木</span><br>50問テスト<br><span class="calender_day">金</span><br>復習テスト<br><span class="calender_bgc calender_bgc_1900">801~</span><br><span class="calender_day">月</span>～<span class="calender_day">金</span><br>新：30<br>復：30<br><span class="calender_day calender_text_red">土</span><br>100問テスト<br><span class="calender_day calender_text_red">日</span><br>100問テスト',
+            '<span class="calender_bgc calender_bgc_1900">~1500</span><br>8月の結果次第',
+            '<span class="calender_bgc calender_bgc_1900">~1500</span><br>8月の結果次第',
+            '<span class="calender_bgc calender_bgc_1900">~1500</span><br>8月の結果次第',
+            '<span class="calender_bgc calender_bgc_1900">~1500</span><br>8月の結果次第'], // 1900
+        ['<span class="calender_bgc calender_bgc_1000">~500</span><br><span class="calender_day">月</span>～<span class="calender_day calender_text_red">日</span><br>新：30<br>復：30',
+            '<span class="calender_bgc calender_bgc_1000">~500</span><br><span class="calender_day">月</span>～<span class="calender_day">金</span><br>新：30<br>復：30<br><span class="calender_day calender_text_red">土</span><br>100問テスト<br><span class="calender_day calender_text_red">日</span><br>100問テスト',
+            '<span class="calender_bgc calender_bgc_1000">501~</span><br><span class="calender_day">月</span>～<span class="calender_day">金</span><br>新：30<br>復：30<br><span class="calender_day calender_text_red">土</span><br>100問テスト<br><span class="calender_day calender_text_red">日</span><br>100問テスト',
+            '<span class="calender_bgc calender_bgc_1000">1000</span><br><span class="calender_day">月</span>～<span class="calender_day calender_text_red">日</span><br>新：30<br>復：30<br>50問テスト',
+            '<span class="calender_bgc calender_bgc_1000">1000</span><br>8月の結果次第',
+            '<span class="calender_bgc calender_bgc_1000">1000</span><br>8月の結果次第',
+            '<span class="calender_bgc calender_bgc_1000">1000</span><br>8月の結果次第',
+            '<span class="calender_bgc calender_bgc_1000">1000</span><br>8月の結果次第'], // 1000
+        ['<span class="calender_bgc calender_bgc_NS">文法</span><br><span class="calender_day">月</span>～<span class="calender_day calender_text_red">日</span><br>30問<br><span class="calender_bgc calender_bgc_NS">語法</span><br><span class="calender_day">月</span>～<span class="calender_day calender_text_red">日</span><br>30問',
+            '<span class="calender_bgc calender_bgc_NS">文法</span><br><span class="calender_day">月</span>～<span class="calender_day calender_text_red">日</span><br>30問<br><span class="calender_bgc calender_bgc_NS">語法</span><br><span class="calender_day">月</span>～<span class="calender_day calender_text_red">日</span><br>30問',
+            '<span class="calender_bgc calender_bgc_NS">文法</span><br><span class="calender_day">月</span>～<span class="calender_day calender_text_red">日</span><br>30問<br><span class="calender_bgc calender_bgc_NS">語法</span><br><span class="calender_day">月</span>～<span class="calender_day calender_text_red">日</span><br>30問',
+            '<span class="calender_bgc calender_bgc_NS">文法</span><br><span class="calender_day">月</span>～<span class="calender_day calender_text_red">日</span><br>30問<br><span class="calender_bgc calender_bgc_NS">語法</span><br><span class="calender_day">月</span>～<span class="calender_day calender_text_red">日</span><br>30問',
+            '<span class="calender_bgc calender_bgc_NS">文法</span><br><span class="calender_day">月</span>～<span class="calender_day calender_text_red">日</span><br>30問<br><span class="calender_bgc calender_bgc_NS">語法</span><br><span class="calender_day">月</span>～<span class="calender_day calender_text_red">日</span><br>30問',
+            '<span class="calender_bgc calender_bgc_NS">文法</span><br><span class="calender_day">月</span>～<span class="calender_day calender_text_red">日</span><br>30問<br><span class="calender_bgc calender_bgc_NS">語法</span><br><span class="calender_day">月</span>～<span class="calender_day calender_text_red">日</span><br>30問',
+            '<span class="calender_bgc calender_bgc_NS">文法</span><br><span class="calender_day">月</span>～<span class="calender_day calender_text_red">日</span><br>30問<br><span class="calender_bgc calender_bgc_NS">語法</span><br><span class="calender_day">月</span>～<span class="calender_day calender_text_red">日</span><br>30問',
+            '<span class="calender_bgc calender_bgc_NS">文法</span><br><span class="calender_day">月</span>～<span class="calender_day calender_text_red">日</span><br>30問<br><span class="calender_bgc calender_bgc_NS">語法</span><br><span class="calender_day">月</span>～<span class="calender_day calender_text_red">日</span><br>30問'], // NS
+        ['',
+            '',
+            '<span class="calender_bgc calender_bgc_reading">300語</span><br>週１題<br><span class="calender_bgc calender_bgc_reading">500語</span><br>週１題',
+            '<span class="calender_bgc calender_bgc_reading">300語</span><br>週１題<br><span class="calender_bgc calender_bgc_reading">500語</span><br>週１題',
+            '',
+            '',
+            '',
+            '']  // 長文
     ];
 
     let isPage2 = false;
@@ -82,14 +110,14 @@ function prependEntry() {
 
         const thead = document.createElement('thead');
         const headerRow = document.createElement('tr');
-        
+
         const thCorner = document.createElement('th');
         thCorner.style.border = '1px solid #ccc';
         thCorner.style.padding = '8px';
         thCorner.style.textAlign = 'center';
-        thCorner.style.width = '20%';
-        
-       const btnToggle = document.createElement('button');
+        thCorner.style.width = '12%';
+
+        const btnToggle = document.createElement('button');
         btnToggle.innerHTML = '<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" style="display: block; margin: auto;"><polyline points="9 18 15 12 9 6"></polyline></svg>';
         btnToggle.style.transition = 'transform 0.3s ease';
         btnToggle.style.backgroundColor = 'white';
@@ -98,7 +126,7 @@ function prependEntry() {
         btnToggle.style.padding = '4px';
         btnToggle.style.cursor = 'pointer';
         btnToggle.style.color = '#121212';
-        
+
         btnToggle.style.transform = isPage2 ? 'rotate(0deg)' : 'rotate(180deg)';
         btnToggle.onclick = (e) => {
             e.stopPropagation();
@@ -119,8 +147,10 @@ function prependEntry() {
             th.style.border = '1px solid #ccc';
             th.style.padding = '8px';
             th.style.cursor = 'pointer';
-            th.style.width = '20%';
+            th.style.width = '22%';
+            th.style.fontSize = '14px';
             th.style.textAlign = 'center';
+            th.style.verticalAlign = 'middle';
             th.onclick = (e) => highlightColumn(i, e);
             headerRow.appendChild(th);
         });
@@ -135,6 +165,8 @@ function prependEntry() {
             thRow.style.border = '1px solid #ccc';
             thRow.style.padding = '8px';
             thRow.style.cursor = 'pointer';
+            thRow.style.fontSize = '14px';
+            thRow.style.textAlign = 'center';
             thRow.style.verticalAlign = 'middle';
             thRow.onclick = (e) => highlightRow(rIdx, e);
             tr.appendChild(thRow);
@@ -143,7 +175,7 @@ function prependEntry() {
                 const td = document.createElement('td');
                 td.innerHTML = cellData[rIdx][colOffset + i];
                 td.style.border = '1px solid #ccc';
-                td.style.padding = '8px';
+                td.style.padding = '8px 4px';
                 td.style.textAlign = 'center';
                 td.style.fontSize = '12px';
                 tr.appendChild(td);
@@ -161,7 +193,7 @@ function prependEntry() {
     }
 
     function highlightRow(rIdx, event) {
-        if(event) event.stopPropagation();
+        if (event) event.stopPropagation();
         clearHighlight();
         const tr = table.querySelectorAll('tbody tr')[rIdx];
         if (tr) {
@@ -174,7 +206,7 @@ function prependEntry() {
     }
 
     function highlightColumn(cIdx, event) {
-        if(event) event.stopPropagation();
+        if (event) event.stopPropagation();
         clearHighlight();
         const th = table.querySelectorAll('thead th')[cIdx + 1];
         if (th) th.style.backgroundColor = 'rgba(255, 255, 255, 0.15)';
@@ -706,7 +738,7 @@ function playAccordionAnimation(content, isOpening, triggerElement, initialTop, 
         if (!isAnimatingScroll) return;
         const currentTop = triggerElement.getBoundingClientRect().top;
         const diff = currentTop - lastTop;
-        
+
         // 0.5px以上のズレが生じた場合のみスクロール位置を補正する（微小なガタつき防止）
         if (Math.abs(diff) > 0.5) {
             window.scrollBy(0, diff);
@@ -716,18 +748,18 @@ function playAccordionAnimation(content, isOpening, triggerElement, initialTop, 
     };
     requestAnimationFrame(maintainScroll);
 
-    const keyframes = isOpening 
+    const keyframes = isOpening
         ? [
-            { 
-                opacity: 0, 
+            {
+                opacity: 0,
                 maxHeight: '0px',
                 marginTop: '0px',
                 marginBottom: '0px',
                 paddingTop: '0px',
                 paddingBottom: '0px'
             },
-            { 
-                opacity: 1, 
+            {
+                opacity: 1,
                 maxHeight: content.scrollHeight + 'px',
                 marginTop: adjustedMarginTop,
                 marginBottom: marginBottom,
@@ -736,16 +768,16 @@ function playAccordionAnimation(content, isOpening, triggerElement, initialTop, 
             }
         ]
         : [
-            { 
-                opacity: 1, 
+            {
+                opacity: 1,
                 maxHeight: content.scrollHeight + 'px',
                 marginTop: adjustedMarginTop,
                 marginBottom: marginBottom,
                 paddingTop: paddingTop,
                 paddingBottom: paddingBottom
             },
-            { 
-                opacity: 0, 
+            {
+                opacity: 0,
                 maxHeight: '0px',
                 marginTop: '0px',
                 marginBottom: '0px',
@@ -783,7 +815,7 @@ function setupDetailsAnimation(container) {
 
         summary.addEventListener('click', (e) => {
             e.preventDefault();
-            
+
             if (isAnimating) return;
             isAnimating = true;
 
@@ -879,7 +911,7 @@ function insertSampleImages() {
 
             trigger.addEventListener('click', (e) => {
                 e.preventDefault();
-                
+
                 if (isAnimating) return;
                 isAnimating = true;
 
