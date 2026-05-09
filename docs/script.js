@@ -115,15 +115,16 @@ function prependEntry() {
         thCorner.style.border = '1px solid #ccc';
         thCorner.style.padding = '8px';
         thCorner.style.textAlign = 'center';
-        thCorner.style.width = '12%';
+        thCorner.style.width = 'max-content';
+        thCorner.style.whiteSpace = 'nowrap';
 
         const btnToggle = document.createElement('button');
-        btnToggle.innerHTML = '<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" style="display: block; margin: auto;"><polyline points="9 18 15 12 9 6"></polyline></svg>';
+        btnToggle.innerHTML = '<svg viewBox="0 0 24 24" width="12" height="12" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" style="display: block; margin: auto;"><polyline points="9 18 15 12 9 6"></polyline></svg>';
         btnToggle.style.transition = 'transform 0.3s ease';
         btnToggle.style.backgroundColor = 'white';
         btnToggle.style.border = 'none';
         btnToggle.style.borderRadius = '6px';
-        btnToggle.style.padding = '4px';
+        btnToggle.style.padding = '6px';
         btnToggle.style.cursor = 'pointer';
         btnToggle.style.color = '#121212';
 
@@ -165,9 +166,10 @@ function prependEntry() {
             thRow.style.border = '1px solid #ccc';
             thRow.style.padding = '8px';
             thRow.style.cursor = 'pointer';
-            thRow.style.fontSize = '14px';
             thRow.style.textAlign = 'center';
             thRow.style.verticalAlign = 'middle';
+            thRow.style.fontSize = '14px';
+            thRow.style.whiteSpace = 'nowrap';
             thRow.onclick = (e) => highlightRow(rIdx, e);
             tr.appendChild(thRow);
 
