@@ -149,7 +149,7 @@ function prependEntry() {
             th.style.padding = '8px';
             th.style.cursor = 'pointer';
             th.style.width = '22%';
-            th.style.fontSize = '14px';
+            th.style.fontSize = '12px';
             th.style.textAlign = 'center';
             th.style.verticalAlign = 'middle';
             th.onclick = (e) => highlightColumn(i, e);
@@ -179,7 +179,7 @@ function prependEntry() {
                 td.style.border = '1px solid #ccc';
                 td.style.padding = '8px 4px';
                 td.style.textAlign = 'center';
-                td.style.fontSize = '12px';
+                td.style.fontSize = '10px';
                 tr.appendChild(td);
             }
             tbody.appendChild(tr);
