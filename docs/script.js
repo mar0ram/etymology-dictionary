@@ -164,11 +164,11 @@ function prependEntry() {
             const thRow = document.createElement('th');
             thRow.textContent = rowName;
             thRow.style.border = '1px solid #ccc';
-            thRow.style.padding = '8px';
+            thRow.style.padding = '4px';
             thRow.style.cursor = 'pointer';
             thRow.style.textAlign = 'center';
             thRow.style.verticalAlign = 'middle';
-            thRow.style.fontSize = '14px';
+            thRow.style.fontSize = '12px';
             thRow.style.whiteSpace = 'nowrap';
             thRow.onclick = (e) => highlightRow(rIdx, e);
             tr.appendChild(thRow);
