@@ -203,43 +203,53 @@ footer {
 }
 
 .calender_bgc {
-    display: inline-block;
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
     margin: 7px 0px;
-    padding: 1px 6px;
+    padding: 2px 8px;
     color: #121212;
     border-radius: 5px;
-    font-size: 12px;
+    font-size: 14px;
     font-weight: 700;
 }
 
 .calender_bgc_1900 {
     background-color: #00a4b7;
 }
+
 .calender_bgc_1000 {
     background-color: #dccd29;
 }
+
 .calender_bgc_NS {
-    background-color: #b90730;
+    background-color: #a7082d;
 }
+
 .calender_bgc_reading {
-    background-color: #2da609;
+    background-color: #279705;
 }
 
 .calender_day {
-    display: inline-block;
-    margin: 6px 4px;
-    padding: 1px 4px;
+    margin: 10px 4px;
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    width: 22px;
+    aspect-ratio: 1 / 1;
     border-radius: 50%;
     color: #121212;
-    font-size: 10px;
-    text-align: center;
-    vertical-align: middle;
+    font-size: 12px;
     background-color: #e4e4e4;
     font-weight: 700;
 }
 
 .calender_text_red {
     color: #c10431;
+}
+
+.calender_text_orange {
+    color: #ffa500;
 }
 
 /* --- 5. セクション構造：情報を左右のパネルに分割 --- */
@@ -741,6 +751,18 @@ footer {
         margin-top: 0px;
         padding-left: 0px;
         border-left: none;
+    }
+
+    .calender_bgc {
+        margin: 7px 0px;
+        padding: 1px 6px;
+        font-size: 12px;
+    }
+
+    .calender_day {
+        margin: 6px 4px;
+        width: 16px;
+        font-size: 10px;
     }
 
     /* 💡 タイムラインマーカーなし */

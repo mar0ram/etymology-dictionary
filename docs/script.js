@@ -40,7 +40,7 @@ function prependEntry() {
 
     const calendarHead = document.createElement('div');
     calendarHead.className = 'head';
-    calendarHead.textContent = '今後の学習計画';
+    calendarHead.textContent = '学習計画：夏終わりまでが勝負';
     calendarEntry.appendChild(calendarHead);
 
     const tableWrapper = document.createElement('div');
@@ -55,7 +55,7 @@ function prependEntry() {
     table.style.tableLayout = 'fixed';
 
     const rows = ['1900', '1000', 'NS', '長文'];
-    const monthsPage1 = ['5月', '6月', '7月', '8月'];
+    const monthsPage1 = ['5月', '6月', '<span class="calender_text_orange">7月</span>', '<span class="calender_text_orange">8月</span>'];
     const monthsPage2 = ['9月', '10月', '11月', '12月'];
 
     // 行タップ時の背景色を定義
@@ -67,10 +67,10 @@ function prependEntry() {
     ];
 
     const cellData = [
-        ['<span class="calender_bgc calender_bgc_1900">~800</span><br>100問<br>テスト',
-            '<span class="calender_bgc calender_bgc_1900">~800</span><br><span class="calender_day">月</span>～<span class="calender_day">木</span><br>50問テスト<br><span class="calender_day">金</span><br>復習テスト<br><span class="calender_bgc calender_bgc_1900">801~</span><br><span class="calender_day">月</span>～<span class="calender_day">金</span><br>新：30<br>復：30<br><span class="calender_day calender_text_red">土</span><br>100問テスト<br><span class="calender_day calender_text_red">日</span><br>100問テスト',
-            '<span class="calender_bgc calender_bgc_1900">~800</span><br><span class="calender_day">月</span>～<span class="calender_day">木</span><br>50問テスト<br><span class="calender_day">金</span><br>復習テスト<br><span class="calender_bgc calender_bgc_1900">801~</span><br><span class="calender_day">月</span>～<span class="calender_day">金</span><br>新：30<br>復：30<br><span class="calender_day calender_text_red">土</span><br>100問テスト<br><span class="calender_day calender_text_red">日</span><br>100問テスト',
-            '<span class="calender_bgc calender_bgc_1900">~800</span><br><span class="calender_day">月</span>～<span class="calender_day">木</span><br>50問テスト<br><span class="calender_day">金</span><br>復習テスト<br><span class="calender_bgc calender_bgc_1900">801~</span><br><span class="calender_day">月</span>～<span class="calender_day">金</span><br>新：30<br>復：30<br><span class="calender_day calender_text_red">土</span><br>100問テスト<br><span class="calender_day calender_text_red">日</span><br>100問テスト',
+        ['<span class="calender_bgc calender_bgc_1900">~800</span><br>100問テスト',
+            '<span class="calender_bgc calender_bgc_1900">~800</span><br><span class="calender_day">月</span>～<span class="calender_day">木</span><br>50問テスト<br><span class="calender_day">金</span><br>テスト復習<br><span class="calender_bgc calender_bgc_1900">801~</span><br><span class="calender_day">月</span>～<span class="calender_day">金</span><br>新：30<br>復：30<br><span class="calender_day calender_text_red">土</span><br>100問テスト<br><span class="calender_day calender_text_red">日</span><br>100問テスト',
+            '<span class="calender_bgc calender_bgc_1900">~800</span><br><span class="calender_day">月</span>～<span class="calender_day">木</span><br>50問テスト<br><span class="calender_day">金</span><br>テスト復習<br><span class="calender_bgc calender_bgc_1900">801~</span><br><span class="calender_day">月</span>～<span class="calender_day">金</span><br>新：30<br>復：30<br><span class="calender_day calender_text_red">土</span><br>100問テスト<br><span class="calender_day calender_text_red">日</span><br>100問テスト',
+            '<span class="calender_bgc calender_bgc_1900">~800</span><br><span class="calender_day">月</span>～<span class="calender_day">木</span><br>50問テスト<br><span class="calender_day">金</span><br>テスト復習<br><span class="calender_bgc calender_bgc_1900">801~</span><br><span class="calender_day">月</span>～<span class="calender_day">金</span><br>新：30<br>復：30<br><span class="calender_day calender_text_red">土</span><br>100問テスト<br><span class="calender_day calender_text_red">日</span><br>100問テスト',
             '<span class="calender_bgc calender_bgc_1900">~1500</span><br>8月の結果次第',
             '<span class="calender_bgc calender_bgc_1900">~1500</span><br>8月の結果次第',
             '<span class="calender_bgc calender_bgc_1900">~1500</span><br>8月の結果次第',
@@ -78,7 +78,7 @@ function prependEntry() {
         ['<span class="calender_bgc calender_bgc_1000">~500</span><br><span class="calender_day">月</span>～<span class="calender_day calender_text_red">日</span><br>新：30<br>復：30',
             '<span class="calender_bgc calender_bgc_1000">~500</span><br><span class="calender_day">月</span>～<span class="calender_day">金</span><br>新：30<br>復：30<br><span class="calender_day calender_text_red">土</span><br>100問テスト<br><span class="calender_day calender_text_red">日</span><br>100問テスト',
             '<span class="calender_bgc calender_bgc_1000">501~</span><br><span class="calender_day">月</span>～<span class="calender_day">金</span><br>新：30<br>復：30<br><span class="calender_day calender_text_red">土</span><br>100問テスト<br><span class="calender_day calender_text_red">日</span><br>100問テスト',
-            '<span class="calender_bgc calender_bgc_1000">1000</span><br><span class="calender_day">月</span>～<span class="calender_day calender_text_red">日</span><br>新：30<br>復：30<br>50問テスト<br>間違い復習',
+            '<span class="calender_bgc calender_bgc_1000">1000</span><br><span class="calender_day">月</span>～<span class="calender_day calender_text_red">日</span><br>新：30<br>復：30<br><br>50問テスト<br>間違い復習',
             '<span class="calender_bgc calender_bgc_1000">1000</span><br>8月の結果次第',
             '<span class="calender_bgc calender_bgc_1000">1000</span><br>8月の結果次第',
             '<span class="calender_bgc calender_bgc_1000">1000</span><br>8月の結果次第',
@@ -105,127 +105,132 @@ function prependEntry() {
 
     function renderTable() {
         table.innerHTML = '';
-        const currentMonths = isPage2 ? monthsPage2 : monthsPage1;
-        const colOffset = isPage2 ? 4 : 0;
+const isPC = window.matchMedia('(min-width: 768px)').matches;
+const currentMonths = isPage2 ? monthsPage2 : monthsPage1;
+const colOffset = isPage2 ? 4 : 0;
 
-        const thead = document.createElement('thead');
-        const headerRow = document.createElement('tr');
+const thead = document.createElement('thead');
+const headerRow = document.createElement('tr');
 
-        const thCorner = document.createElement('th');
-        thCorner.style.border = '1px solid #ccc';
-        thCorner.style.padding = '8px';
-        thCorner.style.textAlign = 'center';
-        thCorner.style.width = 'max-content';
-        thCorner.style.whiteSpace = 'nowrap';
+const thCorner = document.createElement('th');
+thCorner.style.border = '1px solid #ccc';
+thCorner.style.padding = '8px';
+thCorner.style.textAlign = 'center';
+thCorner.style.width = 'max-content';
+thCorner.style.whiteSpace = 'nowrap';
 
-        const btnToggle = document.createElement('button');
-        btnToggle.innerHTML = '<svg viewBox="0 0 24 24" width="12" height="12" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" style="display: block; margin: auto;"><polyline points="9 18 15 12 9 6"></polyline></svg>';
-        btnToggle.style.transition = 'transform 0.3s ease';
-        btnToggle.style.backgroundColor = 'white';
-        btnToggle.style.border = 'none';
-        btnToggle.style.borderRadius = '6px';
-        btnToggle.style.padding = '6px';
-        btnToggle.style.cursor = 'pointer';
-        btnToggle.style.color = '#121212';
+const btnToggle = document.createElement('button');
+btnToggle.innerHTML = '<svg viewBox="0 0 24 24" width="12" height="12" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" style="display: block; margin: auto;"><polyline points="9 18 15 12 9 6"></polyline></svg>';
+btnToggle.style.transition = 'transform 0.3s ease';
+btnToggle.style.backgroundColor = 'white';
+btnToggle.style.border = 'none';
+btnToggle.style.borderRadius = '6px';
+btnToggle.style.padding = '6px';
+btnToggle.style.cursor = 'pointer';
+btnToggle.style.color = '#121212';
 
-        btnToggle.style.transform = isPage2 ? 'rotate(0deg)' : 'rotate(180deg)';
-        btnToggle.onclick = (e) => {
-            e.stopPropagation();
-            isPage2 = !isPage2;
-            renderTable();
-        };
-
-        requestAnimationFrame(() => {
-            btnToggle.style.transform = isPage2 ? 'rotate(180deg)' : 'rotate(0deg)';
-        });
-
-        thCorner.appendChild(btnToggle);
-        headerRow.appendChild(thCorner);
-
-        currentMonths.forEach((m, i) => {
-            const th = document.createElement('th');
-            th.textContent = m;
-            th.style.border = '1px solid #ccc';
-            th.style.padding = '8px';
-            th.style.cursor = 'pointer';
-            th.style.width = '22%';
-            th.style.fontSize = '12px';
-            th.style.textAlign = 'center';
-            th.style.verticalAlign = 'middle';
-            th.onclick = (e) => highlightColumn(i, e);
-            headerRow.appendChild(th);
-        });
-        thead.appendChild(headerRow);
-        table.appendChild(thead);
-
-        const tbody = document.createElement('tbody');
-        rows.forEach((rowName, rIdx) => {
-            const tr = document.createElement('tr');
-            const thRow = document.createElement('th');
-            thRow.textContent = rowName;
-            thRow.style.border = '1px solid #ccc';
-            thRow.style.padding = '4px';
-            thRow.style.cursor = 'pointer';
-            thRow.style.textAlign = 'center';
-            thRow.style.verticalAlign = 'middle';
-            thRow.style.fontSize = '12px';
-            thRow.style.whiteSpace = 'nowrap';
-            thRow.onclick = (e) => highlightRow(rIdx, e);
-            tr.appendChild(thRow);
-
-            for (let i = 0; i < 4; i++) {
-                const td = document.createElement('td');
-                td.innerHTML = cellData[rIdx][colOffset + i];
-                td.style.border = '1px solid #ccc';
-                td.style.padding = '8px 4px';
-                td.style.textAlign = 'center';
-                td.style.fontSize = '10px';
-                tr.appendChild(td);
-            }
-            tbody.appendChild(tr);
-        });
-        table.appendChild(tbody);
-    }
-
-    function clearHighlight() {
-        const cells = table.querySelectorAll('th, td');
-        cells.forEach(cell => {
-            cell.style.backgroundColor = 'transparent';
-        });
-    }
-
-    function highlightRow(rIdx, event) {
-        if (event) event.stopPropagation();
-        clearHighlight();
-        const tr = table.querySelectorAll('tbody tr')[rIdx];
-        if (tr) {
-            const cells = tr.querySelectorAll('th, td');
-            cells.forEach(cell => {
-                // 行インデックスに対応する色を適用
-                cell.style.backgroundColor = rowColors[rIdx];
-            });
-        }
-    }
-
-    function highlightColumn(cIdx, event) {
-        if (event) event.stopPropagation();
-        clearHighlight();
-        const th = table.querySelectorAll('thead th')[cIdx + 1];
-        if (th) th.style.backgroundColor = 'rgba(255, 255, 255, 0.15)';
-        const tbodyRows = table.querySelectorAll('tbody tr');
-        tbodyRows.forEach(tr => {
-            const td = tr.querySelectorAll('td')[cIdx];
-            if (td) td.style.backgroundColor = 'rgba(255, 255, 255, 0.15)';
-        });
-    }
-
-    document.addEventListener('click', () => {
-        clearHighlight();
-    });
-
+btnToggle.style.transform = isPage2 ? 'rotate(0deg)' : 'rotate(180deg)';
+btnToggle.onclick = (e) => {
+    e.stopPropagation();
+    isPage2 = !isPage2;
     renderTable();
-    tableWrapper.appendChild(table);
-    calendarEntry.appendChild(tableWrapper);
+};
+
+requestAnimationFrame(() => {
+    btnToggle.style.transform = isPage2 ? 'rotate(180deg)' : 'rotate(0deg)';
+});
+
+thCorner.appendChild(btnToggle);
+headerRow.appendChild(thCorner);
+
+currentMonths.forEach((m, i) => {
+    const th = document.createElement('th');
+    th.innerHTML = m;
+    th.style.border = '1px solid #ccc';
+    th.style.padding = '8px';
+    th.style.cursor = 'pointer';
+    th.style.width = '22%';
+    th.style.fontSize = isPC ? '16px' : '12px';
+    th.style.textAlign = 'center';
+    th.style.verticalAlign = 'middle';
+    th.onclick = (e) => highlightColumn(i, e);
+    headerRow.appendChild(th);
+});
+thead.appendChild(headerRow);
+table.appendChild(thead);
+
+const tbody = document.createElement('tbody');
+rows.forEach((rowName, rIdx) => {
+    const tr = document.createElement('tr');
+    const thRow = document.createElement('th');
+    thRow.innerHTML = rowName;
+    thRow.style.border = '1px solid #ccc';
+    thRow.style.padding = '4px';
+    thRow.style.cursor = 'pointer';
+    thRow.style.textAlign = 'center';
+    thRow.style.verticalAlign = 'middle';
+    thRow.style.fontSize = isPC ? '16px' : '12px';
+    thRow.style.whiteSpace = 'nowrap';
+    thRow.onclick = (e) => highlightRow(rIdx, e);
+    tr.appendChild(thRow);
+
+    for (let i = 0; i < 4; i++) {
+        const td = document.createElement('td');
+        td.innerHTML = cellData[rIdx][colOffset + i];
+        td.style.border = '1px solid #ccc';
+        td.style.padding = '8px 4px';
+        td.style.textAlign = 'center';
+        td.style.fontSize = isPC ? '14px' : '10px';
+        tr.appendChild(td);
+    }
+    tbody.appendChild(tr);
+});
+table.appendChild(tbody);
+}
+
+function clearHighlight() {
+    const cells = table.querySelectorAll('th, td');
+    cells.forEach(cell => {
+        cell.style.backgroundColor = 'transparent';
+    });
+}
+
+function highlightRow(rIdx, event) {
+    if (event) event.stopPropagation();
+    clearHighlight();
+    const tr = table.querySelectorAll('tbody tr')[rIdx];
+    if (tr) {
+        const cells = tr.querySelectorAll('th, td');
+        cells.forEach(cell => {
+            // 行インデックスに対応する色を適用
+            cell.style.backgroundColor = rowColors[rIdx];
+        });
+    }
+}
+
+function highlightColumn(cIdx, event) {
+    if (event) event.stopPropagation();
+    clearHighlight();
+    const th = table.querySelectorAll('thead th')[cIdx + 1];
+    if (th) th.style.backgroundColor = 'rgba(255, 255, 255, 0.15)';
+    const tbodyRows = table.querySelectorAll('tbody tr');
+    tbodyRows.forEach(tr => {
+        const td = tr.querySelectorAll('td')[cIdx];
+        if (td) td.style.backgroundColor = 'rgba(255, 255, 255, 0.15)';
+    });
+}
+
+document.addEventListener('click', () => {
+    clearHighlight();
+});
+
+window.matchMedia('(min-width: 768px)').addEventListener('change', () => {
+    renderTable();
+});
+
+renderTable();
+tableWrapper.appendChild(table);
+calendarEntry.appendChild(tableWrapper);
     // === カレンダー表エントリの作成ここまで ===
 
 
