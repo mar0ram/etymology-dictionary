@@ -78,7 +78,7 @@ function prependEntry() {
         ['<span class="calender_bgc calender_bgc_1000">~500</span><br><span class="calender_day">月</span>～<span class="calender_day calender_text_red">日</span><br>新：30<br>復：30',
             '<span class="calender_bgc calender_bgc_1000">~500</span><br><span class="calender_day">月</span>～<span class="calender_day">金</span><br>新：30<br>復：30<br><span class="calender_day calender_text_red">土</span><br>100問テスト<br><span class="calender_day calender_text_red">日</span><br>100問テスト',
             '<span class="calender_bgc calender_bgc_1000">501~</span><br><span class="calender_day">月</span>～<span class="calender_day">金</span><br>新：30<br>復：30<br><span class="calender_day calender_text_red">土</span><br>100問テスト<br><span class="calender_day calender_text_red">日</span><br>100問テスト',
-            '<span class="calender_bgc calender_bgc_1000">1000</span><br><span class="calender_day">月</span>～<span class="calender_day calender_text_red">日</span><br>新：30<br>復：30<br>新：50問テスト<br>復：間違い',
+            '<span class="calender_bgc calender_bgc_1000">1000</span><br><span class="calender_day">月</span>～<span class="calender_day calender_text_red">日</span><br>新：30<br>復：30<br>50問テスト<br>間違い復習',
             '<span class="calender_bgc calender_bgc_1000">1000</span><br>8月の結果次第',
             '<span class="calender_bgc calender_bgc_1000">1000</span><br>8月の結果次第',
             '<span class="calender_bgc calender_bgc_1000">1000</span><br>8月の結果次第',
