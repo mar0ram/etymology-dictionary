@@ -257,6 +257,14 @@ footer {
     color: #ffa500;
 }
 
+.calender_text_blue {
+    color: #09c6ff;
+}
+
+.calender_text_yellow {
+    color: #ffee00;
+}
+
 /* --- 5. セクション構造：情報を左右のパネルに分割 --- */
 .section-wrapper {
     display: flex;

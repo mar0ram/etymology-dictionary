@@ -105,22 +105,22 @@ export function prependEntry() {
     <tbody>
         <tr>
             <th style="border: 1px solid #ccc; padding: 10px 6px; text-align: center; vertical-align: middle;"><span class="calender_day">月</span></th>
-            <td id="cell-mon-800" style="border: 1px solid #ccc; padding: 10px 6px;"><span class="calender_bgc calender_bgc_tag">テスト</span><br>50問テスト<br>1枚の半分だけ</td>
+            <td id="cell-mon-800" style="border: 1px solid #ccc; padding: 10px 6px;"><span class="calender_bgc calender_bgc_tag">テスト</span><br>50問テスト<br>1枚の半分だけ<br><span class="calender_text_blue">毎日異なる50問</span></td>
             <td id="cell-mon-801" style="border: 1px solid #ccc; padding: 10px 6px; vertical-align: middle;"><span class="calender_bgc calender_bgc_tag">単語覚え</span><br>30個は前日の復習<br>30個は新しい単語</td>
         </tr>
         <tr>
             <th style="border: 1px solid #ccc; padding: 10px 6px; text-align: center; vertical-align: middle;"><span class="calender_day">火</span></th>
-            <td id="cell-tue-800" style="border: 1px solid #ccc; padding: 10px 6px; vertical-align: middle;"><span class="calender_bgc calender_bgc_tag">テスト</span><br>50問テスト<br>1枚の半分だけ</td>
+            <td id="cell-tue-800" style="border: 1px solid #ccc; padding: 10px 6px; vertical-align: middle;"><span class="calender_bgc calender_bgc_tag">テスト</span><br>50問テスト<br>1枚の半分だけ<br><span class="calender_text_blue">毎日異なる50問</span></td>
             <td id="cell-tue-801" style="border: 1px solid #ccc; padding: 10px 6px; vertical-align: middle;"><span class="calender_bgc calender_bgc_tag">単語覚え</span><br>30個は前日の復習<br>30個は新しい単語</td>
         </tr>
         <tr>
             <th style="border: 1px solid #ccc; padding: 10px 6px; text-align: center; vertical-align: middle;"><span class="calender_day">水</span></th>
-            <td id="cell-wed-800" style="border: 1px solid #ccc; padding: 10px 6px; vertical-align: middle;"><span class="calender_bgc calender_bgc_tag">テスト</span><br>50問テスト<br>1枚の半分だけ</td>
+            <td id="cell-wed-800" style="border: 1px solid #ccc; padding: 10px 6px; vertical-align: middle;"><span class="calender_bgc calender_bgc_tag">テスト</span><br>50問テスト<br>1枚の半分だけ<br><span class="calender_text_blue">毎日異なる50問</span></td>
             <td id="cell-wed-801" style="border: 1px solid #ccc; padding: 10px 6px; vertical-align: middle;"><span class="calender_bgc calender_bgc_tag">単語覚え</span><br>30個は前日の復習<br>30個は新しい単語</td>
         </tr>
         <tr>
             <th style="border: 1px solid #ccc; padding: 10px 6px; text-align: center; vertical-align: middle;"><span class="calender_day">木</span></th>
-            <td id="cell-thu-800" style="border: 1px solid #ccc; padding: 10px 6px; vertical-align: middle;"><span class="calender_bgc calender_bgc_tag">テスト</span><br>50問テスト<br>1枚の半分だけ</td>
+            <td id="cell-thu-800" style="border: 1px solid #ccc; padding: 10px 6px; vertical-align: middle;"><span class="calender_bgc calender_bgc_tag">テスト</span><br>50問テスト<br>1枚の半分だけ<br><span class="calender_text_blue">毎日異なる50問</span></td>
             <td id="cell-thu-801" style="border: 1px solid #ccc; padding: 10px 6px; vertical-align: middle;"><span class="calender_bgc calender_bgc_tag">単語覚え</span><br>30個は前日の復習<br>30個は新しい単語</td>
         </tr>
         <tr>
@@ -153,22 +153,22 @@ export function prependEntry() {
     <tbody>
         <tr>
             <th style="border: 1px solid #ccc; padding: 10px 6px; text-align: center; vertical-align: middle;"><span class="calender_day">月</span></th>
-            <td id="cell-mon-800" style="border: 1px solid #ccc; padding: 10px 6px; vertical-align: middle;"><span class="calender_bgc calender_bgc_tag">テスト</span><br>50問テスト<br>1枚の半分だけ</td>
+            <td id="cell-mon-800" style="border: 1px solid #ccc; padding: 10px 6px; vertical-align: middle;"><span class="calender_bgc calender_bgc_tag">テスト</span><br>50問テスト<br>1枚の半分だけ<br><span class="calender_text_blue">毎日異なる50問</span></td>
             <td id="cell-mon-801" style="border: 1px solid #ccc; padding: 10px 6px; vertical-align: middle;"><span class="calender_bgc calender_bgc_tag">単語覚え</span><br>30個は前日の復習<br>30個は新しい単語</td>
         </tr>
         <tr>
             <th style="border: 1px solid #ccc; padding: 10px 6px; text-align: center; vertical-align: middle;"><span class="calender_day">火</span></th>
-            <td id="cell-tue-800" style="border: 1px solid #ccc; padding: 10px 6px; vertical-align: middle;"><span class="calender_bgc calender_bgc_tag">テスト</span><br>50問テスト<br>1枚の半分だけ</td>
+            <td id="cell-tue-800" style="border: 1px solid #ccc; padding: 10px 6px; vertical-align: middle;"><span class="calender_bgc calender_bgc_tag">テスト</span><br>50問テスト<br>1枚の半分だけ<br><span class="calender_text_blue">毎日異なる50問</span></td>
             <td id="cell-tue-801" style="border: 1px solid #ccc; padding: 10px 6px; vertical-align: middle;"><span class="calender_bgc calender_bgc_tag">単語覚え</span><br>30個は前日の復習<br>30個は新しい単語</td>
         </tr>
         <tr>
             <th style="border: 1px solid #ccc; padding: 10px 6px; text-align: center; vertical-align: middle;"><span class="calender_day">水</span></th>
-            <td id="cell-wed-800" style="border: 1px solid #ccc; padding: 10px 6px; vertical-align: middle;"><span class="calender_bgc calender_bgc_tag">テスト</span><br>50問テスト<br>1枚の半分だけ</td>
+            <td id="cell-wed-800" style="border: 1px solid #ccc; padding: 10px 6px; vertical-align: middle;"><span class="calender_bgc calender_bgc_tag">テスト</span><br>50問テスト<br>1枚の半分だけ<br><span class="calender_text_blue">毎日異なる50問</span></td>
             <td id="cell-wed-801" style="border: 1px solid #ccc; padding: 10px 6px; vertical-align: middle;"><span class="calender_bgc calender_bgc_tag">単語覚え</span><br>30個は前日の復習<br>30個は新しい単語</td>
         </tr>
         <tr>
             <th style="border: 1px solid #ccc; padding: 10px 6px; text-align: center; vertical-align: middle;"><span class="calender_day">木</span></th>
-            <td id="cell-thu-800" style="border: 1px solid #ccc; padding: 10px 6px; vertical-align: middle;"><span class="calender_bgc calender_bgc_tag">テスト</span><br>50問テスト<br>1枚の半分だけ</td>
+            <td id="cell-thu-800" style="border: 1px solid #ccc; padding: 10px 6px; vertical-align: middle;"><span class="calender_bgc calender_bgc_tag">テスト</span><br>50問テスト<br>1枚の半分だけ<br><span class="calender_text_blue">毎日異なる50問</span></td>
             <td id="cell-thu-801" style="border: 1px solid #ccc; padding: 10px 6px; vertical-align: middle;"><span class="calender_bgc calender_bgc_tag">単語覚え</span><br>30個は前日の復習<br>30個は新しい単語</td>
         </tr>
         <tr>
@@ -201,22 +201,22 @@ export function prependEntry() {
     <tbody>
         <tr>
             <th style="border: 1px solid #ccc; padding: 10px 6px; text-align: center; vertical-align: middle;"><span class="calender_day">月</span></th>
-            <td id="cell-mon-800" style="border: 1px solid #ccc; padding: 10px 6px; vertical-align: middle;"><span class="calender_bgc calender_bgc_tag">テスト</span><br>50問テスト<br>1枚の半分だけ</td>
+            <td id="cell-mon-800" style="border: 1px solid #ccc; padding: 10px 6px; vertical-align: middle;"><span class="calender_bgc calender_bgc_tag">テスト</span><br>50問テスト<br>1枚の半分だけ<br><span class="calender_text_blue">毎日異なる50問</span></td>
             <td id="cell-mon-801" style="border: 1px solid #ccc; padding: 10px 6px; vertical-align: middle;"><span class="calender_bgc calender_bgc_tag">単語覚え</span><br>30個は前日の復習<br>30個は新しい単語</td>
         </tr>
         <tr>
             <th style="border: 1px solid #ccc; padding: 10px 6px; text-align: center; vertical-align: middle;"><span class="calender_day">火</span></th>
-            <td id="cell-tue-800" style="border: 1px solid #ccc; padding: 10px 6px; vertical-align: middle;"><span class="calender_bgc calender_bgc_tag">テスト</span><br>50問テスト<br>1枚の半分だけ</td>
+            <td id="cell-tue-800" style="border: 1px solid #ccc; padding: 10px 6px; vertical-align: middle;"><span class="calender_bgc calender_bgc_tag">テスト</span><br>50問テスト<br>1枚の半分だけ<br><span class="calender_text_blue">毎日異なる50問</span></td>
             <td id="cell-tue-801" style="border: 1px solid #ccc; padding: 10px 6px; vertical-align: middle;"><span class="calender_bgc calender_bgc_tag">単語覚え</span><br>30個は前日の復習<br>30個は新しい単語</td>
         </tr>
         <tr>
             <th style="border: 1px solid #ccc; padding: 10px 6px; text-align: center; vertical-align: middle;"><span class="calender_day">水</span></th>
-            <td id="cell-wed-800" style="border: 1px solid #ccc; padding: 10px 6px; vertical-align: middle;"><span class="calender_bgc calender_bgc_tag">テスト</span><br>50問テスト<br>1枚の半分だけ</td>
+            <td id="cell-wed-800" style="border: 1px solid #ccc; padding: 10px 6px; vertical-align: middle;"><span class="calender_bgc calender_bgc_tag">テスト</span><br>50問テスト<br>1枚の半分だけ<br><span class="calender_text_blue">毎日異なる50問</span></td>
             <td id="cell-wed-801" style="border: 1px solid #ccc; padding: 10px 6px; vertical-align: middle;"><span class="calender_bgc calender_bgc_tag">単語覚え</span><br>30個は前日の復習<br>30個は新しい単語</td>
         </tr>
         <tr>
             <th style="border: 1px solid #ccc; padding: 10px 6px; text-align: center; vertical-align: middle;"><span class="calender_day">木</span></th>
-            <td id="cell-thu-800" style="border: 1px solid #ccc; padding: 10px 6px; vertical-align: middle;"><span class="calender_bgc calender_bgc_tag">テスト</span><br>50問テスト<br>1枚の半分だけ</td>
+            <td id="cell-thu-800" style="border: 1px solid #ccc; padding: 10px 6px; vertical-align: middle;"><span class="calender_bgc calender_bgc_tag">テスト</span><br>50問テスト<br>1枚の半分だけ<br><span class="calender_text_blue">毎日異なる50問</span></td>
             <td id="cell-thu-801" style="border: 1px solid #ccc; padding: 10px 6px; vertical-align: middle;"><span class="calender_bgc calender_bgc_tag">単語覚え</span><br>30個は前日の復習<br>30個は新しい単語</td>
         </tr>
         <tr>
@@ -334,31 +334,31 @@ export function prependEntry() {
     <tbody>
         <tr>
             <th style="border: 1px solid #ccc; padding: 10px 6px; text-align: center; vertical-align: middle;"><span class="calender_day">月</span></th>
-            <td id="cell-mon-800" style="border: 1px solid #ccc; padding: 10px 6px;  vertical-align: middle;"><span class="calender_bgc calender_bgc_tag">単語覚え</span><br>30個は前日の復習<br>30個は新しい単語<br><span class="calender_bgc calender_bgc_tag">テスト</span><br>50問テスト：1枚の半分だけ<br>復習テスト：前日の間違い全問</td>
+            <td id="cell-mon-800" style="border: 1px solid #ccc; padding: 10px 6px;  vertical-align: middle;"><span class="calender_bgc calender_bgc_tag">単語覚え</span><br>30個は前日の復習<br>30個は新しい単語<br><span class="calender_bgc calender_bgc_tag">テスト</span><br>50問テスト：<span class="calender_text_yellow">毎日異なる50問</span><br>復習テスト：前日の間違い全問</td>
         </tr>
         <tr>
             <th style="border: 1px solid #ccc; padding: 10px 6px; text-align: center; vertical-align: middle;"><span class="calender_day">火</span></th>
-            <td id="cell-tue-800" style="border: 1px solid #ccc; padding: 10px 6px;  vertical-align: middle;"><span class="calender_bgc calender_bgc_tag">単語覚え</span><br>30個は前日の復習<br>30個は新しい単語<br><span class="calender_bgc calender_bgc_tag">テスト</span><br>50問テスト：1枚の半分だけ<br>復習テスト：前日の間違い全問</td>
+            <td id="cell-tue-800" style="border: 1px solid #ccc; padding: 10px 6px;  vertical-align: middle;"><span class="calender_bgc calender_bgc_tag">単語覚え</span><br>30個は前日の復習<br>30個は新しい単語<br><span class="calender_bgc calender_bgc_tag">テスト</span><br>50問テスト：<span class="calender_text_yellow">毎日異なる50問</span><br>復習テスト：前日の間違い全問</td>
         </tr>
         <tr>
             <th style="border: 1px solid #ccc; padding: 10px 6px; text-align: center; vertical-align: middle;"><span class="calender_day">水</span></th>
-            <td id="cell-wed-800" style="border: 1px solid #ccc; padding: 10px 6px;  vertical-align: middle;"><span class="calender_bgc calender_bgc_tag">単語覚え</span><br>30個は前日の復習<br>30個は新しい単語<br><span class="calender_bgc calender_bgc_tag">テスト</span><br>50問テスト：1枚の半分だけ<br>復習テスト：前日の間違い全問</td>
+            <td id="cell-wed-800" style="border: 1px solid #ccc; padding: 10px 6px;  vertical-align: middle;"><span class="calender_bgc calender_bgc_tag">単語覚え</span><br>30個は前日の復習<br>30個は新しい単語<br><span class="calender_bgc calender_bgc_tag">テスト</span><br>50問テスト：<span class="calender_text_yellow">毎日異なる50問</span><br>復習テスト：前日の間違い全問</td>
         </tr>
         <tr>
             <th style="border: 1px solid #ccc; padding: 10px 6px; text-align: center; vertical-align: middle;"><span class="calender_day">木</span></th>
-            <td id="cell-thu-800" style="border: 1px solid #ccc; padding: 10px 6px;  vertical-align: middle;"><span class="calender_bgc calender_bgc_tag">単語覚え</span><br>30個は前日の復習<br>30個は新しい単語<br><span class="calender_bgc calender_bgc_tag">テスト</span><br>50問テスト：1枚の半分だけ<br>復習テスト：前日の間違い全問</td>
+            <td id="cell-thu-800" style="border: 1px solid #ccc; padding: 10px 6px;  vertical-align: middle;"><span class="calender_bgc calender_bgc_tag">単語覚え</span><br>30個は前日の復習<br>30個は新しい単語<br><span class="calender_bgc calender_bgc_tag">テスト</span><br>50問テスト：<span class="calender_text_yellow">毎日異なる50問</span><br>復習テスト：前日の間違い全問</td>
         </tr>
         <tr>
             <th style="border: 1px solid #ccc; padding: 10px 6px; text-align: center; vertical-align: middle;"><span class="calender_day">金</span></th>
-            <td id="cell-fri-800" style="border: 1px solid #ccc; padding: 10px 6px;  vertical-align: middle;"><span class="calender_bgc calender_bgc_tag">単語覚え</span><br>30個は前日の復習<br>30個は新しい単語<br><span class="calender_bgc calender_bgc_tag">テスト</span><br>50問テスト：1枚の半分だけ<br>復習テスト：前日の間違い全問</td>
+            <td id="cell-fri-800" style="border: 1px solid #ccc; padding: 10px 6px;  vertical-align: middle;"><span class="calender_bgc calender_bgc_tag">単語覚え</span><br>30個は前日の復習<br>30個は新しい単語<br><span class="calender_bgc calender_bgc_tag">テスト</span><br>50問テスト：<span class="calender_text_yellow">毎日異なる50問</span><br>復習テスト：前日の間違い全問</td>
         </tr>
         <tr>
             <th style="border: 1px solid #ccc; padding: 10px 6px; text-align: center; vertical-align: middle;"><span class="calender_day calender_text_red">土</span></th>
-            <td id="cell-sat-800" style="border: 1px solid #ccc; padding: 10px 6px;  vertical-align: middle;"><span class="calender_bgc calender_bgc_tag">単語覚え</span><br>30個は前日の復習<br>30個は新しい単語<br><span class="calender_bgc calender_bgc_tag">テスト</span><br>50問テスト：1枚の半分だけ<br>復習テスト：前日の間違い全問</td>
+            <td id="cell-sat-800" style="border: 1px solid #ccc; padding: 10px 6px;  vertical-align: middle;"><span class="calender_bgc calender_bgc_tag">単語覚え</span><br>30個は前日の復習<br>30個は新しい単語<br><span class="calender_bgc calender_bgc_tag">テスト</span><br>50問テスト：<span class="calender_text_yellow">毎日異なる50問</span><br>復習テスト：前日の間違い全問</td>
         </tr>
         <tr>
             <th style="border: 1px solid #ccc; padding: 10px 6px; text-align: center; vertical-align: middle;"><span class="calender_day calender_text_red">日</span></th>
-            <td id="cell-sun-800" style="border: 1px solid #ccc; padding: 10px 6px;  vertical-align: middle;"><span class="calender_bgc calender_bgc_tag">単語覚え</span><br>30個は前日の復習<br>30個は新しい単語<br><span class="calender_bgc calender_bgc_tag">テスト</span><br>50問テスト：1枚の半分だけ<br>復習テスト：前日の間違い全問</td>
+            <td id="cell-sun-800" style="border: 1px solid #ccc; padding: 10px 6px;  vertical-align: middle;"><span class="calender_bgc calender_bgc_tag">単語覚え</span><br>30個は前日の復習<br>30個は新しい単語<br><span class="calender_bgc calender_bgc_tag">テスト</span><br>50問テスト：<span class="calender_text_yellow">毎日異なる50問</span><br>復習テスト：前日の間違い全問</td>
         </tr>
     </tbody>
 </table>
