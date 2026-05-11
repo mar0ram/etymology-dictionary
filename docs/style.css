@@ -206,7 +206,7 @@ footer {
     display: inline-flex;
     justify-content: center;
     align-items: center;
-    margin: 7px 0px;
+    margin: 8px 0px;
     padding: 2px 8px;
     color: #121212;
     border-radius: 5px;
@@ -228,6 +228,11 @@ footer {
 
 .calender_bgc_reading {
     background-color: #279705;
+}
+
+.calender_bgc_tag{
+    background-color: #ffffff;
+    color: #121212;
 }
 
 .calender_day {
