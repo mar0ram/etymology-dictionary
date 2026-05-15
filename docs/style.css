@@ -382,6 +382,19 @@ footer {
     color: #989898;
 }
 
+.explanation_tag {
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    margin: 8px 0px;
+    padding: 2px 8px;
+    background-color: #535353;
+    color: #ffffff;
+    border-radius: 5px;
+    font-size: 14px;
+    font-weight: 700;
+}
+
 .section.h2 b,
 .section.h4 b {
     width: 100%;
