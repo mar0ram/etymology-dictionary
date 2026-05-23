@@ -9,10 +9,6 @@ body {
     font-weight: 400;
     letter-spacing: 0.03em;
     line-height: 1.6;
-    text-align: justify;
-    /* text-justify: inter-ideograph; */
-    word-break: break-all;
-    font-feature-settings: "palt";
 }
 
 footer {
@@ -39,7 +35,68 @@ footer {
 }
 
 /* 開きかっこ */
+.margin-left-only {
+    margin-left: 0.1em;
+    margin-right: -0.05em;
+    display: inline;
+}
 
+/* 閉じかっこ */
+.margin-right-bracket {
+    margin-right: 0.1em;
+    margin-left: -0.05em;
+    display: inline;
+}
+
+/* 、 。 */
+.margin-right-punctuation {
+    margin-left: 0em;
+    margin-right: -0.3em;
+    display: inline;
+}
+
+/* ・ */
+.margin-both {
+    margin-left: -0.1em;
+    margin-right: -0.1em;
+    display: inline;
+}
+
+/* 1. 閉じかっこ + ・ */
+.margin-reduce-bracket-dot {
+    margin-left: -0.4em;
+    display: inline;
+}
+
+/* 2. ・ + 開きかっこ */
+.margin-reduce-dot-bracket {
+    margin-left: -0.4em;
+    display: inline;
+}
+
+/* 3. 閉じかっこ + ： */
+.margin-reduce-bracket-colon {
+    margin-left: 0.1em;
+    display: inline;
+}
+
+/* 4. ： + 開きかっこ */
+.margin-reduce-colon-bracket {
+    margin-left: 0.1em;
+    display: inline;
+}
+
+/* 5. 閉じかっこ + 句読点 */
+.margin-reduce-bracket-punctuation {
+    margin-left: -0.1em;
+    display: inline;
+}
+
+/* 6. 句読点 + 開きかっこ */
+.margin-reduce-punctuation-bracket {
+    margin-left: -0.1em;
+    display: inline;
+}
 
 /* --- 2. 検索エリア：シャープで目立つ検索バー --- */
 .search-container {
@@ -332,13 +389,21 @@ footer {
     text-justify: inter-ideograph;
     /* 日本語と英語が混ざった文章の文字間隔を自然に調整 */
     word-break: normal;
-    /* 英単語の途中での折り返しを防ぐ */
+    /* 英単語の途中での折り返しを防ぎ、ハイフネーションを有効にする */
     overflow-wrap: break-word;
     /* 要素幅を超える長すぎる英単語がある場合のみ折り返す */
     line-break: strict;
     /* 禁則処理をより厳密に行い、可能な限り行内に収める */
     hanging-punctuation: allow-end;
     /* 行末の句読点を枠外に「ぶら下げて」1行に収める（主にSafari/iOS用） */
+    /* font-feature-settings: "palt"; */
+}
+
+.hyphen-auto {
+    hyphens: auto;
+    -webkit-hyphens: auto;
+    word-break: normal;
+    overflow-wrap: break-word; /* 念のための保険 */
 }
 
 .spacer {
