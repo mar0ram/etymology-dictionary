@@ -9,10 +9,11 @@ body {
     font-weight: 400;
     letter-spacing: 0.03em;
     line-height: 1.6;
-   text-align: justify;
-    text-justify: inter-ideograph; /* 日本語向けの均等割付 */
-    word-break: break-all; /* 英単語を文字単位で折り返す */
-    /* font-feature-settings: "palt"; */
+    /* text-align: justify;
+    text-justify: inter-ideograph;
+    word-break: break-all; */
+    /* 英単語を文字単位で折り返す */
+    font-feature-settings: "palt";
 }
 
 footer {
@@ -39,56 +40,7 @@ footer {
 }
 
 /* 開きかっこ */
-.margin-left-only {
-    margin-left: 0.4em;
-    margin-right: -0.04em;
-    display: inline;
-}
 
-/* 閉じかっこ */
-.margin-right-bracket {
-    margin-right: 0.4em;
-    margin-left: -0.04em;
-    display: inline;
-}
-
-/* 、 。 */
-.margin-right-punctuation {
-    margin-left: 0.05em;
-    margin-right: -0.2em;
-    display: inline;
-}
-
-/* ・ */
-.margin-both {
-    margin-left: -0.1em;
-    margin-right: -0.1em;
-    display: inline;
-}
-
-/* 1. 閉じかっこ + ・ */
-.margin-reduce-bracket-dot {
-    margin-left: -0.6em;
-    display: inline;
-}
-
-/* 2. ・ + 開きかっこ */
-.margin-reduce-dot-bracket {
-    margin-left: -0.6em;
-    display: inline;
-}
-
-/* 3. 閉じかっこ + 句読点 */
-.margin-reduce-bracket-punctuation {
-    margin-left: -0.3em;
-    display: inline;
-}
-
-/* 4. 句読点 + 開きかっこ */
-.margin-reduce-punctuation-bracket {
-    margin-left: -0.1em;
-    display: inline;
-}
 
 /* --- 2. 検索エリア：シャープで目立つ検索バー --- */
 .search-container {
@@ -254,7 +206,7 @@ footer {
     background-color: #279705;
 }
 
-.calender_bgc_tag{
+.calender_bgc_tag {
     background-color: #ffffff;
     color: #121212;
 }

@@ -161,11 +161,14 @@ const nl2br = (text) => {
     html = html.replace(/([「『（【［〔〈《｛〚｟])/g, '<span class="margin-left-only">$1</span>');
     html = html.replace(/([」』）】］〕〉》｝〛｠])/g, '<span class="margin-right-bracket">$1</span>'); // 閉じ括弧用
     html = html.replace(/([、。])/g, '<span class="margin-right-punctuation">$1</span>'); // 句読点用
-    html = html.replace(/([・：])/g, '<span class="margin-both">$1</span>');
+    html = html.replace(/([・])/g, '<span class="margin-both">$1</span>');
+    html = html.replace(/([：])/g, '<span class="margin-both">$1</span>');
 
-    // 4パターンの連続記号に対して、それぞれ独立した余白調整用クラスを後続の記号に付与
-    html = html.replace(/(<span class="margin-right-bracket"[^>]*>[」』）】］〕〉》｝〛｠]<\/span>)<span class="margin-both"[^>]*>([・：])<\/span>/g, '$1<span class="margin-both margin-reduce-bracket-dot">$2</span>');
-    html = html.replace(/(<span class="margin-both"[^>]*>[・：]<\/span>)<span class="margin-left-only"[^>]*>([「『（【［〔〈《｛〚｟])<\/span>/g, '$1<span class="margin-left-only margin-reduce-dot-bracket">$2</span>');
+    // 6パターンの連続記号に対して、それぞれ独立した余白調整用クラスを後続の記号に付与
+    html = html.replace(/(<span class="margin-right-bracket"[^>]*>[」』）】］〕〉》｝〛｠]<\/span>)<span class="margin-both"[^>]*>([・])<\/span>/g, '$1<span class="margin-both margin-reduce-bracket-dot">$2</span>');
+    html = html.replace(/(<span class="margin-right-bracket"[^>]*>[」』）】］〕〉》｝〛｠]<\/span>)<span class="margin-both"[^>]*>([：])<\/span>/g, '$1<span class="margin-both margin-reduce-bracket-colon">$2</span>');
+    html = html.replace(/(<span class="margin-both"[^>]*>[・]<\/span>)<span class="margin-left-only"[^>]*>([「『（【［〔〈《｛〚｟])<\/span>/g, '$1<span class="margin-left-only margin-reduce-dot-bracket">$2</span>');
+    html = html.replace(/(<span class="margin-both"[^>]*>[：]<\/span>)<span class="margin-left-only"[^>]*>([「『（【［〔〈《｛〚｟])<\/span>/g, '$1<span class="margin-left-only margin-reduce-colon-bracket">$2</span>');
     html = html.replace(/(<span class="margin-right-bracket"[^>]*>[」』）】］〕〉》｝〛｠]<\/span>)<span class="margin-right-punctuation"[^>]*>([、。])<\/span>/g, '$1<span class="margin-right-punctuation margin-reduce-bracket-punctuation">$2</span>');
     html = html.replace(/(<span class="margin-right-punctuation"[^>]*>[、。]<\/span>)<span class="margin-left-only"[^>]*>([「『（【［〔〈《｛〚｟])<\/span>/g, '$1<span class="margin-left-only margin-reduce-punctuation-bracket">$2</span>');
 
