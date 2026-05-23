@@ -9,10 +9,9 @@ body {
     font-weight: 400;
     letter-spacing: 0.03em;
     line-height: 1.6;
-    /* text-align: justify;
-    text-justify: inter-ideograph;
-    word-break: break-all; */
-    /* 英単語を文字単位で折り返す */
+    text-align: justify;
+    /* text-justify: inter-ideograph; */
+    word-break: break-all;
     font-feature-settings: "palt";
 }
 
