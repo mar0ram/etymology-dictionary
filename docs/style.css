@@ -1,8 +1,9 @@
 /* --- 1. 基本設定：ディープモード（暗い背景に白い情報パネル） --- */
 /* 「…」の文字（U+2026）にのみ適用する専用のフォントファミリーを定義 */
 @font-face {
+@font-face {
     font-family: 'EllipsisFont';
-    src: local('Yu Gothic'), local('Meiryo'), local('Noto Sans JP');
+    src: local('Hiragino Sans'), local('Hiragino Kaku Gothic ProN'), local('Yu Gothic'), local('Meiryo'), local('Noto Sans JP');
     unicode-range: U+2026;
 }
 
