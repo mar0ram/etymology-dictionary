@@ -1,10 +1,17 @@
 /* --- 1. 基本設定：ディープモード（暗い背景に白い情報パネル） --- */
+/* 「…」の文字（U+2026）にのみ適用する専用のフォントファミリーを定義 */
+@font-face {
+    font-family: 'EllipsisFont';
+    src: local('Yu Gothic'), local('Meiryo'), local('Noto Sans JP');
+    unicode-range: U+2026;
+}
+
 body {
     margin: 0;
     padding: 0;
     color: #efefef;
     background-color: #121212;
-    font-family: YakuHanJPs, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-family: 'EllipsisFont', YakuHanJPs, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     font-size: 16px;
     font-weight: 400;
     letter-spacing: 0.03em;
@@ -403,7 +410,8 @@ footer {
     hyphens: auto;
     -webkit-hyphens: auto;
     word-break: normal;
-    overflow-wrap: break-word; /* 念のための保険 */
+    overflow-wrap: break-word;
+    /* 念のための保険 */
 }
 
 .spacer {
