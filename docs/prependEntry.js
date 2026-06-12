@@ -184,10 +184,11 @@ const cellNS_jun_to_aug = '<span class="calender_bgc calender_bgc_NS">文法</sp
 const popupNS_jun_to_aug = '<span class="calender_bgc calender_bgc_tag">ペース</span><br>文法問題を30問<br>語法・イディオム問題を30問<br>この2つを並行して勉強していく。<br>1ヶ月で最低1周のペースをキープ。<br><span class="calender_bgc calender_bgc_tag">重要なこと</span><br>間違えた問題には付箋を貼って時間があるときに数問でもいいので、見返して復習すること。<br>とにかく間違えた問題は何度も見直して、その問題を視覚的に脳に刻み込むイメージで勉強すること。';
 
 // --- 長文 ---
-const cellReading_jul_aug = '<span class="calender_bgc calender_bgc_reading">300語</span><br><span class="calender_bgc calender_bgc_reading">500語</span><br>毎日１題ずつ<br>交互に解く';
+const cellReading_jul = '<span class="calender_bgc calender_bgc_reading">300語</span><br>毎日２題解く';
+const cellReading_aug = '<span class="calender_bgc calender_bgc_reading">500語</span><br>毎日１題解く';
 const popupReading_jun = 'まだ長文の勉強はしない。';
-const popupReading_jul = '<span class="calender_bgc calender_bgc_tag">300語・500語</span><br>夏休みから300語・500語程度の長文問題を毎日1題ずつ解いていく。<br><span class="calender_bgc calender_bgc_tag">丁寧に読み解く</span><br>時間は気にせず、1文ずつ丁寧に解く。正解することよりも文・段落・文章レベルで構造を理解することが重要。<br><span class="calender_bgc calender_bgc_tag">必ず音読する</span><br>自分が文の意味を理解できる速さで音読する。この練習を繰り返すことで、読解のスピードも上がっていく。';
-const popupReading_aug = '<span class="calender_bgc calender_bgc_tag">300語・500語</span><br>300語・500語程度の長文問題を毎日1題ずつ解いていく。<br><span class="calender_bgc calender_bgc_tag">丁寧に読み解く</span><br>時間は気にせず、1文ずつ丁寧に解く。正解することよりも文・段落・文章レベルで構造を理解することが重要。<br><span class="calender_bgc calender_bgc_tag">必ず音読する</span><br>自分が文の意味を理解できる速さで音読する。この練習を繰り返すことで、読解のスピードも上がっていく。';
+const popupReading_jul = '<span class="calender_bgc calender_bgc_tag">300語</span><br>夏休みから300語程度の長文問題を毎日２題ずつ解いていく。<br><span class="calender_bgc calender_bgc_tag">丁寧に読み解く</span><br>時間は気にせず、1文ずつ丁寧に解く。正解することよりも文・段落・文章レベルで構造を理解することが重要。<br><span class="calender_bgc calender_bgc_tag">必ず音読する</span><br>自分が文の意味を理解できる速さで音読する。この練習を繰り返すことで、読解のスピードも上がっていく。';
+const popupReading_aug = '<span class="calender_bgc calender_bgc_tag">300語・500語</span><br>300語が終わったら、次は500語程度の長文問題を毎日1題ずつ解いていく。<br><span class="calender_bgc calender_bgc_tag">丁寧に読み解く</span><br>時間は気にせず、1文ずつ丁寧に解く。正解することよりも文・段落・文章レベルで構造を理解することが重要。<br><span class="calender_bgc calender_bgc_tag">必ず音読する</span><br>自分が文の意味を理解できる速さで音読する。この練習を繰り返すことで、読解のスピードも上がっていく。';
 
 
 // ==========================================
@@ -228,8 +229,8 @@ const cellData = [
     [
         '', // 5月
         '', // 6月
-        cellReading_jul_aug, // 7月
-        cellReading_jul_aug, // 8月
+        cellReading_jul, // 7月
+        cellReading_aug, // 8月
         '', // 9月
         '', // 10月
         '', // 11月
