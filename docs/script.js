@@ -23,6 +23,16 @@ fetch("data.json")
     .then(json => {
         data = json;
         dataLoaded = true;
+
+        // 💡 追加：URLパラメータを取得して自動で検索処理を実行
+        const urlParams = new URLSearchParams(window.location.search);
+        const targetWord = urlParams.get('word');
+        
+        if (targetWord) {
+            searchBox.value = targetWord;
+            clearBtn.style.display = "flex";
+            doSearch();
+        }
     })
     .catch(err => {
         console.error("JSON読み込みエラー:", err);
