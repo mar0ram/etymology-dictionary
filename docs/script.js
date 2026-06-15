@@ -17,6 +17,30 @@ import { setupWarnAnimation } from './warn.js';
 let data = [];
 let dataLoaded = false;
 
+// 💡 追加：URLの変更を検知して自動検索をリセット・実行する関数
+function handleUrlSearch() {
+    if (!dataLoaded) return; // データ未読み込み時は処理をスキップ（fetch完了後に再度呼ばれるため）
+
+    const paramString = window.location.search || window.location.hash.replace('#', '?');
+    const urlParams = new URLSearchParams(paramString);
+    const targetWord = urlParams.get('word');
+
+    if (targetWord) {
+        searchBox.value = targetWord;
+        clearBtn.style.display = "flex";
+        doSearch(); // 既存の結果をクリアして新しい単語を検索
+    } else {
+        // パラメータが消された場合は初期画面にリセットする
+        searchBox.value = "";
+        clearBtn.style.display = "none";
+        results.innerHTML = "";
+        prependEntry();
+    }
+}
+
+// 💡 追加：URLのハッシュ（#word=...）が書き換えられたタイミングを検知する
+window.addEventListener("hashchange", handleUrlSearch);
+
 // JSON読み込み
 fetch("data.json")
     .then(res => res.json())
@@ -24,15 +48,8 @@ fetch("data.json")
         data = json;
         dataLoaded = true;
 
-        // 💡 追加：URLパラメータを取得して自動で検索処理を実行
-        const urlParams = new URLSearchParams(window.location.search);
-        const targetWord = urlParams.get('word');
-        
-        if (targetWord) {
-            searchBox.value = targetWord;
-            clearBtn.style.display = "flex";
-            doSearch();
-        }
+        // 💡 変更：データ読み込み完了後にURLをチェックして処理を実行
+        handleUrlSearch();
     })
     .catch(err => {
         console.error("JSON読み込みエラー:", err);
@@ -45,7 +62,11 @@ const clearBtn = document.getElementById("clearBtn"); // 💡 クリアボタン
 const viewportMeta = document.querySelector("meta[name=viewport]");
 
 // 初期表示としてカレンダーと各言語解説を描画
-prependEntry();
+// 💡 修正：初回読み込み時にURLパラメータがない場合のみ初期表示を描画（上書き防止）
+const initialParams = new URLSearchParams(window.location.search || window.location.hash.replace('#', '?'));
+if (!initialParams.get('word')) {
+    prependEntry();
+}
 
 // 💡 検索窓への入力監視 (×ボタンの表示/非表示切り替え)
 searchBox.addEventListener("input", () => {
