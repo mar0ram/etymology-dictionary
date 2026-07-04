@@ -644,7 +644,7 @@ footer {
     /* 横幅いっぱいにクリック反応を持たせる */
 }
 
-.section.h3 .content div {
+.section.h3 .content div:not(.sample_image) {
     padding-top: 0.5em;
     padding-bottom: 0.5em;
     border-bottom: 1.5px solid #969696;
