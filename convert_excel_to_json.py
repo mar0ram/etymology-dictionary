@@ -2,6 +2,7 @@ import os
 import json
 import re
 import pandas as pd
+import openpyxl
 
 # --- 設定 ---
 EXCEL_PATH = "data/etymology.xlsx"
@@ -12,8 +13,15 @@ IMAGE_DIR = "docs/sample_images"  # 画像フォルダのパスをdocs配下に�
 # 保存先ディレクトリの作成
 os.makedirs("docs", exist_ok=True)
 
-# 1. Excel 読み込み
-df = pd.read_excel(EXCEL_PATH)
+# 1. Excel 読み込み (数式ではなく、計算後の「値」を確実に読み込む)
+wb = openpyxl.load_workbook(EXCEL_PATH, data_only=True)
+sheet = wb.active  # アクティブなシートを取得（特定のシート名なら wb["シート名"]）
+
+# シートの全データを取得して DataFrame に変換
+excel_data = list(sheet.values)
+columns = excel_data[0]     # 1行目をカラム名にする
+rows = excel_data[1:]        # 2行目以降がデータ
+df = pd.DataFrame(rows, columns=columns)
 
 # 2. JSON 用データ生成
 # 💡 num, word, partOfSpeech が JSON の先頭に並ぶように列順を調整
