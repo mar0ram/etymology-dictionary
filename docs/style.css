@@ -725,7 +725,12 @@ footer {
     margin-top: 5px;
 }
 
-/* --- 9. レスポンシブ対応：モバイルでは縦積みレイアウトに戻す --- */
+/* --- 9. h3の行間margin_bottom 25px --- */
+.section.h3 .content div {
+    margin-bottom: 25px;
+}
+
+/* --- 10. レスポンシブ対応：モバイルでは縦積みレイアウトに戻す --- */
 @media (max-width: 900px) {
 
     /* パネル構造を縦積みに */
