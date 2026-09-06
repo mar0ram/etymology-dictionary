@@ -19,8 +19,8 @@ sheet = wb.active  # アクティブなシートを取得（特定のシート�
 
 # シートの全データを取得して DataFrame に変換
 excel_data = list(sheet.values)
-columns = excel_data[0]     # 1行目をカラム名にする
-rows = excel_data[1:]        # 2行目以降がデータ
+columns = excel_data[0]  # 1行目をカラム名にする
+rows = excel_data[1:]  # 2行目以降がデータ
 df = pd.DataFrame(rows, columns=columns)
 
 # 2. JSON 用データ生成
