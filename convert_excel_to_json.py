@@ -121,7 +121,10 @@ for _, row in df.iterrows():
     h_cols = [
         col
         for col in all_cols
-        if col.startswith("h") and pd.notna(row.get(col)) and row.get(col) != ""
+        if isinstance(col, str)
+        and col.startswith("h")
+        and pd.notna(row.get(col))
+        and row.get(col) != ""
     ]
 
     for i, h_col in enumerate(h_cols):
