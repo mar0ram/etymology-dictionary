@@ -487,6 +487,15 @@ footer {
     /* タップした瞬間にほんのり青く光る */
 }
 
+.related_image {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    /* max-width: 500px; */
+    margin: 20px auto;
+    font-family: sans-serif;
+}
+
 .sample_image {
     display: flex;
     flex-direction: column;

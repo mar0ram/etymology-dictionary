@@ -211,3 +211,22 @@ with open(HTML_OUT, "w", encoding="utf-8") as f:
     f.write(html_output)
 
 print(f"✅ {HTML_OUT} が生成されました！")
+
+# --- related_imageの存在チェック ---
+related_image_dir = os.path.join(os.path.dirname(IMAGE_DIR), "related_images")
+missing_related_images = set()
+
+for item in data_list:
+    for val in item.values():
+        val_str = str(val)
+        # ./related_images/ 以降のファイル名を抽出
+        found_related = re.findall(r"\./related_images/([a-zA-Z0-9_.-]+)", val_str)
+        for img_filename in found_related:
+            img_path = os.path.join(related_image_dir, img_filename)
+            if not os.path.exists(img_path):
+                missing_related_images.add(img_filename)
+
+if missing_related_images:
+    print("\nℹ️ 存在しないrelated_imageのファイル名:")
+    for missing_file in missing_related_images:
+        print(f" - {missing_file}")
