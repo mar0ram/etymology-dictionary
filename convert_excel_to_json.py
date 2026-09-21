@@ -5,13 +5,20 @@ import pandas as pd
 import openpyxl
 
 # --- 設定 ---
-EXCEL_PATH = "data/etymology.xlsx"
-JSON_OUT = "docs/data.json"
-HTML_OUT = "docs/dictionary.html"
-IMAGE_DIR = "docs/sample_images"  # 画像フォルダのパスをdocs配下に修正
+# 実行場所のズレを防ぐため、このPythonファイルがある場所を基準に絶対パス化
+BASE_DIR = (
+    os.path.dirname(os.path.abspath(__file__))
+    if "__file__" in globals()
+    else os.getcwd()
+)
+EXCEL_PATH = os.path.join(BASE_DIR, "data", "etymology.xlsx")
+DOCS_DIR = os.path.join(BASE_DIR, "docs")
+JSON_OUT = os.path.join(DOCS_DIR, "data.json")
+HTML_OUT = os.path.join(DOCS_DIR, "dictionary.html")
+IMAGE_DIR = os.path.join(DOCS_DIR, "sample_images")
 
 # 保存先ディレクトリの作成
-os.makedirs("docs", exist_ok=True)
+os.makedirs(DOCS_DIR, exist_ok=True)
 
 # 1. Excel 読み込み (数式ではなく、計算後の「値」を確実に読み込む)
 wb = openpyxl.load_workbook(EXCEL_PATH, data_only=True)
@@ -31,7 +38,9 @@ df = df[first_cols + other_cols]
 
 # セルが空の場合は空文字にする
 data_list = df.fillna("").to_dict(orient="records")
-with open(JSON_OUT, "w", encoding="utf-8", newline="\n") as f:
+
+# 修正: newline="\n" を削除（Errno 22 回避）
+with open(JSON_OUT, "w", encoding="utf-8") as f:
     json.dump(data_list, f, ensure_ascii=False, indent=2)
 
 # --- sample_imageの存在チェック ---
@@ -207,13 +216,14 @@ for _, row in df.iterrows():
 html_output += "</div>\n</body>\n</html>"
 
 # 4. 出力保存
-with open(HTML_OUT, "w", encoding="utf-8", newline="\n") as f:
+# 修正: newline="\n" を削除（Errno 22 回避）
+with open(HTML_OUT, "w", encoding="utf-8") as f:
     f.write(html_output)
 
 print(f"✅ {HTML_OUT} が生成されました！")
 
 # --- related_imageの存在チェック ---
-related_image_dir = os.path.join(os.path.dirname(IMAGE_DIR), "related_images")
+related_image_dir = os.path.join(DOCS_DIR, "related_images")
 missing_related_images = set()
 
 for item in data_list:
