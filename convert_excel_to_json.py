@@ -31,7 +31,7 @@ df = df[first_cols + other_cols]
 
 # セルが空の場合は空文字にする
 data_list = df.fillna("").to_dict(orient="records")
-with open(JSON_OUT, "w", encoding="utf-8") as f:
+with open(JSON_OUT, "w", encoding="utf-8", newline="\n") as f:
     json.dump(data_list, f, ensure_ascii=False, indent=2)
 
 # --- sample_imageの存在チェック ---
@@ -207,7 +207,7 @@ for _, row in df.iterrows():
 html_output += "</div>\n</body>\n</html>"
 
 # 4. 出力保存
-with open(HTML_OUT, "w", encoding="utf-8") as f:
+with open(HTML_OUT, "w", encoding="utf-8", newline="\n") as f:
     f.write(html_output)
 
 print(f"✅ {HTML_OUT} が生成されました！")
