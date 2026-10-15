@@ -13,6 +13,7 @@ import { drawPrecedeModel } from './precede.js';
 import { drawEpidemicModel } from './epidemic.js';
 import { setupTearAnimation } from './tear.js';
 import { setupWarnAnimation } from './warn.js';
+import { setupNgramInSection } from './ngram.js';
 
 let data = [];
 let dataLoaded = false;
@@ -313,6 +314,12 @@ const nl2br = (text) => {
                     contentDiv.innerHTML += `<div>${nl2br(text)}</div>`;
                 });
             }
+
+            // 💡 追加：h2セクション内の .content の最後にNgram要素を追加
+            if (!isNumber && hKey.startsWith("h2") && item.word) {
+                setupNgramInSection(contentDiv, item.word.trim());
+            }
+
             targetPanel.appendChild(sectionDiv);
         });
         results.appendChild(div);
