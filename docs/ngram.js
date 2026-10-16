@@ -1,12 +1,11 @@
-// =========================================================================
-// Google Ngram カスタムグラフ描画・操作機能（h2の.content末尾に追加）
-// =========================================================================
-
-// ↓ ここにデプロイしたGASの「ウェブアプリのURL」を貼り付けてください
 const GAS_PROXY_URL = "https://script.google.com/macros/s/AKfycbyAwFoznSgLG_yThnBw7pO6796V4zG_12QRbcklkgEzJV8WBFP3emtDgZ32FiMpnwSh/exec";
 
 const NGRAM_THEME = {
-    lineColors: ["#3b82f6", "#ef4444", "#10b981", "#f59e0b", "#8b5cf6", "#ec4899"],
+    lineColors: [
+        "#3b82f6", "#ef4444", "#10b981", "#f59e0b", "#8b5cf6",
+        "#ec4899", "#06b6d4", "#84cc16", "#f97316", "#6366f1",
+        "#14b8a6", "#eab308", "#d946ef", "#64748b", "#b45309"
+    ],
     axisTextColor: "#888888",
     gridColor: "rgba(136, 136, 136, 0.25)",
     tooltipBg: "rgba(20, 20, 20, 0.9)",
@@ -228,6 +227,7 @@ export function setupNgramInSection(container, initialWord) {
                 <input type="number" class="ngram-year-input ngram-start-year" min="${MIN_YEAR}" max="${MAX_YEAR - 1}" value="1900">
                 <span>〜</span>
                 <input type="number" class="ngram-year-input ngram-end-year" min="${MIN_YEAR + 1}" max="${MAX_YEAR}" value="2022">
+                <div style="flex-basis: 100%; height: 0; margin-bottom: 0;"></div>
                 <button type="button" class="ngram-preset-btn" data-start="1500" data-end="1900">近代英語</button>
                 <button type="button" class="ngram-preset-btn" data-start="1900" data-end="2022">現代英語</button>
                 <button type="button" class="ngram-preset-btn" data-start="1500" data-end="2022">全期間</button>
@@ -451,6 +451,14 @@ export function setupNgramInSection(container, initialWord) {
     }
 
     async function addWordToGraph(targetWord) {
+        if (/[,、]/.test(targetWord)) {
+            const words = targetWord.split(/[,、]/).map(s => s.trim()).filter(Boolean);
+            for (const word of words) {
+                await addWordToGraph(word);
+            }
+            return;
+        }
+
         const w = targetWord.trim();
         if (!w) return;
 
