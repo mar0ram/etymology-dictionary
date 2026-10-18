@@ -413,81 +413,155 @@ async function fetchAndSetAudio(word, num, partOfSpeech = "") {
             audioUrl = `https://media.merriam-webster.com/audio/prons/en/us/mp3/${subdir}/${audioFileName}.mp3`;
         }
 
-        const audioBox = document.getElementById(`audio-box-${num}`);
-        if (audioBox) {
-            // MWの独自表記を簡易的なIPAに変換する関数
-            function convertMwToIpa(mwStr) {
-                if (!mwStr) return "";
-                let ipa = mwStr
-                    // 強勢記号の変換（MWでは * が第一強勢、 ˌ が第二強勢などに相当、または特殊文字）
-                    // よくあるMW独自記号を一般的なIPA記号・記法に置換
-                    .replace(/\*/g, 'ˈ')   // 第一強勢
-                    .replace(/\\u02cc/g, 'ˌ') // 第二強勢
-                    // 母音・子音の置換（代表的なもの）
-                    .replace(/ē/g, 'iː')
-                    .replace(/ā/g, 'eɪ')
-                    .replace(/ī/g, 'aɪ')
-                    .replace(/ō/g, 'oʊ')
-                    .replace(/ū/g, 'uː')
-                    .replace(/ȯ/g, 'ɔ')
-                    .replace(/ä/g, 'ɑ')
-                    .replace(/ə̆/g, 'ə')
-                    .replace(/ə/g, 'ə')
-                    .replace(/ŋ/g, 'ŋ')
-                    .replace(/θ/g, 'θ')
-                    .replace(/ð/g, 'ð')
-                    .replace(/sh/g, 'ʃ')
-                    .replace(/zh/g, 'ʒ')
-                    .replace(/ch/g, 'tʃ')
-                    .replace(/j/g, 'dʒ')
-                    // 音節区切りのハイフンやアンダーバーの整理
-                    .replace(/-/g, '')     // 音節ごとのハイフンを除去
-                    .replace(/_/g, '');    // 特殊な結合アンダーバー等を除去
+        // MWの独自表記を日本人向けの読みやすいIPAに変換する関数（網羅版）
+        function convertMwToIpa(mwStr) {
+            if (!mwStr) return "";
+            let ipa = mwStr
+                // カッコ書きの省略可能な発音表記や強勢記号の整理
+                .replace(/\([ˈˌ]\)/g, '')
+                .replace(/\*/g, 'ˈ')
+                .replace(/\\u02cc/g, 'ˌ')
+                // 2文字以上の組み合わせ（先に置換する必要があるもの）
+                .replace(/au̇/g, 'aʊ')
+                .replace(/aù/g, 'aʊ')
+                .replace(/ȯi/g, 'ɔɪ')
+                .replace(/yü/g, 'juː')
+                .replace(/yu̇/g, 'jʊ')
+                .replace(/t͟h/g, 'ð')   // 有声のth (thisなど)
+                .replace(/th/g, 'θ')   // 無声のth (thinkなど)
+                .replace(/sh/g, 'ʃ')
+                .replace(/zh/g, 'ʒ')
+                .replace(/ch/g, 'tʃ')
+                // 単母音・長母音・子音の置換
+                .replace(/j/g, 'dʒ')
+                .replace(/y/g, 'j')    // MWの y はIPAの j (yes -> jes)
+                .replace(/ē/g, 'iː')
+                .replace(/ā/g, 'eɪ')
+                .replace(/ī/g, 'aɪ')
+                .replace(/ō/g, 'oʊ')
+                .replace(/ü/g, 'uː')
+                .replace(/ū/g, 'uː')
+                .replace(/u̇/g, 'ʊ')
+                .replace(/ȯ/g, 'ɔː')
+                .replace(/ä/g, 'ɑː')
+                .replace(/ȧ/g, 'ɑ')
+                .replace(/a/g, 'æ')    // 単体の a は æ (catなど) ※長音・二重母音変換後に実行
+                .replace(/æː/g, 'ɑː')  // 上記の置換で ä などが影響を受けないよう調整
+                .replace(/ə̆/g, 'ə')
+                .replace(/ᵊ/g, 'ə')
+                // 音節区切りのハイフンやアンダーバーの整理
+                .replace(/-/g, '')
+                .replace(/_/g, '');
 
-                return `/${ipa}/`;
-            }
-
-            const ipaText = convertMwToIpa(rawMwPron);
-
-            // アイコンとIPAを並べて描画
-            audioBox.innerHTML = `
-                <div style="display: inline-flex; align-items: center; gap: 6px; margin-bottom: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
-                    ${audioUrl ? `<span class="audio_button" style="cursor:pointer; display: inline-flex; align-items: center;"><i class="fa-solid fa-volume-high fa-rotate-by fa-sm" style="color: #ffffff; --fa-rotate-angle: 340deg;"></i></span>` : ''}
-                    ${ipaText ? `<span class="ipa-text" style="font-size: 1em; color: #272727; font-weight: 500;">${ipaText}</span>` : ''}
-                </div>
-            `;
-
-            // 音声URLが存在する場合のみイベントリスナーを設定
-            if (audioUrl) {
-                const btn = audioBox.querySelector('.audio_button');
-                const audio = new Audio(audioUrl);
-                audio.preload = 'auto';
-
-                btn.addEventListener('click', function () {
-                    if (btn.style.pointerEvents === 'none') return;
-
-                    btn.style.pointerEvents = 'none';
-                    btn.style.opacity = '0.5';
-
-                    audio.currentTime = 0;
-
-                    audio.onended = () => {
-                        btn.style.pointerEvents = 'auto';
-                        btn.style.opacity = '1';
-                    };
-
-                    audio.onerror = () => {
-                        btn.style.pointerEvents = 'auto';
-                        btn.style.opacity = '1';
-                    };
-
-                    audio.play().catch(() => {
-                        btn.style.pointerEvents = 'auto';
-                        btn.style.opacity = '1';
-                    });
-                });
-            }
+            return `/${ipa}/`;
         }
+
+        // aの置換順序による干渉を防ぐため、安全に変換処理を実行
+        function safeConvertMwToIpa(mwStr) {
+            if (!mwStr) return "";
+            let ipa = mwStr
+                .replace(/\([ˈˌ]\)/g, '')
+                .replace(/\*/g, 'ˈ')
+                .replace(/\\u02cc/g, 'ˌ')
+                // 二重母音・特殊子音を先に一時退避または変換
+                .replace(/au̇|aù/g, 'A_U')
+                .replace(/ā/g, 'E_I')
+                .replace(/ī/g, 'A_I')
+                .replace(/ä/g, 'A_H')
+                .replace(/ȧ/g, 'A_H')
+                .replace(/ȯi/g, 'ɔɪ')
+                .replace(/yü/g, 'J_U_LONG')
+                .replace(/yu̇/g, 'J_U_SHORT')
+                .replace(/t͟h/g, 'ð')
+                .replace(/th/g, 'θ')
+                .replace(/sh/g, 'ʃ')
+                .replace(/zh/g, 'ʒ')
+                .replace(/ch/g, 'tʃ')
+                .replace(/j/g, 'dʒ')
+                .replace(/y/g, 'j')
+                // 残った単体の a を æ に変換
+                .replace(/a/g, 'æ')
+                // 退避したものを戻す
+                .replace(/A_U/g, 'aʊ')
+                .replace(/E_I/g, 'eɪ')
+                .replace(/A_I/g, 'aɪ')
+                .replace(/A_H/g, 'ɑ')
+                .replace(/J_U_LONG/g, 'juː')
+                .replace(/J_U_SHORT/g, 'jʊ')
+                // その他の母音
+                .replace(/ē/g, 'iː')
+                .replace(/ō/g, 'oʊ')
+                .replace(/ü|ū/g, 'uː')
+                .replace(/u̇/g, 'ʊ')
+                .replace(/ȯ/g, 'ɔ')
+                .replace(/ə̆|ᵊ/g, 'ə')
+                // 区切り記号の除去
+                .replace(/[-_]/g, '');
+
+            return `/${ipa}/`;
+        }
+
+        const ipaText = safeConvertMwToIpa(rawMwPron);
+
+        // 1回目の検索でDOM生成前だったり、親要素のinnerHTML更新で上書きされても確実に反映する
+        const renderId = String(Date.now() + Math.random());
+        let attempts = 0;
+        const maxAttempts = 30; // 50ms × 30回（最大1.5秒間、要素の出現と上書きを監視）
+
+        const applyToDom = () => {
+            const audioBox = document.getElementById(`audio-box-${num}`);
+            if (audioBox) {
+                if (audioBox.dataset.renderId !== renderId || !audioBox.querySelector('div')) {
+                    // アイコンとIPAを並べて描画
+                    audioBox.innerHTML = `
+                        <div style="display: inline-flex; align-items: center; gap: 6px; margin-bottom: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+                            ${audioUrl ? `<span class="audio_button" style="cursor:pointer; display: inline-flex; align-items: center;"><i class="fa-solid fa-volume-high fa-rotate-by fa-sm" style="color: #ffffff; --fa-rotate-angle: 340deg;"></i></span>` : ''}
+                            ${ipaText ? `<span class="ipa-text" style="font-size: 1em; color: #272727; font-weight: 500; margin-left: 10px;">${ipaText}</span>` : ''}
+                        </div>
+                    `;
+                    audioBox.dataset.renderId = renderId;
+
+                    // 音声URLが存在する場合のみイベントリスナーを設定
+                    if (audioUrl) {
+                        const btn = audioBox.querySelector('.audio_button');
+                        const audio = new Audio(audioUrl);
+                        audio.preload = 'auto';
+
+                        btn.addEventListener('click', function () {
+                            if (btn.style.pointerEvents === 'none') return;
+
+                            btn.style.pointerEvents = 'none';
+                            btn.style.opacity = '0.5';
+
+                            audio.currentTime = 0;
+
+                            audio.onended = () => {
+                                btn.style.pointerEvents = 'auto';
+                                btn.style.opacity = '1';
+                            };
+
+                            audio.onerror = () => {
+                                btn.style.pointerEvents = 'auto';
+                                btn.style.opacity = '1';
+                            };
+
+                            audio.play().catch(() => {
+                                btn.style.pointerEvents = 'auto';
+                                btn.style.opacity = '1';
+                            });
+                        });
+                    }
+                }
+            }
+
+            attempts++;
+            if (attempts >= maxAttempts) {
+                clearInterval(timerId);
+            }
+        };
+
+        const timerId = setInterval(applyToDom, 50);
+        applyToDom();
     } catch (error) {
         // エラー時の処理
     }
