@@ -214,7 +214,7 @@ export function setupNgramInSection(container, initialWord) {
     const MIN_YEAR = 1500;
     const MAX_YEAR = 2022;
 
-    const box = document.createElement("div");
+const box = document.createElement("div");
     box.className = "ngram-box";
     box.innerHTML = `
         <div class="ngram-controls">
@@ -224,7 +224,7 @@ export function setupNgramInSection(container, initialWord) {
             </div>
             <div class="ngram-year-group">
                 <span>年代:</span>
-                <input type="number" class="ngram-year-input ngram-start-year" min="${MIN_YEAR}" max="${MAX_YEAR - 1}" value="1900">
+                 <input type="number" class="ngram-year-input ngram-start-year" min="${MIN_YEAR}" max="${MAX_YEAR - 1}" value="1900">
                 <span>〜</span>
                 <input type="number" class="ngram-year-input ngram-end-year" min="${MIN_YEAR + 1}" max="${MAX_YEAR}" value="2022">
                 <div style="flex-basis: 100%; height: 0; margin-bottom: 0;"></div>
@@ -237,6 +237,10 @@ export function setupNgramInSection(container, initialWord) {
         <div class="ngram-status"></div>
         <div class="ngram-chart-container">
             <canvas style="width: 100%; height: 100%; display: block;"></canvas>
+        </div>
+        <div class="ngram-description" style="color: #7e7e7e; font-size: 0.85em; margin-top: 10px;">
+            ※このグラフは Google Books Ngram Viewer のデータを使用しています。<br>
+            Googleブックスに収録された書籍の中で、各年代にその単語がどのくらいの頻度（割合）で使われていたかの推移を示しています。
         </div>
     `;
     container.appendChild(box);
