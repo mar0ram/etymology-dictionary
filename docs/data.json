@@ -6249,7 +6249,11 @@
     "h2": "語源にもとづいた説明",
     "i1": "individualは「それ以上分けられない物や人」というイメージ。",
     "i2": "<span class=\"w\"><b>【82.individual：個々の, 個人の】</b></span>\n<span class=\"ml\">ラテン語に由来する語で、以下の4つの要素から成る。\n<span class=\"spacer\"></span>in（否定）\ndis（離れて）\nvidere（分ける）\nalis（形容詞化）\n<span class=\"spacer\"></span>このまま日本語にすると「（それ以上）分けて離すことができない」となる。つまりもう分けられない最小単位となった物や人＝「個々の, 個人の」という意味になる。\n<span class=\"spacer\"></span>ラテン語dis（離れて）とvidere（分ける）からは英語の動詞divide（分ける）が生まれている。individualは、divideをinで否定している形容詞と覚えれば、individualとdiveideをセットで覚えられる。</span>",
+<<<<<<< HEAD
     "null": "",
+=======
+    "NaN": "",
+>>>>>>> 5119c8f96b425e6cc4ba111b471834760d229df4
     "i4": "",
     "i5": "",
     "h3": "関連語",
