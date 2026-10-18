@@ -186,43 +186,43 @@ function doSearch() {
         return;
     }
 
-// 改行→HTML および記号の余白調整用スパン付与
-const nl2br = (text) => {
-    if (!text) return "";
+    // 改行→HTML および記号の余白調整用スパン付与
+    const nl2br = (text) => {
+        if (!text) return "";
 
-    // 1. HTMLタグと英単語を同時に検索する
-    // (<[^>]+>) : HTMLタグ全体（例: <span class="w"> や </span>）をキャプチャグループ1とする
-    // ([a-zA-Z][a-zA-Z'-]*) : 英単語をキャプチャグループ2とする
-    let html = text.replace(/(<[^>]+>)|([a-zA-Z][a-zA-Z'-]*)/g, (match, tag, word) => {
-        if (tag) {
-            // HTMLタグにマッチした場合は、何も変更せずにそのまま返す（保護）
-            return tag;
-        }
-        if (word) {
-            // テキスト部分の英単語にマッチした場合のみ、spanで囲んで返す
-            return `<span lang="en" class="hyphen-auto">${word}</span>`;
-        }
-        return match;
-    });
+        // 1. HTMLタグと英単語を同時に検索する
+        // (<[^>]+>) : HTMLタグ全体（例: <span class="w"> や </span>）をキャプチャグループ1とする
+        // ([a-zA-Z][a-zA-Z'-]*) : 英単語をキャプチャグループ2とする
+        let html = text.replace(/(<[^>]+>)|([a-zA-Z][a-zA-Z'-]*)/g, (match, tag, word) => {
+            if (tag) {
+                // HTMLタグにマッチした場合は、何も変更せずにそのまま返す（保護）
+                return tag;
+            }
+            if (word) {
+                // テキスト部分の英単語にマッチした場合のみ、spanで囲んで返す
+                return `<span lang="en" class="hyphen-auto">${word}</span>`;
+            }
+            return match;
+        });
 
-    // 2. その後、改行や記号の処理を行う
-    html = html.replace(/\r?\n/g, "<br>");
-    html = html.replace(/([「『（【［〔〈《｛〚｟])/g, '<span class="margin-left-only">$1</span>');
-    html = html.replace(/([」』）】］〕〉》｝〛｠])/g, '<span class="margin-right-bracket">$1</span>'); // 閉じ括弧用
-    html = html.replace(/([、。])/g, '<span class="margin-right-punctuation">$1</span>'); // 句読点用
-    html = html.replace(/([・])/g, '<span class="margin-both">$1</span>');
-    html = html.replace(/([：])/g, '<span class="margin-both">$1</span>');
+        // 2. その後、改行や記号の処理を行う
+        html = html.replace(/\r?\n/g, "<br>");
+        html = html.replace(/([「『（【［〔〈《｛〚｟])/g, '<span class="margin-left-only">$1</span>');
+        html = html.replace(/([」』）】］〕〉》｝〛｠])/g, '<span class="margin-right-bracket">$1</span>'); // 閉じ括弧用
+        html = html.replace(/([、。])/g, '<span class="margin-right-punctuation">$1</span>'); // 句読点用
+        html = html.replace(/([・])/g, '<span class="margin-both">$1</span>');
+        html = html.replace(/([：])/g, '<span class="margin-both">$1</span>');
 
-    // 4パターンの連続記号に対して、それぞれ独立した余白調整用クラスを後続の記号に付与
-    html = html.replace(/(<span class="margin-right-bracket"[^>]*>[」』）】］〕〉》｝〛｠]<\/span>)<span class="margin-both"[^>]*>([・])<\/span>/g, '$1<span class="margin-both margin-reduce-bracket-dot">$2</span>');
-    html = html.replace(/(<span class="margin-right-bracket"[^>]*>[」』）】］〕〉》｝〛｠]<\/span>)<span class="margin-both"[^>]*>([：])<\/span>/g, '$1<span class="margin-both margin-reduce-bracket-colon">$2</span>');
-    html = html.replace(/(<span class="margin-both"[^>]*>[・]<\/span>)<span class="margin-left-only"[^>]*>([「『（【［〔〈《｛〚｟])<\/span>/g, '$1<span class="margin-left-only margin-reduce-dot-bracket">$2</span>');
-    html = html.replace(/(<span class="margin-both"[^>]*>[：]<\/span>)<span class="margin-left-only"[^>]*>([「『（【［〔〈《｛〚｟])<\/span>/g, '$1<span class="margin-left-only margin-reduce-colon-bracket">$2</span>');
-    html = html.replace(/(<span class="margin-right-bracket"[^>]*>[」』）】］〕〉》｝〛｠]<\/span>)<span class="margin-right-punctuation"[^>]*>([、。])<\/span>/g, '$1<span class="margin-right-punctuation margin-reduce-bracket-punctuation">$2</span>');
-    html = html.replace(/(<span class="margin-right-punctuation"[^>]*>[、。]<\/span>)<span class="margin-left-only"[^>]*>([「『（【［〔〈《｛〚｟])<\/span>/g, '$1<span class="margin-left-only margin-reduce-punctuation-bracket">$2</span>');
+        // 4パターンの連続記号に対して、それぞれ独立した余白調整用クラスを後続の記号に付与
+        html = html.replace(/(<span class="margin-right-bracket"[^>]*>[」』）】］〕〉》｝〛｠]<\/span>)<span class="margin-both"[^>]*>([・])<\/span>/g, '$1<span class="margin-both margin-reduce-bracket-dot">$2</span>');
+        html = html.replace(/(<span class="margin-right-bracket"[^>]*>[」』）】］〕〉》｝〛｠]<\/span>)<span class="margin-both"[^>]*>([：])<\/span>/g, '$1<span class="margin-both margin-reduce-bracket-colon">$2</span>');
+        html = html.replace(/(<span class="margin-both"[^>]*>[・]<\/span>)<span class="margin-left-only"[^>]*>([「『（【［〔〈《｛〚｟])<\/span>/g, '$1<span class="margin-left-only margin-reduce-dot-bracket">$2</span>');
+        html = html.replace(/(<span class="margin-both"[^>]*>[：]<\/span>)<span class="margin-left-only"[^>]*>([「『（【［〔〈《｛〚｟])<\/span>/g, '$1<span class="margin-left-only margin-reduce-colon-bracket">$2</span>');
+        html = html.replace(/(<span class="margin-right-bracket"[^>]*>[」』）】］〕〉》｝〛｠]<\/span>)<span class="margin-right-punctuation"[^>]*>([、。])<\/span>/g, '$1<span class="margin-right-punctuation margin-reduce-bracket-punctuation">$2</span>');
+        html = html.replace(/(<span class="margin-right-punctuation"[^>]*>[、。]<\/span>)<span class="margin-left-only"[^>]*>([「『（【［〔〈《｛〚｟])<\/span>/g, '$1<span class="margin-left-only margin-reduce-punctuation-bracket">$2</span>');
 
-    return html;
-};
+        return html;
+    };
 
     // 結果描画（新しい左右パネル構造に対応させる必要があります）
     filtered.forEach(item => {
@@ -369,8 +369,9 @@ async function fetchAndSetAudio(word, num, partOfSpeech = "") {
 
         const data = await response.json();
         let audioFileName = "";
+        let rawMwPron = ""; // MW独自の独自発音表記を格納する変数
 
-        // Merriam-WebsterのJSONから音声ファイル名（暗号のような文字列）を抽出
+        // Merriam-WebsterのJSONから音声ファイル名と発音文字列を抽出
         if (Array.isArray(data) && data.length > 0 && typeof data[0] === 'object') {
             let targetEntry = data[0]; // デフォルトは一番最初の検索結果
 
@@ -380,7 +381,6 @@ async function fetchAndSetAudio(word, num, partOfSpeech = "") {
                 const matchedEntry = data.find(entry => {
                     if (!entry.fl) return false;
                     const fl = entry.fl.toLowerCase();
-                    // M-W特有の「transitive verb」などにもヒットさせるため、includesを使用
                     return fl === searchPos || fl.includes(searchPos);
                 });
 
@@ -390,8 +390,14 @@ async function fetchAndSetAudio(word, num, partOfSpeech = "") {
             }
 
             // 発音データ(prs)と音声データ(sound.audio)が存在するかチェック
-            if (targetEntry.hwi && targetEntry.hwi.prs && targetEntry.hwi.prs.length > 0 && targetEntry.hwi.prs[0].sound) {
-                audioFileName = targetEntry.hwi.prs[0].sound.audio;
+            if (targetEntry.hwi && targetEntry.hwi.prs && targetEntry.hwi.prs.length > 0) {
+                const prsObj = targetEntry.hwi.prs[0];
+                if (prsObj.sound) {
+                    audioFileName = prsObj.sound.audio;
+                }
+                if (prsObj.mw) {
+                    rawMwPron = prsObj.mw;
+                }
             }
         }
 
@@ -407,41 +413,74 @@ async function fetchAndSetAudio(word, num, partOfSpeech = "") {
             audioUrl = `https://media.merriam-webster.com/audio/prons/en/us/mp3/${subdir}/${audioFileName}.mp3`;
         }
 
-        // 音声データが見つかった場合のみアイコンを表示
-        if (audioUrl) {
-            const audioBox = document.getElementById(`audio-box-${num}`);
-            if (audioBox) {
-                // 連打防止のため、onclick属性を外し、JS側でイベントリスナーを設定する形に変更
-                audioBox.innerHTML = `<span class="audio_button" style="cursor:pointer;"><i class="fa-solid fa-volume-high fa-rotate-by fa-sm" style="color: #ffffff; --fa-rotate-angle: 340deg;"></i></span>`;
+        const audioBox = document.getElementById(`audio-box-${num}`);
+        if (audioBox) {
+            // MWの独自表記を簡易的なIPAに変換する関数
+            function convertMwToIpa(mwStr) {
+                if (!mwStr) return "";
+                let ipa = mwStr
+                    // 強勢記号の変換（MWでは * が第一強勢、 ˌ が第二強勢などに相当、または特殊文字）
+                    // よくあるMW独自記号を一般的なIPA記号・記法に置換
+                    .replace(/\*/g, 'ˈ')   // 第一強勢
+                    .replace(/\\u02cc/g, 'ˌ') // 第二強勢
+                    // 母音・子音の置換（代表的なもの）
+                    .replace(/ē/g, 'iː')
+                    .replace(/ā/g, 'eɪ')
+                    .replace(/ī/g, 'aɪ')
+                    .replace(/ō/g, 'oʊ')
+                    .replace(/ū/g, 'uː')
+                    .replace(/ȯ/g, 'ɔ')
+                    .replace(/ä/g, 'ɑ')
+                    .replace(/ə̆/g, 'ə')
+                    .replace(/ə/g, 'ə')
+                    .replace(/ŋ/g, 'ŋ')
+                    .replace(/θ/g, 'θ')
+                    .replace(/ð/g, 'ð')
+                    .replace(/sh/g, 'ʃ')
+                    .replace(/zh/g, 'ʒ')
+                    .replace(/ch/g, 'tʃ')
+                    .replace(/j/g, 'dʒ')
+                    // 音節区切りのハイフンやアンダーバーの整理
+                    .replace(/-/g, '')     // 音節ごとのハイフンを除去
+                    .replace(/_/g, '');    // 特殊な結合アンダーバー等を除去
 
+                return `/${ipa}/`;
+            }
+
+            const ipaText = convertMwToIpa(rawMwPron);
+
+            // アイコンとIPAを並べて描画
+            audioBox.innerHTML = `
+                <div style="display: inline-flex; align-items: center; gap: 6px; margin-bottom: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+                    ${audioUrl ? `<span class="audio_button" style="cursor:pointer; display: inline-flex; align-items: center;"><i class="fa-solid fa-volume-high fa-rotate-by fa-sm" style="color: #ffffff; --fa-rotate-angle: 340deg;"></i></span>` : ''}
+                    ${ipaText ? `<span class="ipa-text" style="font-size: 1em; color: #272727; font-weight: 500;">${ipaText}</span>` : ''}
+                </div>
+            `;
+
+            // 音声URLが存在する場合のみイベントリスナーを設定
+            if (audioUrl) {
                 const btn = audioBox.querySelector('.audio_button');
-
                 const audio = new Audio(audioUrl);
                 audio.preload = 'auto';
 
                 btn.addEventListener('click', function () {
-                    // すでに無効化されている（再生中）場合は処理を抜ける
                     if (btn.style.pointerEvents === 'none') return;
 
-                    // タップを無効化し、少し半透明にして再生中であることを視覚的に示す
                     btn.style.pointerEvents = 'none';
                     btn.style.opacity = '0.5';
 
                     audio.currentTime = 0;
 
-                    // 再生終了時にタップを有効化して元の濃さに戻す
                     audio.onended = () => {
                         btn.style.pointerEvents = 'auto';
                         btn.style.opacity = '1';
                     };
 
-                    // エラー時も元に戻す（無効化されっぱなしを防ぐ）
                     audio.onerror = () => {
                         btn.style.pointerEvents = 'auto';
                         btn.style.opacity = '1';
                     };
 
-                    // 再生開始（失敗した場合も元に戻す）
                     audio.play().catch(() => {
                         btn.style.pointerEvents = 'auto';
                         btn.style.opacity = '1';
@@ -450,7 +489,7 @@ async function fetchAndSetAudio(word, num, partOfSpeech = "") {
             }
         }
     } catch (error) {
-        // 音声がない場合やエラー時はプレースホルダーのdivは空のまま（アイコン非表示）
+        // エラー時の処理
     }
 }
 
