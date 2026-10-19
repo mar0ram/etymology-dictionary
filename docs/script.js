@@ -399,6 +399,17 @@ async function fetchAndSetAudio(word, num, partOfSpeech = "") {
                     rawMwPron = prsObj.mw;
                 }
             }
+
+            // 音声や発音記号がない場合、最初のエントリから取得
+            if ((!audioFileName || !rawMwPron) && data[0].hwi && data[0].hwi.prs && data[0].hwi.prs.length > 0) {
+                const firstPrsObj = data[0].hwi.prs[0];
+                if (!audioFileName && firstPrsObj.sound) {
+                    audioFileName = firstPrsObj.sound.audio;
+                }
+                if (!rawMwPron && firstPrsObj.mw) {
+                    rawMwPron = firstPrsObj.mw;
+                }
+            }
         }
 
         let audioUrl = "";
