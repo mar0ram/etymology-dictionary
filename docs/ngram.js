@@ -214,7 +214,7 @@ export function setupNgramInSection(container, initialWord) {
     const MIN_YEAR = 1500;
     const MAX_YEAR = 2022;
 
-const box = document.createElement("div");
+    const box = document.createElement("div");
     box.className = "ngram-box";
     box.innerHTML = `
         <div class="ngram-controls">
@@ -224,7 +224,7 @@ const box = document.createElement("div");
             </div>
             <div class="ngram-year-group">
                 <span>年代:</span>
-                 <input type="number" class="ngram-year-input ngram-start-year" min="${MIN_YEAR}" max="${MAX_YEAR - 1}" value="1900">
+                <input type="number" class="ngram-year-input ngram-start-year" min="${MIN_YEAR}" max="${MAX_YEAR - 1}" value="1900">
                 <span>〜</span>
                 <input type="number" class="ngram-year-input ngram-end-year" min="${MIN_YEAR + 1}" max="${MAX_YEAR}" value="2022">
                 <div style="flex-basis: 100%; height: 0; margin-bottom: 0;"></div>
@@ -240,7 +240,8 @@ const box = document.createElement("div");
         </div>
         <div class="ngram-description" style="color: #7e7e7e; font-size: 0.85em; margin-top: 10px;">
             ※このグラフは Google Books Ngram Viewer のデータを使用しています。<br>
-            Googleブックスに収録された書籍の中で、各年代にその単語がどのくらいの頻度（割合）で使われていたかの推移を示しています。
+            Googleブックスに収録された書籍の中で、各年代にその単語がどのくらいの頻度（割合）で使われていたかの推移を示しています。<br>
+            このグラフはあくまで参考値であり、必ずしも正確な言語使用の統計を表すものではありません。
         </div>
     `;
     container.appendChild(box);
@@ -454,6 +455,93 @@ const box = document.createElement("div");
         window.addEventListener("resize", drawCustomChart);
     }
 
+    const POS_DEFINITIONS = [
+        { tag: "NOUN", label: "N", dictNames: ["noun"] },
+        { tag: "VERB", label: "V", dictNames: ["verb"] },
+        { tag: "ADJ", label: "ADJ", dictNames: ["adjective"] },
+        { tag: "ADV", label: "ADV", dictNames: ["adverb"] }
+    ];
+
+    async function resolveWordEntries(word) {
+        // すでに "complete(ADJ)" のように品詞付きで指定された場合
+        const explicitMatch = word.match(/^([a-zA-Z]+)\((N|V|ADJ|ADV)\)$/i);
+        if (explicitMatch) {
+            const base = explicitMatch[1];
+            const label = explicitMatch[2].toUpperCase();
+            const def = POS_DEFINITIONS.find(p => p.label === label);
+            if (def) {
+                const series = await fetchNgramTimeseries(`${base}_${def.tag}`);
+                return series ? [{ displayWord: `${base}(${def.label})`, series }] : [];
+            }
+        }
+
+        // 単一の英単語以外（フレーズ等）はそのまま検索
+        if (!/^[a-zA-Z]+$/.test(word)) {
+            const series = await fetchNgramTimeseries(word);
+            return series ? [{ displayWord: word, series }] : [];
+        }
+
+        // 辞書APIでその単語が持つ品詞を確認（失敗時はNgramデータのみで判定）
+        let dictPosSet = null;
+        try {
+            const res = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(word.toLowerCase())}`);
+            if (res.ok) {
+                const data = await res.json();
+                if (Array.isArray(data)) {
+                    const found = new Set();
+                    data.forEach(entry => {
+                        if (Array.isArray(entry.meanings)) {
+                            entry.meanings.forEach(m => {
+                                if (m.partOfSpeech) found.add(m.partOfSpeech.toLowerCase());
+                            });
+                        }
+                    });
+                    if (found.size > 0) dictPosSet = found;
+                }
+            }
+        } catch (e) {
+            // 辞書APIが利用できない場合はNgramの頻度判定にフォールバック
+        }
+
+        const candidateDefs = dictPosSet
+            ? POS_DEFINITIONS.filter(def => def.dictNames.some(d => dictPosSet.has(d)))
+            : POS_DEFINITIONS;
+
+        // 複数の品詞候補がある場合、品詞ごとにNgramデータを取得
+        if (candidateDefs.length >= 2) {
+            const results = await Promise.all(
+                candidateDefs.map(async (def) => {
+                    try {
+                        const series = await fetchNgramTimeseries(`${word}_${def.tag}`);
+                        if (!series) return null;
+                        const maxVal = Math.max(...series);
+                        return maxVal > 0 ? { def, series, maxVal } : null;
+                    } catch (e) {
+                        return null;
+                    }
+                })
+            );
+
+            const validResults = results.filter(Boolean);
+            if (validResults.length >= 2) {
+                const overallMax = Math.max(...validResults.map(r => r.maxVal));
+                // Ngram上の誤解析ノイズ（最大頻度の3%未満の微小な品詞データ）を除外
+                const significantResults = validResults.filter(r => r.maxVal >= overallMax * 0.03);
+
+                if (significantResults.length >= 2) {
+                    return significantResults.map(r => ({
+                        displayWord: `${word}(${r.def.label})`,
+                        series: r.series
+                    }));
+                }
+            }
+        }
+
+        // 品詞が1つしかない場合は通常の単語として検索
+        const series = await fetchNgramTimeseries(word);
+        return series ? [{ displayWord: word, series }] : [];
+    }
+
     async function addWordToGraph(targetWord) {
         if (/[,、]/.test(targetWord)) {
             const words = targetWord.split(/[,、]/).map(s => s.trim()).filter(Boolean);
@@ -466,7 +554,7 @@ const box = document.createElement("div");
         const w = targetWord.trim();
         if (!w) return;
 
-        if (activeWords.some(item => item.word.toLowerCase() === w.toLowerCase())) {
+        if (activeWords.some(item => item.word.toLowerCase() === w.toLowerCase() || item.word.toLowerCase().startsWith(w.toLowerCase() + "("))) {
             statusEl.textContent = `「${w}」は既に表示されています。`;
             return;
         }
@@ -475,18 +563,22 @@ const box = document.createElement("div");
         addBtn.disabled = true;
 
         try {
-            const series = await fetchNgramTimeseries(w);
-            if (!series) {
+            const entries = await resolveWordEntries(w);
+            if (entries.length === 0) {
                 statusEl.textContent = `「${w}」のデータが見つかりませんでした。`;
             } else {
-                const usedColors = activeWords.map(item => item.color);
-                const nextColor = NGRAM_THEME.lineColors.find(c => !usedColors.includes(c))
-                    || NGRAM_THEME.lineColors[activeWords.length % NGRAM_THEME.lineColors.length];
+                entries.forEach(entry => {
+                    if (activeWords.some(item => item.word.toLowerCase() === entry.displayWord.toLowerCase())) return;
 
-                activeWords.push({
-                    word: w,
-                    series: series,
-                    color: nextColor
+                    const usedColors = activeWords.map(item => item.color);
+                    const nextColor = NGRAM_THEME.lineColors.find(c => !usedColors.includes(c))
+                        || NGRAM_THEME.lineColors[activeWords.length % NGRAM_THEME.lineColors.length];
+
+                    activeWords.push({
+                        word: entry.displayWord,
+                        series: entry.series,
+                        color: nextColor
+                    });
                 });
                 statusEl.textContent = "";
                 renderTags();

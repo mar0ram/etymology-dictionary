@@ -462,7 +462,9 @@ async function fetchAndSetAudio(word, num, partOfSpeech = "") {
                 .replace(/ᵊ/g, 'ə')
                 // 音節区切りのハイフンやアンダーバーの整理
                 .replace(/-/g, '')
-                .replace(/_/g, '');
+                .replace(/_/g, '')
+                // 空白を使ってアクセント記号を見やすくする
+                .replace(/\s*([ˈˌ])/g, ' $1');
 
             return `/${ipa}/`;
         }
@@ -507,7 +509,9 @@ async function fetchAndSetAudio(word, num, partOfSpeech = "") {
                 .replace(/ȯ/g, 'ɔ')
                 .replace(/ə̆|ᵊ/g, 'ə')
                 // 区切り記号の除去
-                .replace(/[-_]/g, '');
+                .replace(/[-_]/g, '')
+                // 空白を使ってアクセント記号を見やすくする
+                .replace(/\s*([ˈˌ])/g, ' $1');
 
             return `/${ipa}/`;
         }
