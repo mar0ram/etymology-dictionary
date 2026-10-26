@@ -165,17 +165,13 @@ function doSearch() {
             return;
         }
 
-        const actualNum = numInput + 1500; // Excel 実際の行番号
-
-        filtered = data.filter(item => {
-            return item.num === actualNum;
+        filtered = data.idioms.filter(item => {
+            return item.num === numInput;
         });
 
     } else {
         // --- 英単語検索モード ---
-        filtered = data.filter(item => {
-            // 1〜1500 行のみ対象
-            if (item.num > 1500) return false;
+        filtered = data.words.filter(item => {
             if (!item.word || typeof item.word !== "string") return false;
             return item.word.toLowerCase() === query;
         });
@@ -232,11 +228,6 @@ function doSearch() {
         let displayNum = item.num;
         if (!displayNum || displayNum === "") {
             displayNum = "empty";
-        } else {
-            const numVal = parseInt(displayNum, 10);
-            if (numVal >= 1501) {
-                displayNum = numVal - 1500;
-            }
         }
 
         // 修正した番号を反映

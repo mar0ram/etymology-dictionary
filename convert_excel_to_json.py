@@ -22,26 +22,46 @@ os.makedirs(DOCS_DIR, exist_ok=True)
 
 # 1. Excel 読み込み (数式ではなく、計算後の「値」を確実に読み込む)
 wb = openpyxl.load_workbook(EXCEL_PATH, data_only=True)
-sheet = wb.active  # アクティブなシートを取得（特定のシート名なら wb["シート名"]）
+sheet_word = wb["Word"]
+sheet_idiom = wb["Idiom"]
 
 # シートの全データを取得して DataFrame に変換
-excel_data = list(sheet.values)
-columns = excel_data[0]  # 1行目をカラム名にする
-rows = excel_data[1:]  # 2行目以降がデータ
-df = pd.DataFrame(rows, columns=columns)
+excel_data_word = list(sheet_word.values)
+columns_word = excel_data_word[0]  # 1行目をカラム名にする
+rows_word = excel_data_word[1:]  # 2行目以降がデータ
+df_word = pd.DataFrame(rows_word, columns=columns_word)
+
+excel_data_idiom = list(sheet_idiom.values)
+columns_idiom = excel_data_idiom[0]  # 1行目をカラム名にする
+rows_idiom = excel_data_idiom[1:]  # 2行目以降がデータ
+df_idiom = pd.DataFrame(rows_idiom, columns=columns_idiom)
 
 # 2. JSON 用データ生成
 # 💡 num, word, partOfSpeech が JSON の先頭に並ぶように列順を調整
-first_cols = [c for c in ["num", "word", "partOfSpeech"] if c in df.columns]
-other_cols = [c for c in df.columns if c not in first_cols]
-df = df[first_cols + other_cols]
+first_cols_word = [c for c in ["num", "word", "partOfSpeech"] if c in df_word.columns]
+other_cols_word = [c for c in df_word.columns if c not in first_cols_word]
+df_word = df_word[first_cols_word + other_cols_word]
+
+first_cols_idiom = [c for c in ["num", "word", "partOfSpeech"] if c in df_idiom.columns]
+other_cols_idiom = [c for c in df_idiom.columns if c not in first_cols_idiom]
+df_idiom = df_idiom[first_cols_idiom + other_cols_idiom]
 
 # セルが空の場合は空文字にする
-data_list = df.fillna("").to_dict(orient="records")
+words_list = df_word.fillna("").to_dict(orient="records")
+idioms_list = df_idiom.fillna("").to_dict(orient="records")
+
+json_data = {
+    "words": words_list,
+    "idioms": idioms_list,
+}
+
+# 後続の画像チェック・HTML生成用にデータを結合
+df = pd.concat([df_word, df_idiom], ignore_index=True)
+data_list = words_list + idioms_list
 
 # 修正: newline="\n" を削除（Errno 22 回避）
 with open(JSON_OUT, "w", encoding="utf-8") as f:
-    json.dump(data_list, f, ensure_ascii=False, indent=2)
+    json.dump(json_data, f, ensure_ascii=False, indent=2)
 
 # --- sample_imageの存在チェック ---
 sample_image_count = 0  # <--- 追記: カウント用変数を初期化
@@ -108,7 +128,7 @@ for _, row in df.iterrows():
     else:
         try:
             val = int(row["num"])
-            num_str = str(val - 1500) if val >= 1501 else str(val)
+            num_str = str(val)
         except (ValueError, TypeError):
             num_str = "empty"
 
