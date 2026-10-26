@@ -89,13 +89,8 @@
       "part5": "",
       "h2": "語源にもとづいた説明",
       "i1": "increaseは「中が膨らんで成長する＝大きくなる＝増える」というイメージ。",
-<<<<<<< HEAD
       "i2": "<span class=\"w\"><b>【2.increase：増加する, ～を増やす】</b></span>\n<span class=\"ml\">ラテン語に由来する語で、以下の2つの要素から成る。\n<span class=\"spacer\"></span>in（中に）\ncrescere（成長する）\n<span class=\"spacer\"></span>このまま日本語にすると「中に成長する」となる。これは木の芽（の内部）が膨らんで大きくなっていくイメージ。この成長して膨らんで大きくなっていくことから、大きさや数が膨れあがる＝「増加する, 増やす」という意味になる。\n<div class=\"sample_image increase\"></div></span>",
-      "null": "",
-=======
-      "i2": "<span class=\"w\"><b>【2.increase：増加する, ～を増やす】</b></span>\n<span class=\"ml\">ラテン語に由来する語で、以下の2つの要素から成る。\n<span class=\"spacer\"></span>in（中に）\ncrescere（成長する）\n<span class=\"spacer\"></span>このまま日本語にすると「中に成長する」となる。これは木の芽（の内部）が膨らんで大きくなっていくことをイメージしてほしい。この成長して膨らんで大きくなっていくことから、大きさや数が膨れあがる＝「増加する, 増やす」という意味になる。\n<div class=\"sample_image increase\"></div></span>",
       "NaN": "",
->>>>>>> eaf5d47a61e9facebcdccd12e81533abfc089158
       "i4": "",
       "i5": "",
       "h3": "関連語",
