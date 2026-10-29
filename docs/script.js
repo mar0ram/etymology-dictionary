@@ -69,6 +69,88 @@ if (!initialParams.get('word')) {
     prependEntry();
 }
 
+// 💡 サジェスト用要素の生成とスタイル設定（JSのみで完結）
+const searchBoxContainer = document.querySelector(".search-box-container");
+searchBoxContainer.style.position = "relative";
+
+const suggestionList = document.createElement("ul");
+Object.assign(suggestionList.style, {
+    position: "absolute",
+    top: "100%",
+    left: "0",
+    width: "100%",
+    maxHeight: "240px",
+    overflowY: "auto",
+    backgroundColor: "#ffffff",
+    border: "1px solid #cccccc",
+    borderRadius: "4px",
+    boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
+    zIndex: "1000",
+    display: "none",
+    margin: "4px 0 0 0",
+    padding: "0",
+    listStyle: "none"
+});
+searchBoxContainer.appendChild(suggestionList);
+
+// 💡 検索用の正規化関数（小文字化 ＋ 半角・全角スペースを除去）
+function normalizeForMatch(str) {
+    return String(str).toLowerCase().replace(/[ \u3000]+/g, "");
+}
+
+// 💡 キーボード操作用の選択インデックスとハイライト更新関数
+let selectedSuggestionIndex = -1;
+
+function updateSuggestionHighlight() {
+    const items = suggestionList.querySelectorAll("li");
+    items.forEach((li, index) => {
+        if (index === selectedSuggestionIndex) {
+            li.style.backgroundColor = "#f0f4f8";
+            li.scrollIntoView({ block: "nearest" });
+        } else {
+            li.style.backgroundColor = "#ffffff";
+        }
+    });
+}
+
+// 💡 data.jsonの"words"と"idioms"から候補リストを取得（重複除外）
+let suggestionItems = [];
+fetch("data.json")
+    .then(res => res.json())
+    .then(json => {
+        const wordsList = (json.words || [])
+            .filter(item => item && item.word)
+            .map(item => ({
+                word: String(item.word),
+                normalizedWord: normalizeForMatch(item.word),
+                searchValue: String(item.word)
+            }));
+
+        const idiomsList = (json.idioms || [])
+            .filter(item => item && item.word)
+            .map(item => ({
+                word: String(item.word),
+                normalizedWord: normalizeForMatch(item.word),
+                searchValue: item.num !== undefined ? String(item.num) : String(item.word)
+            }));
+
+        const seen = new Set();
+        suggestionItems = [...wordsList, ...idiomsList].filter(item => {
+            const key = `${item.word}__${item.searchValue}`;
+            if (seen.has(key)) return false;
+            seen.add(key);
+            return true;
+        });
+    });
+
+// 💡 検索ボックスの外側をクリックしたときにサジェストを閉じる
+document.addEventListener("click", (e) => {
+    if (!searchBoxContainer.contains(e.target)) {
+        suggestionList.style.display = "none";
+        selectedSuggestionIndex = -1;
+    }
+});
+
 // 💡 検索窓への入力監視 (×ボタンの表示/非表示切り替え)
 searchBox.addEventListener("input", () => {
     if (searchBox.value.length > 0) {
@@ -76,16 +158,71 @@ searchBox.addEventListener("input", () => {
     } else {
         clearBtn.style.display = "none";
     }
+
+    const normalizedQuery = normalizeForMatch(searchBox.value);
+    suggestionList.innerHTML = "";
+    selectedSuggestionIndex = -1;
+
+    if (!normalizedQuery) {
+        suggestionList.style.display = "none";
+        return;
+    }
+
+    const matchedItems = suggestionItems.filter(item =>
+        item.normalizedWord.startsWith(normalizedQuery)
+    );
+
+    if (matchedItems.length === 0) {
+        suggestionList.style.display = "none";
+        return;
+    }
+
+    matchedItems.forEach((item, index) => {
+        const li = document.createElement("li");
+        li.textContent = item.word;
+        li.dataset.searchValue = item.searchValue;
+        Object.assign(li.style, {
+            padding: "8px 12px",
+            cursor: "pointer",
+            borderBottom: "1px solid #eeeeee",
+            color: "#333333",
+            backgroundColor: "#ffffff"
+        });
+
+        li.addEventListener("mouseenter", () => {
+            selectedSuggestionIndex = index;
+            updateSuggestionHighlight();
+        });
+        li.addEventListener("mouseleave", () => {
+            selectedSuggestionIndex = -1;
+            updateSuggestionHighlight();
+        });
+
+        li.addEventListener("click", () => {
+            searchBox.value = item.searchValue;
+            suggestionList.innerHTML = "";
+            suggestionList.style.display = "none";
+            selectedSuggestionIndex = -1;
+            searchBtn.click();
+        });
+
+        suggestionList.appendChild(li);
+    });
+
+    suggestionList.style.display = "block";
 });
 
 // 💡 クリアボタン押下時の処理
 clearBtn.addEventListener("click", () => {
     searchBox.value = ""; // 検索窓の文字を空にする
     clearBtn.style.display = "none"; // ×ボタンを非表示にする
-    searchBox.focus(); // 検索窓にフォーカスを戻す（次の入力を促す）
+    suggestionList.innerHTML = "";
+    suggestionList.style.display = "none";
+    selectedSuggestionIndex = -1;
     results.innerHTML = "";
     prependEntry();
     resetZoom(); // ズームリセット関数を実行
+    searchBox.focus(); // 検索窓にフォーカスを戻す（次の入力を促す）
 });
 
 // フォーカス時のズーム防止（iOS Safari対策）
@@ -118,17 +255,42 @@ searchBtn.addEventListener("click", () => {
         results.innerHTML = "<p>データを読み込み中です。少し待ってから再試行してください。</p>";
         return;
     }
+    suggestionList.style.display = "none";
+    selectedSuggestionIndex = -1;
     doSearch();
     resetZoom();
 });
 
-// Enter押下
+// Enter押下 ＆ 上下矢印キーでのサジェスト移動
 searchBox.addEventListener("keydown", (e) => {
+    const items = suggestionList.querySelectorAll("li");
+    const isSuggestionVisible = suggestionList.style.display === "block" && items.length > 0;
+
+    if (e.key === "ArrowDown" && isSuggestionVisible) {
+        e.preventDefault();
+        selectedSuggestionIndex = (selectedSuggestionIndex + 1) % items.length;
+        updateSuggestionHighlight();
+        return;
+    }
+
+    if (e.key === "ArrowUp" && isSuggestionVisible) {
+        e.preventDefault();
+        selectedSuggestionIndex = (selectedSuggestionIndex - 1 + items.length) % items.length;
+        updateSuggestionHighlight();
+        return;
+    }
+
     if (e.key === "Enter") {
         if (!dataLoaded) {
             results.innerHTML = "<p>データを読み込み中です。少し待ってから再試行してください。</p>";
             return;
         }
+        if (isSuggestionVisible && selectedSuggestionIndex >= 0 && items[selectedSuggestionIndex]) {
+            e.preventDefault();
+            searchBox.value = items[selectedSuggestionIndex].dataset.searchValue;
+        }
+        suggestionList.style.display = "none";
+        selectedSuggestionIndex = -1;
         doSearch();
         resetZoom();
     }
