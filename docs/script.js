@@ -83,6 +83,7 @@ Object.assign(suggestionList.style, {
     overflowY: "auto",
     overflowX: "hidden",
     overscrollBehavior: "contain",
+    boxSizing: "border-box",
     backgroundColor: "#ffffff",
     border: "1px solid #cccccc",
     borderRadius: "4px",
@@ -94,6 +95,11 @@ Object.assign(suggestionList.style, {
     listStyle: "none"
 });
 searchBoxContainer.appendChild(suggestionList);
+
+// 💡 スマホ判定関数
+function isMobileView() {
+    return window.matchMedia("(max-width: 767px)").matches;
+}
 
 // 💡 検索候補表示中の背景スクロール禁止制御
 function setSuggestionDisplay(show) {
@@ -123,12 +129,60 @@ function normalizeForMatch(str) {
     return String(str).toLowerCase().replace(/[ \u3000]+/g, "");
 }
 
-// 💡 キーボード操作用の選択インデックスとハイライト更新関数
+// 💡 キーボード操作・ドラムロール表示用の選択インデックスとハイライト更新関数
 let selectedSuggestionIndex = -1;
 
 function updateSuggestionHighlight() {
     const items = suggestionList.querySelectorAll("li");
+    if (items.length === 0) return;
+
+    if (isMobileView()) {
+        const listHeight = suggestionList.clientHeight || 240;
+        const viewCenter = suggestionList.scrollTop + listHeight / 2;
+
+        let closestIndex = 0;
+        let minDistance = Infinity;
+        items.forEach((li, index) => {
+            const itemCenter = li.offsetTop + li.offsetHeight / 2;
+            const dist = Math.abs(itemCenter - viewCenter);
+            if (dist < minDistance) {
+                minDistance = dist;
+                closestIndex = index;
+            }
+        });
+        selectedSuggestionIndex = closestIndex;
+
+        items.forEach((li, index) => {
+            const itemCenter = li.offsetTop + li.offsetHeight / 2;
+            const ratio = (itemCenter - viewCenter) / (listHeight / 2);
+            const absRatio = Math.min(Math.abs(ratio), 1.2);
+            const rotateX = -ratio * 28;
+            const scale = index === closestIndex ? 1.04 : Math.max(0.88, 1 - absRatio * 0.12);
+            const opacity = index === closestIndex ? 1 : Math.max(0.4, 1 - absRatio * 0.55);
+
+            li.style.transform = `perspective(500px) rotateX(${rotateX.toFixed(1)}deg) scale(${scale.toFixed(3)})`;
+            li.style.opacity = String(opacity.toFixed(2));
+
+            if (index === closestIndex) {
+                li.style.backgroundColor = "#f0f4f8";
+                li.style.zIndex = "3";
+                li.style.boxShadow = "0 6px 14px rgba(0, 0, 0, 0.18)";
+                li.style.borderRadius = "6px";
+                li.style.fontWeight = "600";
+            } else {
+                li.style.backgroundColor = "#ffffff";
+                li.style.zIndex = String(Math.max(1, Math.round((1.2 - absRatio) * 2)));
+                li.style.boxShadow = "none";
+                li.style.borderRadius = "4px";
+                li.style.fontWeight = "normal";
+            }
+        });
+        return;
+    }
+
     items.forEach((li, index) => {
+        li.style.opacity = "1";
+        li.style.fontWeight = "normal";
         if (index === selectedSuggestionIndex) {
             li.style.backgroundColor = "#f0f4f8";
             li.style.zIndex = "2";
@@ -145,6 +199,13 @@ function updateSuggestionHighlight() {
         }
     });
 }
+
+// 💡 スマホでのスクロール時にドラムロール表示を更新
+suggestionList.addEventListener("scroll", () => {
+    if (isMobileView() && suggestionList.style.display === "block") {
+        updateSuggestionHighlight();
+    }
+});
 
 // 💡 data.jsonの"words"と"idioms"から候補リストを取得（重複除外）
 let suggestionItems = [];
@@ -220,6 +281,10 @@ searchBox.addEventListener("input", () => {
         return;
     }
 
+    const mobile = isMobileView();
+    suggestionList.style.padding = mobile ? (matchedItems.length >= 3 ? "76px 8px" : "8px") : "0";
+    suggestionList.style.scrollSnapType = mobile ? "y proximity" : "none";
+
     matchedItems.forEach((item, index) => {
         const li = document.createElement("li");
         li.textContent = item.word;
@@ -232,16 +297,23 @@ searchBox.addEventListener("input", () => {
             backgroundColor: "#ffffff",
             position: "relative",
             zIndex: "1",
-            transition: "transform 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease"
+            scrollSnapAlign: mobile ? "center" : "none",
+            transition: mobile
+                ? "background-color 0.1s ease, box-shadow 0.1s ease"
+                : "transform 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease"
         });
 
         li.addEventListener("mouseenter", () => {
-            selectedSuggestionIndex = index;
-            updateSuggestionHighlight();
+            if (!isMobileView()) {
+                selectedSuggestionIndex = index;
+                updateSuggestionHighlight();
+            }
         });
         li.addEventListener("mouseleave", () => {
-            selectedSuggestionIndex = -1;
-            updateSuggestionHighlight();
+            if (!isMobileView()) {
+                selectedSuggestionIndex = -1;
+                updateSuggestionHighlight();
+            }
         });
 
         li.addEventListener("click", () => {
@@ -256,6 +328,15 @@ searchBox.addEventListener("input", () => {
     });
 
     setSuggestionDisplay(true);
+
+    if (mobile) {
+        const initialIndex = matchedItems.length >= 3 ? 1 : 0;
+        const targetLi = suggestionList.querySelectorAll("li")[initialIndex];
+        if (targetLi) {
+            suggestionList.scrollTop = targetLi.offsetTop - (suggestionList.clientHeight / 2) + (targetLi.offsetHeight / 2);
+        }
+        updateSuggestionHighlight();
+    }
 });
 
 // 💡 クリアボタン押下時の処理
@@ -341,7 +422,6 @@ searchBox.addEventListener("keydown", (e) => {
         resetZoom();
     }
 });
-
 // 単語イメージのアニメーション実行
 function startAnimation(container, drawFunc) {
     if (!container) return;
