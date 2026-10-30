@@ -81,6 +81,8 @@ Object.assign(suggestionList.style, {
     width: "100%",
     maxHeight: "240px",
     overflowY: "auto",
+    overflowX: "hidden",
+    overscrollBehavior: "contain",
     backgroundColor: "#ffffff",
     border: "1px solid #cccccc",
     borderRadius: "4px",
@@ -92,6 +94,29 @@ Object.assign(suggestionList.style, {
     listStyle: "none"
 });
 searchBoxContainer.appendChild(suggestionList);
+
+// 💡 検索候補表示中の背景スクロール禁止制御
+function setSuggestionDisplay(show) {
+    if (show) {
+        suggestionList.style.display = "block";
+        document.body.style.overflow = "hidden";
+    } else {
+        suggestionList.style.display = "none";
+        document.body.style.overflow = "";
+    }
+}
+
+document.addEventListener("wheel", (e) => {
+    if (suggestionList.style.display === "block" && !suggestionList.contains(e.target)) {
+        e.preventDefault();
+    }
+}, { passive: false });
+
+document.addEventListener("touchmove", (e) => {
+    if (suggestionList.style.display === "block" && !suggestionList.contains(e.target)) {
+        e.preventDefault();
+    }
+}, { passive: false });
 
 // 💡 検索用の正規化関数（小文字化 ＋ 半角・全角スペースを除去）
 function normalizeForMatch(str) {
@@ -106,9 +131,17 @@ function updateSuggestionHighlight() {
     items.forEach((li, index) => {
         if (index === selectedSuggestionIndex) {
             li.style.backgroundColor = "#f0f4f8";
+            li.style.zIndex = "2";
+            li.style.transform = "scale(1.02)";
+            li.style.boxShadow = "0 4px 12px rgba(0, 0, 0, 0.18)";
+            li.style.borderRadius = "4px";
             li.scrollIntoView({ block: "nearest" });
         } else {
             li.style.backgroundColor = "#ffffff";
+            li.style.zIndex = "1";
+            li.style.transform = "scale(1)";
+            li.style.boxShadow = "none";
+            li.style.borderRadius = "0";
         }
     });
 }
@@ -140,13 +173,23 @@ fetch("data.json")
             if (seen.has(key)) return false;
             seen.add(key);
             return true;
+        }).sort((a, b) => {
+            const wordA = a.normalizedWord;
+            const wordB = b.normalizedWord;
+            const len = Math.min(wordA.length, wordB.length);
+            for (let i = 0; i < len; i++) {
+                if (wordA[i] !== wordB[i]) {
+                    return wordA.charCodeAt(i) - wordB.charCodeAt(i);
+                }
+            }
+            return wordA.length - wordB.length;
         });
     });
 
 // 💡 検索ボックスの外側をクリックしたときにサジェストを閉じる
 document.addEventListener("click", (e) => {
     if (!searchBoxContainer.contains(e.target)) {
-        suggestionList.style.display = "none";
+        setSuggestionDisplay(false);
         selectedSuggestionIndex = -1;
     }
 });
@@ -164,7 +207,7 @@ searchBox.addEventListener("input", () => {
     selectedSuggestionIndex = -1;
 
     if (!normalizedQuery) {
-        suggestionList.style.display = "none";
+        setSuggestionDisplay(false);
         return;
     }
 
@@ -173,7 +216,7 @@ searchBox.addEventListener("input", () => {
     );
 
     if (matchedItems.length === 0) {
-        suggestionList.style.display = "none";
+        setSuggestionDisplay(false);
         return;
     }
 
@@ -186,7 +229,10 @@ searchBox.addEventListener("input", () => {
             cursor: "pointer",
             borderBottom: "1px solid #eeeeee",
             color: "#333333",
-            backgroundColor: "#ffffff"
+            backgroundColor: "#ffffff",
+            position: "relative",
+            zIndex: "1",
+            transition: "transform 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease"
         });
 
         li.addEventListener("mouseenter", () => {
@@ -201,7 +247,7 @@ searchBox.addEventListener("input", () => {
         li.addEventListener("click", () => {
             searchBox.value = item.searchValue;
             suggestionList.innerHTML = "";
-            suggestionList.style.display = "none";
+            setSuggestionDisplay(false);
             selectedSuggestionIndex = -1;
             searchBtn.click();
         });
@@ -209,7 +255,7 @@ searchBox.addEventListener("input", () => {
         suggestionList.appendChild(li);
     });
 
-    suggestionList.style.display = "block";
+    setSuggestionDisplay(true);
 });
 
 // 💡 クリアボタン押下時の処理
@@ -217,7 +263,7 @@ clearBtn.addEventListener("click", () => {
     searchBox.value = ""; // 検索窓の文字を空にする
     clearBtn.style.display = "none"; // ×ボタンを非表示にする
     suggestionList.innerHTML = "";
-    suggestionList.style.display = "none";
+    setSuggestionDisplay(false);
     selectedSuggestionIndex = -1;
     results.innerHTML = "";
     prependEntry();
@@ -255,7 +301,7 @@ searchBtn.addEventListener("click", () => {
         results.innerHTML = "<p>データを読み込み中です。少し待ってから再試行してください。</p>";
         return;
     }
-    suggestionList.style.display = "none";
+    setSuggestionDisplay(false);
     selectedSuggestionIndex = -1;
     doSearch();
     resetZoom();
@@ -289,7 +335,7 @@ searchBox.addEventListener("keydown", (e) => {
             e.preventDefault();
             searchBox.value = items[selectedSuggestionIndex].dataset.searchValue;
         }
-        suggestionList.style.display = "none";
+        setSuggestionDisplay(false);
         selectedSuggestionIndex = -1;
         doSearch();
         resetZoom();
