@@ -137,14 +137,19 @@ function updateSuggestionHighlight() {
     if (items.length === 0) return;
 
     if (isMobileView()) {
-        const listHeight = suggestionList.clientHeight || 240;
-        const viewCenter = suggestionList.scrollTop + listHeight / 2;
+        const firstLi = items[0];
+        const lastLi = items[items.length - 1];
+        const firstCenter = firstLi.offsetTop + firstLi.offsetHeight / 2;
+        const lastCenter = lastLi.offsetTop + lastLi.offsetHeight / 2;
+        const maxScroll = suggestionList.scrollHeight - suggestionList.clientHeight;
+        const scrollRatio = maxScroll > 0 ? Math.min(Math.max(suggestionList.scrollTop / maxScroll, 0), 1) : 0;
+        const focusCenter = firstCenter + (lastCenter - firstCenter) * scrollRatio;
 
         let closestIndex = 0;
         let minDistance = Infinity;
         items.forEach((li, index) => {
             const itemCenter = li.offsetTop + li.offsetHeight / 2;
-            const dist = Math.abs(itemCenter - viewCenter);
+            const dist = Math.abs(itemCenter - focusCenter);
             if (dist < minDistance) {
                 minDistance = dist;
                 closestIndex = index;
@@ -152,13 +157,14 @@ function updateSuggestionHighlight() {
         });
         selectedSuggestionIndex = closestIndex;
 
+        const listHeight = suggestionList.clientHeight || 240;
         items.forEach((li, index) => {
             const itemCenter = li.offsetTop + li.offsetHeight / 2;
-            const ratio = (itemCenter - viewCenter) / (listHeight / 2);
+            const ratio = (itemCenter - focusCenter) / (listHeight / 2);
             const absRatio = Math.min(Math.abs(ratio), 1.2);
-            const rotateX = -ratio * 28;
-            const scale = index === closestIndex ? 1.04 : Math.max(0.88, 1 - absRatio * 0.12);
-            const opacity = index === closestIndex ? 1 : Math.max(0.4, 1 - absRatio * 0.55);
+            const rotateX = -ratio * 25;
+            const scale = index === closestIndex ? 1.03 : Math.max(0.9, 1 - absRatio * 0.1);
+            const opacity = index === closestIndex ? 1 : Math.max(0.45, 1 - absRatio * 0.5);
 
             li.style.transform = `perspective(500px) rotateX(${rotateX.toFixed(1)}deg) scale(${scale.toFixed(3)})`;
             li.style.opacity = String(opacity.toFixed(2));
@@ -167,13 +173,13 @@ function updateSuggestionHighlight() {
                 li.style.backgroundColor = "#f0f4f8";
                 li.style.zIndex = "3";
                 li.style.boxShadow = "0 6px 14px rgba(0, 0, 0, 0.18)";
-                li.style.borderRadius = "6px";
+                li.style.borderRadius = "4px";
                 li.style.fontWeight = "600";
             } else {
                 li.style.backgroundColor = "#ffffff";
                 li.style.zIndex = String(Math.max(1, Math.round((1.2 - absRatio) * 2)));
                 li.style.boxShadow = "none";
-                li.style.borderRadius = "4px";
+                li.style.borderRadius = "0";
                 li.style.fontWeight = "normal";
             }
         });
@@ -282,8 +288,6 @@ searchBox.addEventListener("input", () => {
     }
 
     const mobile = isMobileView();
-    suggestionList.style.padding = mobile ? (matchedItems.length >= 3 ? "76px 8px" : "8px") : "0";
-    suggestionList.style.scrollSnapType = mobile ? "y proximity" : "none";
 
     matchedItems.forEach((item, index) => {
         const li = document.createElement("li");
@@ -297,7 +301,6 @@ searchBox.addEventListener("input", () => {
             backgroundColor: "#ffffff",
             position: "relative",
             zIndex: "1",
-            scrollSnapAlign: mobile ? "center" : "none",
             transition: mobile
                 ? "background-color 0.1s ease, box-shadow 0.1s ease"
                 : "transform 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease"
@@ -330,11 +333,7 @@ searchBox.addEventListener("input", () => {
     setSuggestionDisplay(true);
 
     if (mobile) {
-        const initialIndex = matchedItems.length >= 3 ? 1 : 0;
-        const targetLi = suggestionList.querySelectorAll("li")[initialIndex];
-        if (targetLi) {
-            suggestionList.scrollTop = targetLi.offsetTop - (suggestionList.clientHeight / 2) + (targetLi.offsetHeight / 2);
-        }
+        suggestionList.scrollTop = 0;
         updateSuggestionHighlight();
     }
 });
@@ -422,6 +421,7 @@ searchBox.addEventListener("keydown", (e) => {
         resetZoom();
     }
 });
+
 // 単語イメージのアニメーション実行
 function startAnimation(container, drawFunc) {
     if (!container) return;
