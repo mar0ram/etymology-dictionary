@@ -474,10 +474,30 @@ function doSearch() {
     const nl2br = (text) => {
         if (!text) return "";
 
+        // 💡 案4：タイトル部分（<span class="w"><b>【番号.単語：意味】</b></span>）を抽出してダークヘッダーHTMLに変換
+        const headerPlaceholders = [];
+        const preprocessedText = text.replace(
+            /<span class="w">\s*<b>\s*【?\s*(?:(\d+)\s*\.\s*)?([^：:]+?)\s*[：:]\s*([\s\S]+?)\s*】?\s*<\/b>(?:<\/b>)?\s*<\/span>(?:\r?\n)?/g,
+            (match, num, word, meaningStr) => {
+                const meanings = meaningStr
+                    .split(/\s*[,，、]\s*/)
+                    .map(s => s.trim())
+                    .filter(Boolean);
+                const meaningTags = meanings
+                    .map(m => `<span class="w-p4-meaning-item"><span class="w-p4-dot"></span><span>${m}</span></span>`)
+                    .join("");
+                const numBadge = num ? `<span class="w-p4-num">#${num.trim()}</span>` : "";
+                const headerHtml = `<span class="w w-p4-header"><span class="w-p4-top">${numBadge}<span class="w-p4-word" lang="en">${word.trim()}</span></span><span class="w-p4-meanings">${meaningTags}</span></span>`;
+                const placeholder = `<!--W_P4_HEADER_${headerPlaceholders.length}-->`;
+                headerPlaceholders.push(headerHtml);
+                return placeholder;
+            }
+        );
+
         // 1. HTMLタグと英単語を同時に検索する
         // (<[^>]+>) : HTMLタグ全体（例: <span class="w"> や </span>）をキャプチャグループ1とする
         // ([a-zA-Z][a-zA-Z'-]*) : 英単語をキャプチャグループ2とする
-        let html = text.replace(/(<[^>]+>)|([a-zA-Z][a-zA-Z'-]*)/g, (match, tag, word) => {
+        let html = preprocessedText.replace(/(<[^>]+>)|([a-zA-Z][a-zA-Z'-]*)/g, (match, tag, word) => {
             if (tag) {
                 // HTMLタグにマッチした場合は、何も変更せずにそのまま返す（保護）
                 return tag;
@@ -502,8 +522,13 @@ function doSearch() {
         html = html.replace(/(<span class="margin-right-bracket"[^>]*>[」』）】］〕〉》｝〛｠]<\/span>)<span class="margin-both"[^>]*>([：])<\/span>/g, '$1<span class="margin-both margin-reduce-bracket-colon">$2</span>');
         html = html.replace(/(<span class="margin-both"[^>]*>[・]<\/span>)<span class="margin-left-only"[^>]*>([「『（【［〔〈《｛〚｟])<\/span>/g, '$1<span class="margin-left-only margin-reduce-dot-bracket">$2</span>');
         html = html.replace(/(<span class="margin-both"[^>]*>[：]<\/span>)<span class="margin-left-only"[^>]*>([「『（【［〔〈《｛〚｟])<\/span>/g, '$1<span class="margin-left-only margin-reduce-colon-bracket">$2</span>');
-        html = html.replace(/(<span class="margin-right-bracket"[^>]*>[」』）】］〕〉》｝〛｠]<\/span>)<span class="margin-right-punctuation"[^>]*>([、。])<\/span>/g, '$1<span class="margin-right-punctuation margin-reduce-bracket-punctuation">$2</span>');
+        html = html.replace(/(<span class="margin-right-punctuation"[^>]*>[」』）】］〕〉》｝〛｠]<\/span>)<span class="margin-right-punctuation"[^>]*>([、。])<\/span>/g, '$1<span class="margin-right-punctuation margin-reduce-bracket-punctuation">$2</span>');
         html = html.replace(/(<span class="margin-right-punctuation"[^>]*>[、。]<\/span>)<span class="margin-left-only"[^>]*>([「『（【［〔〈《｛〚｟])<\/span>/g, '$1<span class="margin-left-only margin-reduce-punctuation-bracket">$2</span>');
+
+        // 保護していたタイトルHTMLを復元
+        headerPlaceholders.forEach((headerHtml, idx) => {
+            html = html.replace(`<!--W_P4_HEADER_${idx}-->`, headerHtml);
+        });
 
         return html;
     };
@@ -580,7 +605,7 @@ function doSearch() {
                     let text = item[k];
                     // 💡 「i2」の場合のみ、<b>と<span class="ml">の間にdiv要素（プレースホルダー）を挿入
                     if (k === "i2") {
-                        text = text.replace(/<\/span>(\r?\n)?<span class="ml">/, `</b></span><div id="audio-box-${item.num}" class="audio_box" style="display:inline-block; margin: 0 10px;"></div>$1<span class="ml">`);
+                        text = text.replace(/<\/span>(\r?\n)?<span class="ml">/, `</b></span><div id="audio-box-${item.num}" class="audio_box"></div><span class="ml">`);
                     }
 
                     // 💡 追加部分：h3のrelated項目で<span class="ml">を持つ場合のみアコーディオン化
