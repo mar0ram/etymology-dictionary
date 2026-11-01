@@ -470,29 +470,53 @@ function doSearch() {
         return;
     }
 
+    let relAudioCount = 0; // 💡 関連語の音声ボックス用連番
+
     // 改行→HTML および記号の余白調整用スパン付与
     const nl2br = (text) => {
         if (!text) return "";
 
-        // 💡 案4：タイトル部分（<span class="w"><b>【番号.単語：意味】</b></span>）を抽出してダークヘッダーHTMLに変換
+        // 💡 案4：h2タイトル部分とh3関連語タイトル部分を抽出してHTMLに変換
         const headerPlaceholders = [];
-        const preprocessedText = text.replace(
-            /<span class="w">\s*<b>\s*【?\s*(?:(\d+)\s*\.\s*)?([^：:]+?)\s*[：:]\s*([\s\S]+?)\s*】?\s*<\/b>(?:<\/b>)?\s*<\/span>(?:\r?\n)?/g,
-            (match, num, word, meaningStr) => {
-                const meanings = meaningStr
-                    .split(/\s*[,，、]\s*/)
-                    .map(s => s.trim())
-                    .filter(Boolean);
-                const meaningTags = meanings
-                    .map(m => `<span class="w-p4-meaning-item"><span class="w-p4-dot"></span><span>${m}</span></span>`)
-                    .join("");
-                const numBadge = num ? `<span class="w-p4-num">#${num.trim()}</span>` : "";
-                const headerHtml = `<span class="w w-p4-header"><span class="w-p4-top">${numBadge}<span class="w-p4-word" lang="en">${word.trim()}</span></span><span class="w-p4-meanings">${meaningTags}</span></span>`;
-                const placeholder = `<!--W_P4_HEADER_${headerPlaceholders.length}-->`;
-                headerPlaceholders.push(headerHtml);
-                return placeholder;
-            }
-        );
+        const preprocessedText = text
+            .replace(
+                /<span class="w">\s*<b>\s*【?\s*(?:(\d+)\s*\.\s*)?([^：:]+?)\s*[：:]\s*([\s\S]+?)\s*】?\s*<\/b>(?:<\/b>)?\s*<\/span>(?:<div id="(audio-box-[^"]+)" class="audio_box"[^>]*><\/div>)?(?:\r?\n)?/g,
+                (match, num, word, meaningStr, audioBoxId) => {
+                    const meanings = meaningStr
+                        .split(/\s*[,，、]\s*/)
+                        .map(s => s.trim())
+                        .filter(Boolean);
+                    const meaningTags = meanings
+                        .map(m => `<span class="w-p4-meaning-item"><span class="w-p4-dot"></span><span>${m}</span></span>`)
+                        .join("");
+                    const numBadge = num ? `<span class="w-p4-num">#${num.trim()}</span>` : "";
+                    const audioBoxHtml = audioBoxId ? `<span id="${audioBoxId}" class="audio_box"></span>` : "";
+                    const headerHtml = `<span class="w w-p4-header"><span class="w-p4-top">${numBadge}<span class="w-p4-word" lang="en">${word.trim()}</span>${audioBoxHtml}</span><span class="w-p4-meanings">${meaningTags}</span></span>`;
+                    const placeholder = `<!--W_P4_HEADER_${headerPlaceholders.length}-->`;
+                    headerPlaceholders.push(headerHtml);
+                    return placeholder;
+                }
+            )
+            .replace(
+                /<b>\s*【\s*(?:(\d+)\s*\.\s*)?([^：:]+?)\s*[：:]\s*([\s\S]+?)\s*】\s*<\/b>/g,
+                (match, num, word, meaningStr) => {
+                    const cleanWord = word.trim();
+                    const relAudioKey = `rel-${++relAudioCount}`;
+                    const meanings = meaningStr
+                        .split(/\s*[,，、]\s*/)
+                        .map(s => s.trim())
+                        .filter(Boolean);
+                    const meaningTags = meanings
+                        .map(m => `<span class="h3-p4-meaning-item"><span class="h3-p4-dot"></span><span>${m}</span></span>`)
+                        .join("");
+                    const numBadge = num ? `<span class="h3-p4-num">#${num.trim()}</span>` : "";
+                    const relAudioHtml = `<span id="audio-box-${relAudioKey}" class="audio_box h3-audio-box" data-audio-key="${relAudioKey}" data-word="${cleanWord}"></span>`;
+                    const barHtml = `<span class="h3-p4-bar">${numBadge}<span class="h3-p4-word" lang="en">${cleanWord}</span>${relAudioHtml}<span class="h3-p4-meanings">${meaningTags}</span></span>`;
+                    const placeholder = `<!--W_P4_HEADER_${headerPlaceholders.length}-->`;
+                    headerPlaceholders.push(barHtml);
+                    return placeholder;
+                }
+            );
 
         // 1. HTMLタグと英単語を同時に検索する
         // (<[^>]+>) : HTMLタグ全体（例: <span class="w"> や </span>）をキャプチャグループ1とする
@@ -630,6 +654,20 @@ function doSearch() {
 
         // 💡 最後に非同期で音声をAPIから取得し、先ほどのdiv内にアイコンを生成
         fetchAndSetAudio(item.word, item.num, item.partOfSpeech);
+
+        // 💡 関連語（h3）の音声・発音記号も非同期で取得
+        div.querySelectorAll(".h3-audio-box").forEach(box => {
+            const relWord = box.dataset.word;
+            const relKey = box.dataset.audioKey;
+            if (relWord && relKey) {
+                const matchedWordObj = (data.words || []).find(
+                    w => w.word && w.word.toLowerCase() === relWord.toLowerCase()
+                );
+                const relPos = matchedWordObj ? (matchedWordObj.partOfSpeech || "") : "";
+                fetchAndSetAudio(relWord, relKey, relPos);
+            }
+        });
+
         insertSampleImages();
 
         const configs = [
@@ -835,7 +873,7 @@ async function fetchAndSetAudio(word, num, partOfSpeech = "") {
                     audioBox.innerHTML = `
                         <div style="display: inline-flex; align-items: center; gap: 6px; margin-bottom: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
                             ${audioUrl ? `<span class="audio_button" style="cursor:pointer; display: inline-flex; align-items: center;"><i class="fa-solid fa-volume-high fa-rotate-by fa-sm" style="color: #ffffff; --fa-rotate-angle: 340deg;"></i></span>` : ''}
-                            ${ipaText ? `<span class="ipa-text" style="font-size: 1em; color: #272727; font-weight: 500; margin-left: 10px;">${ipaText}</span>` : ''}
+                            ${ipaText ? `<span class="ipa-text">${ipaText}</span>` : ''}
                         </div>
                     `;
                     audioBox.dataset.renderId = renderId;
@@ -846,7 +884,8 @@ async function fetchAndSetAudio(word, num, partOfSpeech = "") {
                         const audio = new Audio(audioUrl);
                         audio.preload = 'auto';
 
-                        btn.addEventListener('click', function () {
+                       btn.addEventListener('click', function (e) {
+                            e.stopPropagation();
                             if (btn.style.pointerEvents === 'none') return;
 
                             btn.style.pointerEvents = 'none';
