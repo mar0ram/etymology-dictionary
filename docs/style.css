@@ -390,7 +390,11 @@ footer {
 
 /* --- コントラスト・ダークヘッダー --- */
 .w.w-p4-header {
-    display: block;
+    display: grid;
+    grid-template-columns: auto 1fr;
+    column-gap: 12px;
+    row-gap: 0;
+    align-items: center;
     background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
     border-radius: 8px 8px 0 0;
     padding: 14px 16px;
@@ -401,6 +405,11 @@ footer {
     box-sizing: border-box;
 }
 
+.w.w-p4-header:not(:has(.w-p4-num)) {
+    grid-template-columns: 0px 1fr;
+    column-gap: 0;
+}
+
 /* 親のdiv全体を1つのカードとして影をつける */
 .content>div:has(.w-p4-header) {
     border-radius: 8px;
@@ -408,16 +417,18 @@ footer {
     overflow: hidden;
 }
 
-/* 英単語の右側に配置する音声・発音記号エリア */
-.w-p4-top .audio_box {
+/* 2段目：音声ボタン・発音記号エリア（左端を単語に合わせる） */
+.w-p4-header .audio_box {
+    grid-column: 2;
+    grid-row: 2;
     display: inline-flex;
     align-items: center;
-    margin-left: 8px;
-    /* 英単語との間隔（.w-p4-topのgap: 10pxと合わせて18px空きます） */
+    margin-top: 12px;
+    margin-left: 0;
 }
 
 /* 音声データ取得前（空のとき）は非表示にして余白を作らない */
-.w-p4-top .audio_box:empty {
+.w-p4-header .audio_box:empty {
     display: none;
 }
 
@@ -426,11 +437,11 @@ footer {
     font-size: 1em;
     color: #272727;
     font-weight: 500;
-    margin-left: 10px;
+    margin-left: 6px;
 }
 
 /* ダークヘッダーの背景上で発音記号を見やすい明るい色にする */
-.w-p4-top .ipa-text {
+.w-p4-header .ipa-text {
     color: #e2e8f0;
 }
 
@@ -456,27 +467,29 @@ footer {
 }
 
 .w-p4-top {
-    display: flex;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 10px;
-    margin-bottom: 10px;
+    display: contents;
 }
 
+/* 1段目左：番号 */
 .w-p4-num {
+    grid-column: 1;
+    grid-row: 1;
     background-color: #f59e0b;
     color: #0f172a;
     font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
     font-size: 12px;
     font-weight: 800;
-    padding: 2px 8px;
+    padding: 2px 6px;
     border-radius: 4px;
     letter-spacing: 0.04em;
     line-height: 1.4;
     flex-shrink: 0;
 }
 
+/* 1段目右：英単語 */
 .w-p4-word {
+    grid-column: 2;
+    grid-row: 1;
     font-size: 24px;
     font-weight: 800;
     color: #ffffff;
@@ -484,7 +497,12 @@ footer {
     line-height: 1.2;
 }
 
+/* 3段目：意味（少し上下の間を空け、左端を単語・音声ボタンと合わせる） */
 .w-p4-meanings {
+    grid-column: 2;
+    grid-row: 3;
+    margin-top: 12px;
+    margin-left: 0;
     display: flex;
     flex-wrap: wrap;
     gap: 6px;
@@ -511,178 +529,6 @@ footer {
     background-color: #f59e0b;
     display: inline-block;
     flex-shrink: 0;
-}
-
-/* --- h3 関連語：スリム・スレートバー） --- */
-.section.h3 .content>div:has(.h3-p4-bar) {
-    padding-top: 0;
-    padding-bottom: 0;
-    border-bottom: none;
-    margin-bottom: 10px;
-}
-
-.section.h3 details summary:has(.h3-p4-bar) {
-    padding-right: 0;
-}
-
-.h3-p4-bar {
-    display: flex;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 8px;
-    background-color: #334155;
-    padding: 9px 14px;
-    border-radius: 6px;
-    color: #ffffff;
-    box-sizing: border-box;
-    transition: background-color 0.25s ease, border-radius 0.2s ease;
-}
-
-/* アコーディオン（summary内）にある場合は右側に矢印アイコン分の余白を確保 */
-.section.h3 details summary .h3-p4-bar {
-    padding-right: 36px;
-}
-
-.section.h3 details summary:hover .h3-p4-bar {
-    background-color: #263346;
-}
-
-/* 展開時（open）：背景を引き締め、下側の角丸を0にして説明部分（.ml）と繋げる */
-.section.h3 details[open] summary .h3-p4-bar {
-    background-color: #1e293b;
-    border-radius: 6px 6px 0 0;
-}
-
-/* ナンバー（展開前：グレーベース） */
-.h3-p4-num {
-    background-color: #475569;
-    color: #e2e8f0;
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-    font-size: 11px;
-    font-weight: 700;
-    padding: 1px 6px;
-    border-radius: 3px;
-    letter-spacing: 0.03em;
-    line-height: 1.4;
-    flex-shrink: 0;
-    transition: background-color 0.25s ease, color 0.25s ease, border-color 0.25s ease;
-}
-
-/* ナンバー（展開時：黄色・アンバーベースに変化） */
-.section.h3 details[open] summary .h3-p4-num {
-    background-color: #f59e0b;
-    color: #0f172a;
-    border-color: #f59e0b;
-}
-
-/* 関連語の英単語（h2より控えめなサイズ） */
-.h3-p4-word {
-    font-size: 16px;
-    font-weight: 700;
-    color: #ffffff;
-    letter-spacing: 0.02em;
-    line-height: 1.3;
-    margin-left: 8px;
-    margin-right: 4px;
-}
-
-/* 意味チップ群 */
-.h3-p4-meanings {
-    display: inline-flex;
-    width: 100%;
-    flex-wrap: wrap;
-    gap: 5px;
-    align-items: center;
-}
-
-.h3-p4-meaning-item {
-    background-color: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.14);
-    color: #f1f5f9;
-    font-size: 12px;
-    font-weight: 500;
-    padding: 2px 8px;
-    border-radius: 4px;
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    line-height: 1.4;
-}
-
-/* 意味の前のポッチ（展開前：グレーベース） */
-.h3-p4-dot {
-    width: 4px;
-    height: 4px;
-    border-radius: 50%;
-    background-color: #94a3b8;
-    display: inline-block;
-    flex-shrink: 0;
-    transition: background-color 0.25s ease;
-}
-
-/* 意味の前のポッチ（展開時：黄色・アンバーベースに変化） */
-.section.h3 details[open] summary .h3-p4-dot {
-    background-color: #f59e0b;
-}
-
-/* スレート背景に合わせて右端の開閉矢印（∨ / ∧）を見やすい色にする */
-.section.h3 details summary:has(.h3-p4-bar)::after {
-    border-color: #cbd5e1;
-    z-index: 2;
-}
-
-.section.h3 details summary:has(.h3-p4-bar):hover::after {
-    border-color: #ffffff;
-}
-
-.section.h3 details[open] summary:has(.h3-p4-bar)::after {
-    border-color: #f59e0b;
-}
-
-/* 展開される説明部分（.ml）を上のバーと隙間なく直結させる */
-.section.h3 details .ml {
-    margin-top: 0;
-    margin-bottom: 0;
-    border-radius: 0 0 6px 6px;
-    border: 1px solid #cbd5e1;
-    border-top: none;
-    box-shadow: 0 4px 10px rgba(15, 23, 42, 0.08);
-    box-sizing: border-box;
-}
-
-/* h3関連語バー内の音声ボタン・発音記号 */
-.h3-p4-bar .audio_box {
-    display: inline-flex;
-    align-items: center;
-    margin-left: 10px;
-    margin-right: 6px;
-}
-
-.h3-p4-bar .audio_box:empty {
-    display: none;
-}
-
-/* 既存の .section.h3 .content div の下線・余白ルールが内部divに当たるのを防ぐ */
-.section.h3 .content .h3-p4-bar .audio_box div {
-    padding-top: 0;
-    padding-bottom: 0;
-    border-bottom: none;
-    margin-bottom: 0;
-}
-
-/* h2より少し控えめなボタンサイズに調整 */
-.h3-p4-bar .audio_button {
-    width: 16px;
-    height: 16px;
-    font-size: 8px;
-}
-
-/* スレート背景上で発音記号を見やすい明るい色＆サイズに調整 */
-.h3-p4-bar .ipa-text {
-    color: #e2e8f0;
-    font-size: 13.5px;
-    margin-left: 4px;
 }
 
 .ml {
@@ -775,7 +621,7 @@ footer {
     height: 20px;
     font-size: 10px;
     background-color: #333333;
-    border: 1.5px solid rgba(255, 255, 255);
+    border: 1.5px solid rgb(115, 115, 115);
     border-radius: 5px;
     box-shadow: 0 2px 6px rgba(0, 7, 209, 0.15);
     -webkit-tap-highlight-color: transparent;
@@ -912,8 +758,7 @@ footer {
     }
 }
 
-/* --- 7. h1 partN (語源パーツ) - 左パネルに配置 --- */
-/* --- 7. h1 partN (語源パーツ) - 左パネルに配置（提案③：立体チップ＆＋連結） --- */
+/* --- 7. h1 partN (語源パーツ) - 左パネルに配置（立体チップ＆＋連結） --- */
 .section.h1 {
     background-color: #f1f5f9;
 }
@@ -971,7 +816,6 @@ footer {
 }
 
 /* --- アコーディオン（h3関連語/h5語源）のカスタムデザイン --- */
-
 /* 1. デフォルトの三角アイコンを非表示にする（全ブラウザ対応） */
 .section.h3 details summary::-webkit-details-marker,
 .section.h5 details summary::-webkit-details-marker {
@@ -982,16 +826,9 @@ footer {
 .section.h3 details summary,
 .section.h5 details summary {
     list-style: none;
-    /* Firefox, 標準 */
-
-    /* 2. カスタムアイコンのための準備 */
     position: relative;
-    padding-right: 2.5em;
-    /* 右側にアイコン分のスペースを確保 */
     cursor: pointer;
-    /* カーソルをポインターに */
     display: block;
-    /* 横幅いっぱいにクリック反応を持たせる */
 }
 
 .section.h3 .content div:not(.sample_image) {
@@ -1000,42 +837,228 @@ footer {
 }
 
 /* 3. 洗練された矢印アイコン（∨）を作成（擬似要素 ::after） */
-.section.h3 details summary::after {
+.section.h3 details summary:has(.h3-p4-bar)::after {
     content: '';
     /* テキストは空 */
     position: absolute;
-    /* 矢印（∨）の形状を描画（細めの線で） */
+    /* 中央（50%）からテキスト半分＋隙間分だけ左へ配置 */
+    left: calc(50% - 2.2em);
+    bottom: 5%;
+    z-index: 2;
     width: 0.6em;
     height: 0.6em;
-    border-right: 2px solid #888;
+    border-right: 2px solid #d8d8d8d1;
     /* 矢印の色 */
-    border-bottom: 2px solid #888;
-
+    border-bottom: 2px solid #d8d8d8d1;
     /* 初期状態：下向き矢印（∨） */
-    transform: translateY(-70%) rotate(45deg);
-
+    transform: translateX(-50%) translateY(-70%) rotate(45deg);
     /* アニメーションの設定（0.3秒かけて滑らかに） */
     transition: transform 0.3s ease, border-color 0.3s ease;
 }
 
-.section.h3 details summary::after {
-    right: 1em;
-    /* 右端からの位置 */
-    top: 50%;
-    /* 中央配置 */
-}
-
-/* ホバー時の矢印の色を少し濃くする（洗練さを出す） */
-.section.h3 details summary:hover::after {
+/* ホバー時の矢印の色を少し濃くする */
+.section.h3 details summary:has(.h3-p4-bar):hover::after {
     border-color: #555;
 }
 
-/* 4. 展開時（[open]）のアイコンの状態（∧へ回転） */
-.section.h3 details[open] summary::after {
+/* 展開時（[open]）のアイコンの状態（∧へ回転） */
+.section.h3 details[open] summary:has(.h3-p4-bar)::after {
     /* 展開状態：上向き矢印（∧）へ180度回転 */
-    transform: translateY(-30%) rotate(225deg);
-    border-color: #444;
-    /* 展開時は色を濃く */
+    transform: translateX(-50%) translateY(-30%) rotate(225deg);
+    left: 50%;
+}
+
+.section.h3 details summary:has(.h3-p4-bar)::before {
+    content: '説明を表示';
+    position: absolute;
+    /* 中央（50%）から矢印＋隙間分だけ右へ配置し、全体で中央揃えにする */
+    left: 50%;
+    transform: translateX(calc(-50% + 0.9em));
+    bottom: 5%;
+    font-size: 0.7em;
+    color: #d8d8d8d1;
+    white-space: nowrap;
+}
+
+/* スレート背景に合わせて右端の開閉矢印（∨ / ∧）を見やすい色にする */
+.section.h3 details summary:has(.h3-p4-bar):hover::after {
+    border-color: #ffffff;
+}
+
+.section.h3 details[open] summary:has(.h3-p4-bar)::after {
+    border-color: #f59e0b;
+}
+
+.section.h3 details[open] summary:has(.h3-p4-bar)::before {
+    display: none;
+}
+
+/* --- h3 関連語：スリム・スレートバー --- */
+.section.h3 .content>div:has(.h3-p4-bar) {
+    padding-top: 0;
+    padding-bottom: 0;
+    border-bottom: none;
+    margin-bottom: 10px;
+}
+
+.h3-p4-bar {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    column-gap: 12px;
+    row-gap: 0;
+    align-items: center;
+    background-color: #334155;
+    padding: 9px 14px 35px;
+    border-radius: 6px;
+    color: #ffffff;
+    box-sizing: border-box;
+    transition: background-color 0.25s ease, border-radius 0.2s ease;
+}
+
+.h3-p4-bar:not(:has(.h3-p4-num)) {
+    grid-template-columns: 0px 1fr;
+    column-gap: 0;
+}
+
+.h3-p4-top {
+    display: contents;
+}
+
+.section.h3 details summary:hover .h3-p4-bar {
+    background-color: #263346;
+}
+
+/* 展開時（open）：背景を引き締め、下側の角丸を0にして説明部分（.ml）と繋げる */
+.section.h3 details[open] summary .h3-p4-bar {
+    background-color: #1e293b;
+    border-radius: 6px 6px 0 0;
+}
+
+/* 1段目左：ナンバー（展開前：グレーベース） */
+.h3-p4-num {
+    grid-column: 1;
+    grid-row: 1;
+    background-color: #475569;
+    color: #e2e8f0;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 1px 4px;
+    border-radius: 3px;
+    letter-spacing: 0.03em;
+    line-height: 1.4;
+    flex-shrink: 0;
+    transition: background-color 0.25s ease, color 0.25s ease, border-color 0.25s ease;
+}
+
+/* ナンバー（展開時：黄色・アンバーベースに変化） */
+.section.h3 details[open] summary .h3-p4-num {
+    background-color: #f59e0b;
+    color: #0f172a;
+    border-color: #f59e0b;
+}
+
+/* 1段目右：関連語の英単語 */
+.h3-p4-word {
+    grid-column: 2;
+    grid-row: 1;
+    font-size: 16px;
+    font-weight: 700;
+    color: #ffffff;
+    letter-spacing: 0.02em;
+    line-height: 1.3;
+    margin: 0;
+}
+
+/* 3段目：意味チップ群（少し上下の間を空け、左端を単語・音声ボタンと合わせる） */
+.h3-p4-meanings {
+    grid-column: 2;
+    grid-row: 3;
+    margin-top: 10px;
+    margin-left: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    align-items: center;
+}
+
+.h3-p4-meaning-item {
+    background-color: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    color: #f1f5f9;
+    font-size: 12px;
+    font-weight: 500;
+    padding: 2px 8px;
+    border-radius: 4px;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    line-height: 1.4;
+}
+
+/* 意味の前のポッチ（展開前：グレーベース） */
+.h3-p4-dot {
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background-color: #94a3b8;
+    display: inline-block;
+    flex-shrink: 0;
+    transition: background-color 0.25s ease;
+}
+
+/* 意味の前のポッチ（展開時：黄色・アンバーベースに変化） */
+.section.h3 details[open] summary .h3-p4-dot {
+    background-color: #f59e0b;
+}
+
+/* 展開される説明部分（.ml）を上のバーと隙間なく直結させる */
+.section.h3 details .ml {
+    margin-top: 0;
+    margin-bottom: 0;
+    border-radius: 0 0 6px 6px;
+    border: 1px solid #cbd5e1;
+    border-top: none;
+    box-shadow: 0 4px 10px rgba(15, 23, 42, 0.08);
+    box-sizing: border-box;
+}
+
+/* 2段目：h3関連語バー内の音声ボタン・発音記号（左端を単語と合わせる） */
+.h3-p4-bar .audio_box {
+    grid-column: 2;
+    grid-row: 2;
+    display: inline-flex;
+    align-items: center;
+    margin-top: 10px;
+    margin-left: 0;
+    margin-right: 0;
+}
+
+.h3-p4-bar .audio_box:empty {
+    display: none;
+}
+
+/* 既存の .section.h3 .content div の下線・余白ルールが内部divに当たるのを防ぐ */
+.section.h3 .content .h3-p4-bar .audio_box div {
+    padding-top: 0;
+    padding-bottom: 0;
+    border-bottom: none;
+    margin-bottom: 0;
+}
+
+/* h2より少し控えめなボタンサイズに調整 */
+.h3-p4-bar .audio_button {
+    width: 16px;
+    height: 16px;
+    font-size: 8px;
+}
+
+/* スレート背景上で発音記号を見やすい明るい色＆サイズに調整 */
+.h3-p4-bar .ipa-text {
+    color: #e2e8f0;
+    font-size: 13.5px;
+    margin-left: 4px;
 }
 
 /* --- h5「語源」開閉矢印：スレート・ピル（カプセル型） --- */
@@ -1161,8 +1184,7 @@ footer {
     margin-bottom: 25px;
 }
 
-/* ===== Google Ngram カスタムデザイン ===== */
-/* ===== Google Ngram カスタムデザイン（提案⑤：ダッシュボード風白カード） ===== */
+/* ===== Google Ngram カスタムデザイン（ダッシュボード風白カード） ===== */
 :root {
     --ngram-bg: #ffffff;
     --ngram-border: #cbd5e1;
@@ -1245,7 +1267,6 @@ footer {
     border: 1px solid #0f172a;
     border-radius: 5px;
     background-color: #0f172a;
-    color: #ffffff;
     font-weight: 700;
     cursor: pointer;
     font-size: 0.8rem;
@@ -1254,10 +1275,11 @@ footer {
 
 .ngram-btn:hover {
     background-color: #1e293b;
+    color: #ffffff;
 }
 
 .ngram-btn:active {
-    transform: scale(0.97);
+    transform: scale(0.95);
 }
 
 /* 年代プリセットボタン（白背景ピル型） */
@@ -1469,6 +1491,7 @@ footer {
 
     .w.w-p4-header {
         padding: 12px 14px;
+        column-gap: 10px;
     }
 
     .w-p4-word {
@@ -1481,12 +1504,8 @@ footer {
     }
 
     .h3-p4-bar {
-        padding: 8px 12px;
-        gap: 6px;
-    }
-
-    .section.h3 details summary .h3-p4-bar {
-        padding-right: 32px;
+        padding: 8px 12px 30px;
+        column-gap: 10px;
     }
 
     .h3-p4-word {
