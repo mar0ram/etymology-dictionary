@@ -885,26 +885,27 @@ async function fetchAndSetAudio(word, num, partOfSpeech = "") {
                         audio.preload = 'auto';
 
                        btn.addEventListener('click', function (e) {
+                            e.preventDefault();
                             e.stopPropagation();
-                            if (btn.style.pointerEvents === 'none') return;
+                            if (btn.dataset.playing === 'true') return;
 
-                            btn.style.pointerEvents = 'none';
+                            btn.dataset.playing = 'true';
                             btn.style.opacity = '0.5';
 
                             audio.currentTime = 0;
 
                             audio.onended = () => {
-                                btn.style.pointerEvents = 'auto';
+                                btn.dataset.playing = 'false';
                                 btn.style.opacity = '1';
                             };
 
                             audio.onerror = () => {
-                                btn.style.pointerEvents = 'auto';
+                                btn.dataset.playing = 'false';
                                 btn.style.opacity = '1';
                             };
 
                             audio.play().catch(() => {
-                                btn.style.pointerEvents = 'auto';
+                                btn.dataset.playing = 'false';
                                 btn.style.opacity = '1';
                             });
                         });
@@ -1036,6 +1037,7 @@ function setupDetailsAnimation(container) {
         let isAnimating = false;
 
         summary.addEventListener('click', (e) => {
+            if (e.target.closest('.audio_button')) return;
             e.preventDefault();
 
             if (isAnimating) return;
