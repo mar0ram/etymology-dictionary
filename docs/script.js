@@ -489,7 +489,7 @@ function doSearch() {
                     const meaningTags = meanings
                         .map(m => `<span class="w-p4-meaning-item"><span class="w-p4-dot"></span><span>${m}</span></span>`)
                         .join("");
-                    const numBadge = num ? `<span class="w-p4-num">#${num.trim()}</span>` : "";
+                    const numBadge = num ? `<span class="w-p4-num">${num.trim()}</span>` : "";
                     const audioBoxHtml = audioBoxId ? `<span id="${audioBoxId}" class="audio_box"></span>` : "";
                     const headerHtml = `<span class="w w-p4-header"><span class="w-p4-top">${numBadge}<span class="w-p4-word" lang="en">${word.trim()}</span>${audioBoxHtml}</span><span class="w-p4-meanings">${meaningTags}</span></span>`;
                     const placeholder = `<!--W_P4_HEADER_${headerPlaceholders.length}-->`;
@@ -509,7 +509,7 @@ function doSearch() {
                     const meaningTags = meanings
                         .map(m => `<span class="h3-p4-meaning-item"><span class="h3-p4-dot"></span><span>${m}</span></span>`)
                         .join("");
-                    const numBadge = num ? `<span class="h3-p4-num">#${num.trim()}</span>` : "";
+                    const numBadge = num ? `<span class="h3-p4-num">${num.trim()}</span>` : "";
                     const relAudioHtml = `<span id="audio-box-${relAudioKey}" class="audio_box h3-audio-box" data-audio-key="${relAudioKey}" data-word="${cleanWord}"></span>`;
                     const barHtml = `<span class="h3-p4-bar">${numBadge}<span class="h3-p4-word" lang="en">${cleanWord}</span>${relAudioHtml}<span class="h3-p4-meanings">${meaningTags}</span></span>`;
                     const placeholder = `<!--W_P4_HEADER_${headerPlaceholders.length}-->`;
