@@ -100,6 +100,11 @@ function clearAllRecentSearches() {
     } catch (e) {  }
 }
 
+// 💡 ブラウザ標準のスクロール位置自動復元を無効化（戻る・進む時のチラつき防止）
+if ("scrollRestoration" in window.history) {
+    window.history.scrollRestoration = "manual";
+}
+
 // 💡 追加：URLの変更を検知して自動検索をリセット・実行する関数
 function handleUrlSearch(event) {
     if (!dataLoaded) return; // データ未読み込み時は処理をスキップ（fetch完了後に再度呼ばれるため）
@@ -108,6 +113,11 @@ function handleUrlSearch(event) {
     if (suggestionSelectTimer) {
         clearTimeout(suggestionSelectTimer);
         suggestionSelectTimer = null;
+    }
+
+    if (historyDebounceTimer) {
+        clearTimeout(historyDebounceTimer);
+        historyDebounceTimer = null;
     }
 
     const paramString = window.location.hash.replace('#', '?') || window.location.search;
@@ -135,45 +145,34 @@ function handleUrlSearch(event) {
         clearBtn.style.display = "none";
     }
 
-    const executeUrlSearch = () => {
-        historyDebounceTimer = null;
-        isSelectingSuggestion = false;
+    isSelectingSuggestion = false;
 
-        if (targetWord) {
-            if (
-                currentRenderedWord !== null &&
-                currentRenderedWord.toLowerCase() === targetWord.trim().toLowerCase() &&
-                results.children.length > 0
-            ) {
-                return;
-            }
-            searchBox.value = targetWord;
-            clearBtn.style.display = "flex";
-            doSearch(false); // 履歴の二重追加を防ぎつつ検索を実行
-            window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
-        } else {
-            if (currentRenderedWord === null && results.children.length > 0) return;
-            // パラメータが消された場合は初期画面にリセットする
-            currentSearchId++;
-            activeAudioTimers.forEach(id => clearInterval(id));
-            activeAudioTimers.clear();
-            currentRenderedWord = null;
-            searchBox.value = "";
-            clearBtn.style.display = "none";
-            results.innerHTML = "";
-            prependEntry();
-            window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+    if (targetWord) {
+        if (
+            currentRenderedWord !== null &&
+            currentRenderedWord.toLowerCase() === targetWord.trim().toLowerCase() &&
+            results.children.length > 0
+        ) {
+            return;
         }
-    };
-
-    if (historyDebounceTimer) {
-        clearTimeout(historyDebounceTimer);
-    }
-
-    if (event) {
-        historyDebounceTimer = setTimeout(executeUrlSearch, 100);
+        window.scrollTo(0, 0);
+        searchBox.value = targetWord;
+        clearBtn.style.display = "flex";
+        doSearch(false); // 履歴の二重追加を防ぎつつ検索を実行
+        window.scrollTo(0, 0);
     } else {
-        executeUrlSearch();
+        if (currentRenderedWord === null && results.children.length > 0) return;
+        // パラメータが消された場合は初期画面にリセットする
+        window.scrollTo(0, 0);
+        currentSearchId++;
+        activeAudioTimers.forEach(id => clearInterval(id));
+        activeAudioTimers.clear();
+        currentRenderedWord = null;
+        searchBox.value = "";
+        clearBtn.style.display = "none";
+        results.innerHTML = "";
+        prependEntry();
+        window.scrollTo(0, 0);
     }
 }
 
@@ -383,12 +382,17 @@ function updateSuggestionHighlight() {
     });
 }
 
-// 💡 スマホでのスクロール時にドラムロール表示を更新
+// 💡 スマホでのスクロール時にドラムロール表示を更新（requestAnimationFrameで負荷軽減）
+let isSuggestionScrollTicking = false;
 suggestionList.addEventListener("scroll", () => {
-    if (isMobileView() && suggestionList.style.display === "block") {
-        updateSuggestionHighlight();
+    if (!isSuggestionScrollTicking && isMobileView() && suggestionList.style.display === "block") {
+        isSuggestionScrollTicking = true;
+        requestAnimationFrame(() => {
+            updateSuggestionHighlight();
+            isSuggestionScrollTicking = false;
+        });
     }
-});
+}, { passive: true });
 
 
 // 💡 検索ボックスの外側をクリックしたときにサジェストを閉じる
@@ -623,22 +627,34 @@ searchBox.addEventListener("input", () => {
         return;
     }
 
+    const MAX_SUGGESTIONS = 50; // 💡 DOM肥大化を防ぐ最大表示件数
     const isNumberQuery = /^[0-9]+$/.test(normalizedQuery);
     let matchedItems = [];
 
     if (isNumberQuery) {
         matchedItems = suggestionItems
             .filter(item => item.numStr && item.numStr.startsWith(normalizedQuery))
-            .sort((a, b) => Number(a.numStr) - Number(b.numStr));
+            .sort((a, b) => Number(a.numStr) - Number(b.numStr))
+            .slice(0, MAX_SUGGESTIONS);
     } else {
-        const prefixMatches = suggestionItems.filter(item =>
-            item.normalizedWord.startsWith(normalizedQuery)
-        );
-        const partialMatches = suggestionItems.filter(item =>
-            !item.normalizedWord.startsWith(normalizedQuery) &&
-            item.normalizedWord.includes(normalizedQuery)
-        );
-        matchedItems = [...prefixMatches, ...partialMatches];
+        const prefixMatches = [];
+        const partialMatches = [];
+        // 💡 1文字のときは前方一致のみ、2文字以上で部分一致も検索する
+        const enablePartial = normalizedQuery.length >= 2;
+
+        for (let i = 0; i < suggestionItems.length; i++) {
+            const item = suggestionItems[i];
+            if (item.normalizedWord.startsWith(normalizedQuery)) {
+                prefixMatches.push(item);
+                if (prefixMatches.length >= MAX_SUGGESTIONS) break;
+            } else if (enablePartial && item.normalizedWord.includes(normalizedQuery)) {
+                partialMatches.push(item);
+            }
+        }
+
+        matchedItems = prefixMatches.length >= MAX_SUGGESTIONS
+            ? prefixMatches
+            : prefixMatches.concat(partialMatches.slice(0, MAX_SUGGESTIONS - prefixMatches.length));
     }
 
     if (matchedItems.length === 0) {
@@ -647,6 +663,7 @@ searchBox.addEventListener("input", () => {
     }
 
     const mobile = isMobileView();
+    const fragment = document.createDocumentFragment(); // 💡 メモリ上で一括構築してリフローを1回に抑える
 
     matchedItems.forEach((item, index) => {
         const li = document.createElement("li");
@@ -703,9 +720,10 @@ searchBox.addEventListener("input", () => {
             selectSuggestionItem(item.searchValue);
         });
 
-        suggestionList.appendChild(li);
+        fragment.appendChild(li);
     });
 
+    suggestionList.appendChild(fragment);
     setSuggestionDisplay(true);
 
     if (mobile) {
@@ -734,6 +752,24 @@ clearBtn.addEventListener("click", () => {
     renderRecentSuggestions(); // 空になったので最近の検索を表示
 });
 
+// サジェスト・履歴リスト内の操作中にblurでリストが消えて選択が空振りするのを防ぐ制御
+let isInteractingWithSuggestion = false;
+suggestionList.addEventListener("mousedown", (e) => {
+    // PCでの項目クリック・スクロールバー操作時に検索窓のフォーカスが外れるのを防ぐ
+    e.preventDefault();
+});
+suggestionList.addEventListener("touchstart", () => {
+    isInteractingWithSuggestion = true;
+}, { passive: true });
+suggestionList.addEventListener("touchend", () => {
+    setTimeout(() => {
+        isInteractingWithSuggestion = false;
+    }, 150);
+}, { passive: true });
+suggestionList.addEventListener("touchcancel", () => {
+    isInteractingWithSuggestion = false;
+}, { passive: true });
+
 // フォーカス時のズーム防止（iOS Safari対策）＆ 空欄時の最近の検索表示
 searchBox.addEventListener("focus", () => {
     if (viewportMeta) {
@@ -745,6 +781,18 @@ searchBox.addEventListener("focus", () => {
     if (searchBox.value.length === 0) {
         renderRecentSuggestions();
     }
+});
+
+// 検索窓のフォーカスが外れたら検索履歴を非表示にする
+searchBox.addEventListener("blur", () => {
+    setTimeout(() => {
+        if (isInteractingWithSuggestion || document.activeElement === searchBox) return;
+        if (searchBox.value.length === 0 || suggestionList.querySelector(".suggestion-header")) {
+            suggestionList.innerHTML = "";
+            setSuggestionDisplay(false);
+            selectedSuggestionIndex = -1;
+        }
+    }, 100);
 });
 
 // 既にフォーカスがある状態で空の検索窓をクリックした場合にも最近の検索を表示
@@ -854,6 +902,7 @@ function doSearch(updateHistory = true) {
     }
 
     results.innerHTML = "";
+    window.scrollTo(0, 0);
 
     // 数値判定（整数のみ）
     const isNumber = /^[0-9]+$/.test(query);
