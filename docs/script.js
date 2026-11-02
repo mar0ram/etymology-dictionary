@@ -19,19 +19,104 @@ let data = [];
 let dataLoaded = false;
 let currentRenderedWord = null; // 💡 現在表示中の検索ワードを保持
 let isSelectingSuggestion = false; // 💡 サジェスト選択・履歴移動中のinputイベント抑止フラグ
+let suggestionSelectTimer = null; // 💡 サジェスト・関連語選択時の遅延処理タイマー
 let historyDebounceTimer = null; // 💡 戻る・進む連打時のデバウンス用タイマー
 let currentSearchId = 0; // 💡 非同期処理の世代管理用ID
-const audioCache = new Map(); // 💡 音声・発音データのキャッシュ
+const AUDIO_CACHE_STORAGE_KEY = "mw_audio_cache_v1";
+let initialAudioCacheEntries = [];
+try {
+    initialAudioCacheEntries = JSON.parse(localStorage.getItem(AUDIO_CACHE_STORAGE_KEY) || "[]");
+} catch (e) {
+    initialAudioCacheEntries = [];
+}
+const audioCache = new Map(initialAudioCacheEntries); // 💡 音声・発音データのキャッシュ（localStorage連携）
 const activeAudioTimers = new Set(); // 💡 実行中の音声DOM監視タイマー管理
+
+// 💡 キャッシュをメモリとlocalStorageの両方に保存する関数（最大500件）
+function saveAudioCache(key, value) {
+    audioCache.set(key, value);
+    try {
+        if (audioCache.size > 500) {
+            const oldestKey = audioCache.keys().next().value;
+            audioCache.delete(oldestKey);
+        }
+        localStorage.setItem(AUDIO_CACHE_STORAGE_KEY, JSON.stringify([...audioCache]));
+    } catch (e) {
+        // ストレージ容量上限などの場合はメモリキャッシュのみ継続利用
+    }
+}
+
+// 💡 最近調べた単語（検索履歴）の管理（localStorage連携・最大10件）
+const RECENT_SEARCHES_STORAGE_KEY = "recent_searches_v1";
+const MAX_RECENT_SEARCHES = 10;
+let recentSearches = [];
+try {
+    const parsedRecent = JSON.parse(localStorage.getItem(RECENT_SEARCHES_STORAGE_KEY) || "[]");
+    if (Array.isArray(parsedRecent)) {
+        recentSearches = parsedRecent.filter(
+            item => item && typeof item.searchValue === "string" && typeof item.label === "string"
+        );
+    }
+} catch (e) {
+    recentSearches = [];
+}
+
+function saveRecentSearch(searchValue, label) {
+    const cleanValue = String(searchValue).trim();
+    const cleanLabel = String(label).trim();
+    if (!cleanValue || !cleanLabel) return;
+
+    const normalizedTarget = cleanValue.toLowerCase();
+    recentSearches = recentSearches.filter(
+        item => String(item.searchValue).trim().toLowerCase() !== normalizedTarget
+    );
+    recentSearches.unshift({ searchValue: cleanValue, label: cleanLabel });
+
+    if (recentSearches.length > MAX_RECENT_SEARCHES) {
+        recentSearches = recentSearches.slice(0, MAX_RECENT_SEARCHES);
+    }
+
+    try {
+        localStorage.setItem(RECENT_SEARCHES_STORAGE_KEY, JSON.stringify(recentSearches));
+    } catch (e) {
+        // ストレージ上限時などはメモリ上のみ保持
+    }
+}
+
+function removeRecentSearch(searchValue) {
+    const normalizedTarget = String(searchValue).trim().toLowerCase();
+    recentSearches = recentSearches.filter(
+        item => String(item.searchValue).trim().toLowerCase() !== normalizedTarget
+    );
+    try {
+        localStorage.setItem(RECENT_SEARCHES_STORAGE_KEY, JSON.stringify(recentSearches));
+    } catch (e) { }
+}
+
+function clearAllRecentSearches() {
+    recentSearches = [];
+    try {
+        localStorage.removeItem(RECENT_SEARCHES_STORAGE_KEY);
+    } catch (e) {  }
+}
 
 // 💡 追加：URLの変更を検知して自動検索をリセット・実行する関数
 function handleUrlSearch(event) {
     if (!dataLoaded) return; // データ未読み込み時は処理をスキップ（fetch完了後に再度呼ばれるため）
 
+    // サジェストや関連語選択時の150ms遅延タイマーが残っていれば解除（履歴移動の上書き防止）
+    if (suggestionSelectTimer) {
+        clearTimeout(suggestionSelectTimer);
+        suggestionSelectTimer = null;
+    }
+
     const paramString = window.location.hash.replace('#', '?') || window.location.search;
     const urlParams = new URLSearchParams(paramString);
     const stateWord = (event && event.state && typeof event.state.word === "string") ? event.state.word : null;
     const targetWord = urlParams.get('word') ?? stateWord;
+
+    // 開いている画像モーダルがあれば閉じる
+    document.querySelectorAll(".sample-image-modal").forEach(m => m.remove());
 
     // 履歴移動時はサジェストを閉じ、検索窓のフォーカスを解除してIME等の干渉を防ぐ
     isSelectingSuggestion = true;
@@ -55,10 +140,17 @@ function handleUrlSearch(event) {
         isSelectingSuggestion = false;
 
         if (targetWord) {
-            if (currentRenderedWord === targetWord && results.children.length > 0) return;
+            if (
+                currentRenderedWord !== null &&
+                currentRenderedWord.toLowerCase() === targetWord.trim().toLowerCase() &&
+                results.children.length > 0
+            ) {
+                return;
+            }
             searchBox.value = targetWord;
             clearBtn.style.display = "flex";
             doSearch(false); // 履歴の二重追加を防ぎつつ検索を実行
+            window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
         } else {
             if (currentRenderedWord === null && results.children.length > 0) return;
             // パラメータが消された場合は初期画面にリセットする
@@ -70,6 +162,7 @@ function handleUrlSearch(event) {
             clearBtn.style.display = "none";
             results.innerHTML = "";
             prependEntry();
+            window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
         }
     };
 
@@ -88,11 +181,49 @@ function handleUrlSearch(event) {
 window.addEventListener("hashchange", handleUrlSearch);
 window.addEventListener("popstate", handleUrlSearch);
 
-// JSON読み込み
+let suggestionItems = [];
+
+// JSON読み込み（データ本体とサジェスト候補の生成を1回で実行）
 fetch("data.json")
     .then(res => res.json())
     .then(json => {
         data = json;
+
+        const wordsList = (json.words || [])
+            .filter(item => item && item.word)
+            .map(item => ({
+                word: String(item.word),
+                normalizedWord: normalizeForMatch(item.word),
+                searchValue: String(item.word)
+            }));
+
+        const idiomsList = (json.idioms || [])
+            .filter(item => item && item.word)
+            .map(item => ({
+                word: String(item.word),
+                normalizedWord: normalizeForMatch(item.word),
+                searchValue: item.num !== undefined ? String(item.num) : String(item.word),
+                numStr: item.num !== undefined ? String(item.num) : ""
+            }));
+
+        const seen = new Set();
+        suggestionItems = [...wordsList, ...idiomsList].filter(item => {
+            const key = `${item.word}__${item.searchValue}`;
+            if (seen.has(key)) return false;
+            seen.add(key);
+            return true;
+        }).sort((a, b) => {
+            const wordA = a.normalizedWord;
+            const wordB = b.normalizedWord;
+            const len = Math.min(wordA.length, wordB.length);
+            for (let i = 0; i < len; i++) {
+                if (wordA[i] !== wordB[i]) {
+                    return wordA.charCodeAt(i) - wordB.charCodeAt(i);
+                }
+            }
+            return wordA.length - wordB.length;
+        });
+
         dataLoaded = true;
 
         // 💡 変更：データ読み込み完了後にURLをチェックして処理を実行
@@ -259,45 +390,6 @@ suggestionList.addEventListener("scroll", () => {
     }
 });
 
-// 💡 data.jsonの"words"と"idioms"から候補リストを取得（重複除外）
-let suggestionItems = [];
-fetch("data.json")
-    .then(res => res.json())
-    .then(json => {
-        const wordsList = (json.words || [])
-            .filter(item => item && item.word)
-            .map(item => ({
-                word: String(item.word),
-                normalizedWord: normalizeForMatch(item.word),
-                searchValue: String(item.word)
-            }));
-
-        const idiomsList = (json.idioms || [])
-            .filter(item => item && item.word)
-            .map(item => ({
-                word: String(item.word),
-                normalizedWord: normalizeForMatch(item.word),
-                searchValue: item.num !== undefined ? String(item.num) : String(item.word)
-            }));
-
-        const seen = new Set();
-        suggestionItems = [...wordsList, ...idiomsList].filter(item => {
-            const key = `${item.word}__${item.searchValue}`;
-            if (seen.has(key)) return false;
-            seen.add(key);
-            return true;
-        }).sort((a, b) => {
-            const wordA = a.normalizedWord;
-            const wordB = b.normalizedWord;
-            const len = Math.min(wordA.length, wordB.length);
-            for (let i = 0; i < len; i++) {
-                if (wordA[i] !== wordB[i]) {
-                    return wordA.charCodeAt(i) - wordB.charCodeAt(i);
-                }
-            }
-            return wordA.length - wordB.length;
-        });
-    });
 
 // 💡 検索ボックスの外側をクリックしたときにサジェストを閉じる
 document.addEventListener("click", (e) => {
@@ -309,6 +401,10 @@ document.addEventListener("click", (e) => {
 
 // 💡 サジェスト候補を選択・確定する共通関数（スマホのIME未確定時にも確実にフォーカス解除・非表示化）
 function selectSuggestionItem(searchValue) {
+    if (suggestionSelectTimer) {
+        clearTimeout(suggestionSelectTimer);
+        suggestionSelectTimer = null;
+    }
     isSelectingSuggestion = true;
     searchBox.blur();
     searchBox.value = searchValue;
@@ -317,13 +413,193 @@ function selectSuggestionItem(searchValue) {
     setSuggestionDisplay(false);
     selectedSuggestionIndex = -1;
     doSearch();
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
     resetZoom();
-    setTimeout(() => {
+    suggestionSelectTimer = setTimeout(() => {
+        suggestionSelectTimer = null;
         searchBox.value = searchValue;
         suggestionList.innerHTML = "";
         setSuggestionDisplay(false);
         isSelectingSuggestion = false;
     }, 150);
+}
+
+// 💡 検索窓が空のときに「最近の検索」リストを描画する関数
+function renderRecentSuggestions() {
+    if (isSelectingSuggestion || !dataLoaded) return;
+    if (searchBox.value.length > 0) return;
+
+    suggestionList.innerHTML = "";
+    selectedSuggestionIndex = -1;
+
+    if (recentSearches.length === 0) {
+        setSuggestionDisplay(false);
+        return;
+    }
+
+    // 見出し行（liではなくdivにすることで、矢印キー移動やドラムロール計算の干渉を防ぐ）
+    const headerDiv = document.createElement("div");
+    headerDiv.className = "suggestion-header";
+    Object.assign(headerDiv.style, {
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+        padding: "6px 12px",
+        backgroundColor: "#f8f9fa",
+        borderBottom: "1px solid #e0e0e0",
+        fontSize: "12px",
+        color: "#666666",
+        position: "sticky",
+        top: "0",
+        zIndex: "5"
+    });
+
+    const titleSpan = document.createElement("span");
+    titleSpan.textContent = "最近の検索";
+
+    const clearAllBtn = document.createElement("span");
+    clearAllBtn.textContent = "履歴を消去";
+    Object.assign(clearAllBtn.style, {
+        cursor: "pointer",
+        color: "#888888",
+        fontSize: "11px",
+        textDecoration: "underline"
+    });
+
+    const handleClearAll = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        clearAllRecentSearches();
+        suggestionList.innerHTML = "";
+        setSuggestionDisplay(false);
+        selectedSuggestionIndex = -1;
+    };
+    clearAllBtn.addEventListener("mousedown", handleClearAll);
+    clearAllBtn.addEventListener("touchstart", handleClearAll, { passive: false });
+
+    headerDiv.appendChild(titleSpan);
+    headerDiv.appendChild(clearAllBtn);
+    suggestionList.appendChild(headerDiv);
+
+    const mobile = isMobileView();
+
+    recentSearches.forEach((item, index) => {
+        const li = document.createElement("li");
+        li.dataset.searchValue = item.searchValue;
+        Object.assign(li.style, {
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            padding: "8px 12px",
+            cursor: "pointer",
+            borderBottom: "1px solid #eeeeee",
+            color: "#333333",
+            backgroundColor: "#ffffff",
+            position: "relative",
+            zIndex: "1",
+            transition: mobile
+                ? "background-color 0.1s ease, box-shadow 0.1s ease"
+                : "transform 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease"
+        });
+
+        const labelWrap = document.createElement("span");
+        Object.assign(labelWrap.style, {
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "8px",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap"
+        });
+
+        const clockIcon = document.createElement("i");
+        clockIcon.className = "fa-regular fa-clock fa-xs";
+        clockIcon.style.color = "#999999";
+
+        const textSpan = document.createElement("span");
+        textSpan.textContent = item.label;
+
+        labelWrap.appendChild(clockIcon);
+        labelWrap.appendChild(textSpan);
+
+        // 個別削除ボタン（×）
+        const deleteBtn = document.createElement("span");
+        deleteBtn.textContent = "×";
+        deleteBtn.title = "この履歴を削除";
+        Object.assign(deleteBtn.style, {
+            padding: "0 6px",
+            color: "#aaaaaa",
+            fontSize: "14px",
+            lineHeight: "1",
+            cursor: "pointer",
+            flexShrink: "0"
+        });
+
+        const handleRemoveItem = (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            removeRecentSearch(item.searchValue);
+            renderRecentSuggestions();
+        };
+        deleteBtn.addEventListener("mousedown", handleRemoveItem);
+        deleteBtn.addEventListener("touchstart", handleRemoveItem, { passive: false });
+        deleteBtn.addEventListener("click", (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+        });
+
+        li.appendChild(labelWrap);
+        li.appendChild(deleteBtn);
+
+        li.addEventListener("mouseenter", () => {
+            if (!isMobileView()) {
+                selectedSuggestionIndex = index;
+                updateSuggestionHighlight();
+            }
+        });
+        li.addEventListener("mouseleave", () => {
+            if (!isMobileView()) {
+                selectedSuggestionIndex = -1;
+                updateSuggestionHighlight();
+            }
+        });
+
+        let touchStartX = 0;
+        let touchStartY = 0;
+
+        li.addEventListener("touchstart", (e) => {
+            if (e.touches && e.touches.length > 0) {
+                touchStartX = e.touches[0].clientX;
+                touchStartY = e.touches[0].clientY;
+            }
+        }, { passive: true });
+
+        li.addEventListener("touchend", (e) => {
+            if (e.target === deleteBtn || deleteBtn.contains(e.target)) return;
+            if (e.changedTouches && e.changedTouches.length > 0) {
+                const dx = Math.abs(e.changedTouches[0].clientX - touchStartX);
+                const dy = Math.abs(e.changedTouches[0].clientY - touchStartY);
+                if (dx < 10 && dy < 10) {
+                    e.preventDefault();
+                    selectSuggestionItem(item.searchValue);
+                }
+            }
+        });
+
+        li.addEventListener("click", (e) => {
+            if (e.target === deleteBtn || deleteBtn.contains(e.target)) return;
+            selectSuggestionItem(item.searchValue);
+        });
+
+        suggestionList.appendChild(li);
+    });
+
+    setSuggestionDisplay(true);
+
+    if (mobile) {
+        suggestionList.scrollTop = 0;
+        updateSuggestionHighlight();
+    }
 }
 
 // 💡 検索窓への入力監視 (×ボタンの表示/非表示切り替え)
@@ -334,6 +610,8 @@ searchBox.addEventListener("input", () => {
         clearBtn.style.display = "flex";
     } else {
         clearBtn.style.display = "none";
+        renderRecentSuggestions();
+        return;
     }
 
     const normalizedQuery = normalizeForMatch(searchBox.value);
@@ -345,9 +623,23 @@ searchBox.addEventListener("input", () => {
         return;
     }
 
-    const matchedItems = suggestionItems.filter(item =>
-        item.normalizedWord.startsWith(normalizedQuery)
-    );
+    const isNumberQuery = /^[0-9]+$/.test(normalizedQuery);
+    let matchedItems = [];
+
+    if (isNumberQuery) {
+        matchedItems = suggestionItems
+            .filter(item => item.numStr && item.numStr.startsWith(normalizedQuery))
+            .sort((a, b) => Number(a.numStr) - Number(b.numStr));
+    } else {
+        const prefixMatches = suggestionItems.filter(item =>
+            item.normalizedWord.startsWith(normalizedQuery)
+        );
+        const partialMatches = suggestionItems.filter(item =>
+            !item.normalizedWord.startsWith(normalizedQuery) &&
+            item.normalizedWord.includes(normalizedQuery)
+        );
+        matchedItems = [...prefixMatches, ...partialMatches];
+    }
 
     if (matchedItems.length === 0) {
         setSuggestionDisplay(false);
@@ -358,7 +650,7 @@ searchBox.addEventListener("input", () => {
 
     matchedItems.forEach((item, index) => {
         const li = document.createElement("li");
-        li.textContent = item.word;
+        li.textContent = (isNumberQuery && item.numStr) ? `${item.numStr}. ${item.word}` : item.word;
         li.dataset.searchValue = item.searchValue;
         Object.assign(li.style, {
             padding: "8px 12px",
@@ -428,21 +720,37 @@ clearBtn.addEventListener("click", () => {
         clearTimeout(historyDebounceTimer);
         historyDebounceTimer = null;
     }
+    if (suggestionSelectTimer) {
+        clearTimeout(suggestionSelectTimer);
+        suggestionSelectTimer = null;
+        isSelectingSuggestion = false;
+    }
     searchBox.value = ""; // 検索窓の文字を空にする
     clearBtn.style.display = "none"; // ×ボタンを非表示にする
     suggestionList.innerHTML = "";
     setSuggestionDisplay(false);
     selectedSuggestionIndex = -1;
     searchBox.focus(); // 検索窓にフォーカスを戻す（次の入力を促す）
+    renderRecentSuggestions(); // 空になったので最近の検索を表示
 });
 
-// フォーカス時のズーム防止（iOS Safari対策）
+// フォーカス時のズーム防止（iOS Safari対策）＆ 空欄時の最近の検索表示
 searchBox.addEventListener("focus", () => {
     if (viewportMeta) {
         viewportMeta.setAttribute(
             "content",
             "width=device-width, initial-scale=1.0, maximum-scale=1.0"
         );
+    }
+    if (searchBox.value.length === 0) {
+        renderRecentSuggestions();
+    }
+});
+
+// 既にフォーカスがある状態で空の検索窓をクリックした場合にも最近の検索を表示
+searchBox.addEventListener("click", () => {
+    if (searchBox.value.length === 0 && suggestionList.style.display === "none") {
+        renderRecentSuggestions();
     }
 });
 
@@ -474,6 +782,8 @@ searchBtn.addEventListener("click", () => {
 
 // Enter押下 ＆ 上下矢印キーでのサジェスト移動
 searchBox.addEventListener("keydown", (e) => {
+    if (e.isComposing || e.keyCode === 229) return;
+
     const items = suggestionList.querySelectorAll("li");
     const isSuggestionVisible = suggestionList.style.display === "block" && items.length > 0;
 
@@ -536,7 +846,7 @@ function doSearch(updateHistory = true) {
     if (updateHistory) {
         const paramString = window.location.hash.replace('#', '?') || window.location.search;
         const currentUrlWord = new URLSearchParams(paramString).get('word');
-        if (currentUrlWord !== raw) {
+        if (!currentUrlWord || currentUrlWord.trim().toLowerCase() !== query) {
             window.history.pushState({ word: raw }, "", `#word=${encodeURIComponent(raw)}`);
         } else {
             window.history.replaceState({ word: raw }, "", `#word=${encodeURIComponent(raw)}`);
@@ -575,6 +885,16 @@ function doSearch(updateHistory = true) {
     if (filtered.length === 0) {
         results.innerHTML = "<p>該当なし</p>";
         return;
+    }
+
+    // 💡 検索結果が存在し、かつ通常の検索操作（履歴移動ではない）の場合に「最近の検索」へ保存
+    if (updateHistory) {
+        const firstHit = filtered[0];
+        if (isNumber && firstHit && firstHit.num !== undefined) {
+            saveRecentSearch(String(firstHit.num), `${firstHit.num}. ${firstHit.word}`);
+        } else if (firstHit && firstHit.word) {
+            saveRecentSearch(String(firstHit.word), String(firstHit.word));
+        }
     }
 
     let relAudioCount = 0; // 💡 関連語の音声ボックス用連番
@@ -618,7 +938,13 @@ function doSearch(updateHistory = true) {
                         .join("");
                     const numBadge = num ? `<span class="h3-p4-num">${num.trim()}</span>` : "";
                     const relAudioHtml = `<span id="audio-box-${relAudioKey}" class="audio_box h3-audio-box" data-audio-key="${relAudioKey}" data-word="${cleanWord}"></span>`;
-                    const barHtml = `<span class="h3-p4-bar">${numBadge}<span class="h3-p4-word" lang="en">${cleanWord}</span>${relAudioHtml}<span class="h3-p4-meanings">${meaningTags}</span></span>`;
+                    const isWordInDict = (data.words || []).some(
+                        w => w.word && w.word.toLowerCase() === cleanWord.toLowerCase() && w.word.toLowerCase() !== query
+                    );
+                    const wordSpanHtml = isWordInDict
+                        ? `<span class="h3-p4-word h3-word-link" lang="en" data-target-word="${cleanWord}" title="「${cleanWord}」を検索" style="cursor: pointer; text-decoration: underline; text-underline-offset: 3px;">${cleanWord}<i class="fa-solid fa-arrow-up-right-from-square fa-2xs" style="margin-left: 4px; opacity: 0.75;"></i></span>`
+                        : `<span class="h3-p4-word" lang="en">${cleanWord}</span>`;
+                    const barHtml = `<span class="h3-p4-bar">${numBadge}${wordSpanHtml}${relAudioHtml}<span class="h3-p4-meanings">${meaningTags}</span></span>`;
                     const placeholder = `<!--W_P4_HEADER_${headerPlaceholders.length}-->`;
                     headerPlaceholders.push(barHtml);
                     return placeholder;
@@ -775,7 +1101,19 @@ function doSearch(updateHistory = true) {
             }
         });
 
-        insertSampleImages();
+        // 💡 関連語（h3）の見出し語クリックで該当単語へジャンプ（再検索）
+        div.querySelectorAll(".h3-word-link").forEach(linkEl => {
+            linkEl.addEventListener("click", (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                const targetWord = linkEl.dataset.targetWord;
+                if (targetWord) {
+                    selectSuggestionItem(targetWord);
+                }
+            });
+        });
+
+        insertSampleImages(div);
 
         const configs = [
             { sel: ".tropic", func: drawEclipticModel },
@@ -804,6 +1142,53 @@ function doSearch(updateHistory = true) {
         // 定義した開閉アニメーション関数を実行
         setupDetailsAnimation(div);
     });
+}
+
+// 💡 MWの独自表記を日本人向けの読みやすいIPAに安全に変換する関数
+function safeConvertMwToIpa(mwStr) {
+    if (!mwStr) return "";
+    let ipa = mwStr
+        .replace(/\([ˈˌ]\)/g, '')
+        .replace(/\*/g, 'ˈ')
+        .replace(/\\u02cc/g, 'ˌ')
+        // 二重母音・特殊子音を先に一時退避または変換
+        .replace(/au̇|aù/g, 'A_U')
+        .replace(/ā/g, 'E_I')
+        .replace(/ī/g, 'A_I')
+        .replace(/ä/g, 'A_H')
+        .replace(/ȧ/g, 'A_H')
+        .replace(/ȯi/g, 'ɔɪ')
+        .replace(/yü/g, 'J_U_LONG')
+        .replace(/yu̇/g, 'J_U_SHORT')
+        .replace(/t͟h/g, 'ð')
+        .replace(/th/g, 'θ')
+        .replace(/sh/g, 'ʃ')
+        .replace(/zh/g, 'ʒ')
+        .replace(/ch/g, 'tʃ')
+        .replace(/j/g, 'dʒ')
+        .replace(/y/g, 'j')
+        // 残った単体の a を æ に変換
+        .replace(/a/g, 'æ')
+        // 退避したものを戻す
+        .replace(/A_U/g, 'aʊ')
+        .replace(/E_I/g, 'eɪ')
+        .replace(/A_I/g, 'aɪ')
+        .replace(/A_H/g, 'ɑ')
+        .replace(/J_U_LONG/g, 'juː')
+        .replace(/J_U_SHORT/g, 'jʊ')
+        // その他の母音
+        .replace(/ē/g, 'iː')
+        .replace(/ō/g, 'oʊ')
+        .replace(/ü|ū/g, 'uː')
+        .replace(/u̇/g, 'ʊ')
+        .replace(/ȯ/g, 'ɔ')
+        .replace(/ə̆|ᵊ/g, 'ə')
+        // 区切り記号の除去
+        .replace(/[-_]/g, '')
+        // 空白を使ってアクセント記号を見やすくする
+        .replace(/\s*([ˈˌ])/g, ' $1');
+
+    return `/${ipa}/`;
 }
 
 // 💡 Merriam-Webster APIから音声を取得し、該当のdiv要素内にアイコンを描画する関数
@@ -884,100 +1269,8 @@ async function fetchAndSetAudio(word, num, partOfSpeech = "", searchId = current
                 audioUrl = `https://media.merriam-webster.com/audio/prons/en/us/mp3/${subdir}/${audioFileName}.mp3`;
             }
 
-            // MWの独自表記を日本人向けの読みやすいIPAに変換する関数（網羅版）
-            function convertMwToIpa(mwStr) {
-                if (!mwStr) return "";
-                let ipa = mwStr
-                    // カッコ書きの省略可能な発音表記や強勢記号の整理
-                    .replace(/\([ˈˌ]\)/g, '')
-                    .replace(/\*/g, 'ˈ')
-                    .replace(/\\u02cc/g, 'ˌ')
-                    // 2文字以上の組み合わせ（先に置換する必要があるもの）
-                    .replace(/au̇/g, 'aʊ')
-                    .replace(/aù/g, 'aʊ')
-                    .replace(/ȯi/g, 'ɔɪ')
-                    .replace(/yü/g, 'juː')
-                    .replace(/yu̇/g, 'jʊ')
-                    .replace(/t͟h/g, 'ð')   // 有声のth (thisなど)
-                    .replace(/th/g, 'θ')   // 無声のth (thinkなど)
-                    .replace(/sh/g, 'ʃ')
-                    .replace(/zh/g, 'ʒ')
-                    .replace(/ch/g, 'tʃ')
-                    // 単母音・長母音・子音の置換
-                    .replace(/j/g, 'dʒ')
-                    .replace(/y/g, 'j')    // MWの y はIPAの j (yes -> jes)
-                    .replace(/ē/g, 'iː')
-                    .replace(/ā/g, 'eɪ')
-                    .replace(/ī/g, 'aɪ')
-                    .replace(/ō/g, 'oʊ')
-                    .replace(/ü/g, 'uː')
-                    .replace(/ū/g, 'uː')
-                    .replace(/u̇/g, 'ʊ')
-                    .replace(/ȯ/g, 'ɔː')
-                    .replace(/ä/g, 'ɑː')
-                    .replace(/ȧ/g, 'ɑ')
-                    .replace(/a/g, 'æ')    // 単体の a は æ (catなど) ※長音・二重母音変換後に実行
-                    .replace(/æː/g, 'ɑː')  // 上記の置換で ä などが影響を受けないよう調整
-                    .replace(/ə̆/g, 'ə')
-                    .replace(/ᵊ/g, 'ə')
-                    // 音節区切りのハイフンやアンダーバーの整理
-                    .replace(/-/g, '')
-                    .replace(/_/g, '')
-                    // 空白を使ってアクセント記号を見やすくする
-                    .replace(/\s*([ˈˌ])/g, ' $1');
-
-                return `/${ipa}/`;
-            }
-
-            // aの置換順序による干渉を防ぐため、安全に変換処理を実行
-            function safeConvertMwToIpa(mwStr) {
-                if (!mwStr) return "";
-                let ipa = mwStr
-                    .replace(/\([ˈˌ]\)/g, '')
-                    .replace(/\*/g, 'ˈ')
-                    .replace(/\\u02cc/g, 'ˌ')
-                    // 二重母音・特殊子音を先に一時退避または変換
-                    .replace(/au̇|aù/g, 'A_U')
-                    .replace(/ā/g, 'E_I')
-                    .replace(/ī/g, 'A_I')
-                    .replace(/ä/g, 'A_H')
-                    .replace(/ȧ/g, 'A_H')
-                    .replace(/ȯi/g, 'ɔɪ')
-                    .replace(/yü/g, 'J_U_LONG')
-                    .replace(/yu̇/g, 'J_U_SHORT')
-                    .replace(/t͟h/g, 'ð')
-                    .replace(/th/g, 'θ')
-                    .replace(/sh/g, 'ʃ')
-                    .replace(/zh/g, 'ʒ')
-                    .replace(/ch/g, 'tʃ')
-                    .replace(/j/g, 'dʒ')
-                    .replace(/y/g, 'j')
-                    // 残った単体の a を æ に変換
-                    .replace(/a/g, 'æ')
-                    // 退避したものを戻す
-                    .replace(/A_U/g, 'aʊ')
-                    .replace(/E_I/g, 'eɪ')
-                    .replace(/A_I/g, 'aɪ')
-                    .replace(/A_H/g, 'ɑ')
-                    .replace(/J_U_LONG/g, 'juː')
-                    .replace(/J_U_SHORT/g, 'jʊ')
-                    // その他の母音
-                    .replace(/ē/g, 'iː')
-                    .replace(/ō/g, 'oʊ')
-                    .replace(/ü|ū/g, 'uː')
-                    .replace(/u̇/g, 'ʊ')
-                    .replace(/ȯ/g, 'ɔ')
-                    .replace(/ə̆|ᵊ/g, 'ə')
-                    // 区切り記号の除去
-                    .replace(/[-_]/g, '')
-                    // 空白を使ってアクセント記号を見やすくする
-                    .replace(/\s*([ˈˌ])/g, ' $1');
-
-                return `/${ipa}/`;
-            }
-
             ipaText = safeConvertMwToIpa(rawMwPron);
-            audioCache.set(cacheKey, { audioUrl, ipaText });
+            saveAudioCache(cacheKey, { audioUrl, ipaText });
         }
 
         // 1回目の検索でDOM生成前だったり、親要素のinnerHTML更新で上書きされても確実に反映する
@@ -1168,7 +1461,7 @@ function setupDetailsAnimation(container) {
         let isAnimating = false;
 
         summary.addEventListener('click', (e) => {
-            if (e.target.closest('.audio_button')) return;
+            if (e.target.closest('.audio_button') || e.target.closest('.h3-word-link')) return;
             e.preventDefault();
 
             if (isAnimating) return;
@@ -1193,17 +1486,19 @@ function setupDetailsAnimation(container) {
 }
 
 // サンプル画像のアコーディオン開閉処理
-function insertSampleImages() {
-    const targetElements = document.querySelectorAll('div.sample_image');
+function insertSampleImages(container = document) {
+    const targetElements = container.querySelectorAll('div.sample_image');
 
     if (targetElements.length === 0) {
         return;
     }
 
     targetElements.forEach((el) => {
+        if (el.dataset.sampleInitialized === 'true') return;
         const imageName = el.classList[1];
 
         if (imageName) {
+            el.dataset.sampleInitialized = 'true';
             // トリガーとなるspan
             const trigger = document.createElement('span');
             trigger.classList.add('accordion-trigger');
@@ -1224,6 +1519,7 @@ function insertSampleImages() {
 
                 // モーダルの背景要素を作成
                 const modal = document.createElement('div');
+                modal.className = 'sample-image-modal';
                 modal.style.position = 'fixed';
                 modal.style.top = '0';
                 modal.style.left = '0';
