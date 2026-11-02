@@ -105,21 +105,19 @@ if ("scrollRestoration" in window.history) {
     window.history.scrollRestoration = "manual";
 }
 
-// 💡 画面書き換え前にCanvasや画像のGPUメモリを明示的に解放する関数（クラッシュ防止）
+let lastHistoryEventTime = 0; // 💡 戻る・進むの連打判定用タイムスタンプ
+let heavyRenderTimer = null; // 💡 連打時にNgram・アニメーション・音声の起動を遅延・間引くタイマー
+
+// 💡 進行中の非同期タイマーを停止し、メイン領域を安全にクリアする関数
 function cleanupResultsResources() {
+    if (heavyRenderTimer) {
+        clearTimeout(heavyRenderTimer);
+        heavyRenderTimer = null;
+    }
+    activeAudioTimers.forEach(id => clearInterval(id));
+    activeAudioTimers.clear();
     if (!results) return;
-    results.querySelectorAll("canvas").forEach(canvas => {
-        const ctx = canvas.getContext("2d");
-        if (ctx) {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-        }
-        canvas.width = 0;
-        canvas.height = 0;
-    });
-    results.querySelectorAll("img").forEach(img => {
-        img.src = "";
-    });
-    results.innerHTML = "";
+    results.replaceChildren();
 }
 
 // 💡 追加：URLの変更を検知して自動検索をリセット・実行する関数
@@ -157,18 +155,20 @@ function handleUrlSearch(event) {
         clearBtn.style.display = "none";
     }
 
-    // 💡 チラつき防止のため、スクロール位置のリセットと古い画面のクリアだけは即座（0ms）に実行する
     const isSameTarget = targetWord
         ? (currentRenderedWord !== null && currentRenderedWord.toLowerCase() === targetWord.trim().toLowerCase() && results.children.length > 0)
         : (currentRenderedWord === null && results.children.length > 0);
 
+    // 進行中の古い非同期処理（Ngram・音声等）だけを即座にキャンセルし、DOM自体は次の描画瞬間まで残す（footerのチラつき防止）
     if (!isSameTarget) {
         window.scrollTo(0, 0);
         currentSearchId++;
+        if (heavyRenderTimer) {
+            clearTimeout(heavyRenderTimer);
+            heavyRenderTimer = null;
+        }
         activeAudioTimers.forEach(id => clearInterval(id));
         activeAudioTimers.clear();
-        cleanupResultsResources();
-        currentRenderedWord = "__PENDING__"; // 連打中の仮状態マーク
     }
 
     const executeUrlSearch = () => {
@@ -178,7 +178,6 @@ function handleUrlSearch(event) {
         if (targetWord) {
             if (
                 currentRenderedWord !== null &&
-                currentRenderedWord !== "__PENDING__" &&
                 currentRenderedWord.toLowerCase() === targetWord.trim().toLowerCase() &&
                 results.children.length > 0
             ) {
@@ -194,8 +193,6 @@ function handleUrlSearch(event) {
             // パラメータが消された場合は初期画面にリセットする
             window.scrollTo(0, 0);
             currentSearchId++;
-            activeAudioTimers.forEach(id => clearInterval(id));
-            activeAudioTimers.clear();
             currentRenderedWord = null;
             searchBox.value = "";
             clearBtn.style.display = "none";
@@ -207,11 +204,21 @@ function handleUrlSearch(event) {
 
     if (historyDebounceTimer) {
         clearTimeout(historyDebounceTimer);
+        historyDebounceTimer = null;
     }
 
-    // 💡 戻る・進む連打時は80ms待ってから最終ページの1回分だけを描画する（メモリ枯渇・クラッシュ防止）
     if (event) {
-        historyDebounceTimer = setTimeout(executeUrlSearch, 80);
+        const now = Date.now();
+        const isRapidClick = (now - lastHistoryEventTime) < 180;
+        lastHistoryEventTime = now;
+
+        if (isRapidClick) {
+            // 連打中は前の画面を維持したまま120ms待って最終ページだけを描画する
+            historyDebounceTimer = setTimeout(executeUrlSearch, 120);
+        } else {
+            // 単発の「戻る・進む」は待ち時間ゼロで即座に切り替える
+            executeUrlSearch();
+        }
     } else {
         executeUrlSearch();
     }
@@ -1282,30 +1289,14 @@ function doSearch(updateHistory = true) {
                 });
             }
 
-            // 💡 追加：h2セクション内の .content の最後にNgram要素を追加
+            // 💡 追加：h2セクション内の .content の最後にNgram要素を追加（連打時のメモリ負荷を防ぐため後続のタスクで実行）
             if (!isNumber && hKey.startsWith("h2") && item.word) {
-                setupNgramInSection(contentDiv, item.word.trim());
+                sectionDiv.dataset.ngramWord = item.word.trim();
             }
 
             targetPanel.appendChild(sectionDiv);
         });
         results.appendChild(div);
-
-        // 💡 最後に非同期で音声をAPIから取得し、先ほどのdiv内にアイコンを生成
-        fetchAndSetAudio(item.word, item.num, item.partOfSpeech, searchId);
-
-        // 💡 関連語（h3）の音声・発音記号も非同期で取得
-        div.querySelectorAll(".h3-audio-box").forEach(box => {
-            const relWord = box.dataset.word;
-            const relKey = box.dataset.audioKey;
-            if (relWord && relKey) {
-                const matchedWordObj = (data.words || []).find(
-                    w => w.word && w.word.toLowerCase() === relWord.toLowerCase()
-                );
-                const relPos = matchedWordObj ? (matchedWordObj.partOfSpeech || "") : "";
-                fetchAndSetAudio(relWord, relKey, relPos, searchId);
-            }
-        });
 
         // 💡 関連語（h3）の見出し語クリックで該当単語へジャンプ（再検索）
         div.querySelectorAll(".h3-word-link").forEach(linkEl => {
@@ -1321,32 +1312,67 @@ function doSearch(updateHistory = true) {
 
         insertSampleImages(div);
 
-        const configs = [
-            { sel: ".tropic", func: drawEclipticModel },
-            { sel: ".arctic", func: drawArcticModel },
-            { sel: ".dimension", func: drawDimensionModel },
-            { sel: ".scheme", func: drawSchemeModel },
-            { sel: ".postpone", func: drawPostponeModel },
-            { sel: ".fiber", func: drawFiberModel },
-            { sel: ".tense", func: drawTenseLineModel },
-            { sel: ".scatter", func: drawScatterAnimation },
-            { sel: ".transparent", func: drawTransparentAnimation },
-            { sel: ".steep", func: drawSteepModel },
-            { sel: ".precede", func: drawPrecedeModel },
-            { sel: ".epidemic", func: drawEpidemicModel },
-            { sel: ".tear", func: setupTearAnimation },
-            { sel: ".warn", func: setupWarnAnimation },
-        ];
-
-        configs.forEach(config => {
-            const target = div.querySelector(config.sel);
-            if (target) {
-                startAnimation(target, config.func);
-            }
-        });
-
         // 定義した開閉アニメーション関数を実行
         setupDetailsAnimation(div);
+
+        // 💡 Canvas・Ngram・音声取得などの高負荷処理（戻る・進む連打時は止まったページでのみ実行してクラッシュを防ぐ）
+        const runHeavyFeatures = () => {
+            if (searchId !== currentSearchId || !div.isConnected) return;
+
+            div.querySelectorAll(".section[data-ngram-word]").forEach(sec => {
+                const cDiv = sec.querySelector(".content");
+                if (cDiv && sec.dataset.ngramWord) {
+                    setupNgramInSection(cDiv, sec.dataset.ngramWord);
+                }
+            });
+
+            fetchAndSetAudio(item.word, item.num, item.partOfSpeech, searchId);
+
+            div.querySelectorAll(".h3-audio-box").forEach(box => {
+                const relWord = box.dataset.word;
+                const relKey = box.dataset.audioKey;
+                if (relWord && relKey) {
+                    const matchedWordObj = (data.words || []).find(
+                        w => w.word && w.word.toLowerCase() === relWord.toLowerCase()
+                    );
+                    const relPos = matchedWordObj ? (matchedWordObj.partOfSpeech || "") : "";
+                    fetchAndSetAudio(relWord, relKey, relPos, searchId);
+                }
+            });
+
+            const configs = [
+                { sel: ".tropic", func: drawEclipticModel },
+                { sel: ".arctic", func: drawArcticModel },
+                { sel: ".dimension", func: drawDimensionModel },
+                { sel: ".scheme", func: drawSchemeModel },
+                { sel: ".postpone", func: drawPostponeModel },
+                { sel: ".fiber", func: drawFiberModel },
+                { sel: ".tense", func: drawTenseLineModel },
+                { sel: ".scatter", func: drawScatterAnimation },
+                { sel: ".transparent", func: drawTransparentAnimation },
+                { sel: ".steep", func: drawSteepModel },
+                { sel: ".precede", func: drawPrecedeModel },
+                { sel: ".epidemic", func: drawEpidemicModel },
+                { sel: ".tear", func: setupTearAnimation },
+                { sel: ".warn", func: setupWarnAnimation },
+            ];
+
+            configs.forEach(config => {
+                const target = div.querySelector(config.sel);
+                if (target) {
+                    startAnimation(target, config.func);
+                }
+            });
+        };
+
+        if (updateHistory) {
+            runHeavyFeatures();
+        } else {
+            heavyRenderTimer = setTimeout(() => {
+                heavyRenderTimer = null;
+                runHeavyFeatures();
+            }, 150);
+        }
     });
 }
 
@@ -1484,10 +1510,10 @@ async function fetchAndSetAudio(word, num, partOfSpeech = "", searchId = current
             saveAudioCache(cacheKey, { audioUrl, ipaText });
         }
 
-        // 1回目の検索でDOM生成前だったり、親要素のinnerHTML更新で上書きされても確実に反映する
+        // DOM要素へ反映し、完了したら即座に監視を終える（不要なタイマー稼働によるスクロール負荷を防止）
         const renderId = String(Date.now() + Math.random());
         let attempts = 0;
-        const maxAttempts = 30; // 50ms × 30回（最大1.5秒間、要素の出現と上書きを監視）
+        const maxAttempts = 20;
         let timerId = null;
 
         const applyToDom = () => {
@@ -1496,7 +1522,7 @@ async function fetchAndSetAudio(word, num, partOfSpeech = "", searchId = current
                     clearInterval(timerId);
                     activeAudioTimers.delete(timerId);
                 }
-                return;
+                return true;
             }
 
             const audioBox = document.getElementById(`audio-box-${num}`);
@@ -1549,6 +1575,12 @@ async function fetchAndSetAudio(word, num, partOfSpeech = "", searchId = current
                         });
                     }
                 }
+                // 描画が完了したら即座にタイマーを停止する
+                if (timerId !== null) {
+                    clearInterval(timerId);
+                    activeAudioTimers.delete(timerId);
+                }
+                return true;
             }
 
             attempts++;
@@ -1556,11 +1588,14 @@ async function fetchAndSetAudio(word, num, partOfSpeech = "", searchId = current
                 clearInterval(timerId);
                 activeAudioTimers.delete(timerId);
             }
+            return false;
         };
 
-        timerId = setInterval(applyToDom, 50);
-        activeAudioTimers.add(timerId);
-        applyToDom();
+        // 即時実行してまだDOMがなかった場合のみインターバルを起動する
+        if (!applyToDom()) {
+            timerId = setInterval(applyToDom, 50);
+            activeAudioTimers.add(timerId);
+        }
     } catch (error) {
         // エラー時の処理
     }
