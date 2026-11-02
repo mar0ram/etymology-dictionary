@@ -320,11 +320,6 @@ Object.assign(suggestionList.style, {
 });
 searchBoxContainer.appendChild(suggestionList);
 
-// 💡 スマホ・タブレット判定関数（画面幅1024px以下 または タッチ操作主体端末）
-function isMobileView() {
-    return window.matchMedia("(max-width: 1024px), (pointer: coarse)").matches;
-}
-
 // 💡 検索候補表示中の背景スクロール禁止制御
 function setSuggestionDisplay(show) {
     if (show) {
@@ -333,46 +328,6 @@ function setSuggestionDisplay(show) {
     } else {
         suggestionList.style.display = "none";
         document.body.style.overflow = "";
-    }
-}
-
-// 💡 候補が少ないときもスクロールして全項目を選択できるよう下部余白と高さを調整する関数
-function setupSuggestionScrollPadding() {
-    suggestionList.querySelectorAll(".suggestion-spacer").forEach(el => el.remove());
-    suggestionList.style.maxHeight = "240px";
-
-    const items = suggestionList.querySelectorAll("li");
-    if (items.length === 0) return;
-
-    if (isMobileView()) {
-        const firstLi = items[0];
-        const lastLi = items[items.length - 1];
-        const naturalHeight = lastLi.offsetTop + lastLi.offsetHeight;
-        const visibleHeight = Math.min(naturalHeight, 240);
-
-        // 枠の見た目の高さは本来の候補数分の高さ（最大240px）に抑える
-        suggestionList.style.maxHeight = `${visibleHeight}px`;
-
-        const firstCenter = firstLi.offsetTop + firstLi.offsetHeight / 2;
-        const lastCenter = lastLi.offsetTop + lastLi.offsetHeight / 2;
-        const travelDistance = Math.max(0, lastCenter - firstCenter);
-        // 候補が1件のときも少しスクロール感を持たせ、2件以上のときは最後の項目まで確実にスクロールできる余白を確保
-        const extraScrollSpace = items.length > 1 ? travelDistance : 24;
-        const requiredScrollHeight = visibleHeight + extraScrollSpace;
-        const spacerHeight = Math.max(0, Math.ceil(requiredScrollHeight - naturalHeight));
-
-        if (spacerHeight > 0) {
-            const spacer = document.createElement("div");
-            spacer.className = "suggestion-spacer";
-            spacer.setAttribute("aria-hidden", "true");
-            Object.assign(spacer.style, {
-                height: `${spacerHeight}px`,
-                width: "100%",
-                flexShrink: "0",
-                pointerEvents: "none"
-            });
-            suggestionList.appendChild(spacer);
-        }
     }
 }
 
@@ -393,87 +348,12 @@ function normalizeForMatch(str) {
     return String(str).toLowerCase().replace(/[ \u3000]+/g, "");
 }
 
-// 💡 キーボード操作・ドラムロール表示用の選択インデックスとハイライト更新関数
+// 💡 キーボード・マウス操作用の選択インデックスとハイライト更新関数（全端末共通）
 let selectedSuggestionIndex = -1;
-let isKeyboardScrollLock = false;
-let keyboardScrollLockTimer = null;
 
 function updateSuggestionHighlight({ fromKeyboard = false } = {}) {
     const items = suggestionList.querySelectorAll("li");
     if (items.length === 0) return;
-
-    if (isMobileView()) {
-        const firstLi = items[0];
-        const lastLi = items[items.length - 1];
-        const firstCenter = firstLi.offsetTop + firstLi.offsetHeight / 2;
-        const lastCenter = lastLi.offsetTop + lastLi.offsetHeight / 2;
-        const maxScroll = suggestionList.scrollHeight - suggestionList.clientHeight;
-
-        let focusCenter = firstCenter;
-
-        if (fromKeyboard && selectedSuggestionIndex >= 0 && selectedSuggestionIndex < items.length) {
-            // キーボードの矢印キー操作時は、選択された項目に合わせてスクロール位置を移動する
-            const targetLi = items[selectedSuggestionIndex];
-            const targetCenter = targetLi.offsetTop + targetLi.offsetHeight / 2;
-            focusCenter = targetCenter;
-
-            if (maxScroll > 0 && lastCenter > firstCenter) {
-                const targetRatio = (targetCenter - firstCenter) / (lastCenter - firstCenter);
-                const targetScrollTop = Math.round(Math.min(Math.max(targetRatio, 0), 1) * maxScroll);
-                isKeyboardScrollLock = true;
-                if (keyboardScrollLockTimer) clearTimeout(keyboardScrollLockTimer);
-                suggestionList.scrollTop = targetScrollTop;
-                keyboardScrollLockTimer = setTimeout(() => {
-                    isKeyboardScrollLock = false;
-                    keyboardScrollLockTimer = null;
-                }, 120);
-            }
-        } else {
-            // スクロール操作時は、現在のスクロール位置から最も近い項目を選択状態にする
-            const scrollRatio = maxScroll > 0 ? Math.min(Math.max(suggestionList.scrollTop / maxScroll, 0), 1) : 0;
-            focusCenter = firstCenter + (lastCenter - firstCenter) * scrollRatio;
-
-            let closestIndex = 0;
-            let minDistance = Infinity;
-            items.forEach((li, index) => {
-                const itemCenter = li.offsetTop + li.offsetHeight / 2;
-                const dist = Math.abs(itemCenter - focusCenter);
-                if (dist < minDistance) {
-                    minDistance = dist;
-                    closestIndex = index;
-                }
-            });
-            selectedSuggestionIndex = closestIndex;
-        }
-
-        const listHeight = suggestionList.clientHeight || 240;
-        items.forEach((li, index) => {
-            const itemCenter = li.offsetTop + li.offsetHeight / 2;
-            const ratio = (itemCenter - focusCenter) / (listHeight / 2);
-            const absRatio = Math.min(Math.abs(ratio), 1.2);
-            const rotateX = -ratio * 25;
-            const scale = index === selectedSuggestionIndex ? 1.03 : Math.max(0.9, 1 - absRatio * 0.1);
-            const opacity = index === selectedSuggestionIndex ? 1 : Math.max(0.45, 1 - absRatio * 0.5);
-
-            li.style.transform = `perspective(500px) rotateX(${rotateX.toFixed(1)}deg) scale(${scale.toFixed(3)})`;
-            li.style.opacity = String(opacity.toFixed(2));
-
-            if (index === selectedSuggestionIndex) {
-                li.style.backgroundColor = "#f0f4f8";
-                li.style.zIndex = "3";
-                li.style.boxShadow = "0 6px 14px rgba(0, 0, 0, 0.18)";
-                li.style.borderRadius = "4px";
-                li.style.fontWeight = "600";
-            } else {
-                li.style.backgroundColor = "#ffffff";
-                li.style.zIndex = String(Math.max(1, Math.round((1.2 - absRatio) * 2)));
-                li.style.boxShadow = "none";
-                li.style.borderRadius = "0";
-                li.style.fontWeight = "normal";
-            }
-        });
-        return;
-    }
 
     items.forEach((li, index) => {
         li.style.opacity = "1";
@@ -508,21 +388,6 @@ function updateSuggestionHighlight({ fromKeyboard = false } = {}) {
         }
     });
 }
-
-// 💡 スマホ・タブレットでのスクロール時にドラムロール表示を更新（requestAnimationFrameで負荷軽減）
-let isSuggestionScrollTicking = false;
-suggestionList.addEventListener("scroll", () => {
-    if (isKeyboardScrollLock) return;
-    if (!isSuggestionScrollTicking && isMobileView() && suggestionList.style.display === "block") {
-        isSuggestionScrollTicking = true;
-        requestAnimationFrame(() => {
-            if (!isKeyboardScrollLock) {
-                updateSuggestionHighlight();
-            }
-            isSuggestionScrollTicking = false;
-        });
-    }
-}, { passive: true });
 
 
 // 💡 検索ボックスの外側をクリックしたときにサジェストを閉じる
@@ -615,8 +480,6 @@ function renderRecentSuggestions() {
     headerDiv.appendChild(clearAllBtn);
     suggestionList.appendChild(headerDiv);
 
-    const mobile = isMobileView();
-
     recentSearches.forEach((item, index) => {
         const li = document.createElement("li");
         li.dataset.searchValue = item.searchValue;
@@ -631,9 +494,7 @@ function renderRecentSuggestions() {
             backgroundColor: "#ffffff",
             position: "relative",
             zIndex: "1",
-            transition: mobile
-                ? "background-color 0.1s ease, box-shadow 0.1s ease"
-                : "transform 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease"
+            transition: "transform 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease"
         });
 
         const labelWrap = document.createElement("span");
@@ -686,16 +547,12 @@ function renderRecentSuggestions() {
         li.appendChild(deleteBtn);
 
         li.addEventListener("mouseenter", () => {
-            if (!isMobileView()) {
-                selectedSuggestionIndex = index;
-                updateSuggestionHighlight();
-            }
+            selectedSuggestionIndex = index;
+            updateSuggestionHighlight();
         });
         li.addEventListener("mouseleave", () => {
-            if (!isMobileView()) {
-                selectedSuggestionIndex = -1;
-                updateSuggestionHighlight();
-            }
+            selectedSuggestionIndex = -1;
+            updateSuggestionHighlight();
         });
 
         let touchStartX = 0;
@@ -729,12 +586,7 @@ function renderRecentSuggestions() {
     });
 
     setSuggestionDisplay(true);
-    setupSuggestionScrollPadding();
     suggestionList.scrollTop = 0;
-
-    if (mobile) {
-        updateSuggestionHighlight();
-    }
 }
 
 // 💡 検索窓への入力監視 (×ボタンの表示/非表示切り替え)
@@ -793,7 +645,6 @@ searchBox.addEventListener("input", () => {
         return;
     }
 
-    const mobile = isMobileView();
     const fragment = document.createDocumentFragment(); // 💡 メモリ上で一括構築してリフローを1回に抑える
 
     matchedItems.forEach((item, index) => {
@@ -808,22 +659,16 @@ searchBox.addEventListener("input", () => {
             backgroundColor: "#ffffff",
             position: "relative",
             zIndex: "1",
-            transition: mobile
-                ? "background-color 0.1s ease, box-shadow 0.1s ease"
-                : "transform 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease"
+            transition: "transform 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease"
         });
 
         li.addEventListener("mouseenter", () => {
-            if (!isMobileView()) {
-                selectedSuggestionIndex = index;
-                updateSuggestionHighlight();
-            }
+            selectedSuggestionIndex = index;
+            updateSuggestionHighlight();
         });
         li.addEventListener("mouseleave", () => {
-            if (!isMobileView()) {
-                selectedSuggestionIndex = -1;
-                updateSuggestionHighlight();
-            }
+            selectedSuggestionIndex = -1;
+            updateSuggestionHighlight();
         });
 
         let touchStartX = 0;
@@ -856,12 +701,7 @@ searchBox.addEventListener("input", () => {
 
     suggestionList.appendChild(fragment);
     setSuggestionDisplay(true);
-    setupSuggestionScrollPadding();
     suggestionList.scrollTop = 0;
-
-    if (mobile) {
-        updateSuggestionHighlight();
-    }
 });
 
 // 💡 クリアボタン押下時の処理
