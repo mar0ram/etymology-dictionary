@@ -17,21 +17,25 @@ import { setupNgramInSection } from './ngram.js';
 
 let data = [];
 let dataLoaded = false;
+let currentRenderedWord = null; // 💡 現在表示中の検索ワードを保持
 
 // 💡 追加：URLの変更を検知して自動検索をリセット・実行する関数
 function handleUrlSearch() {
     if (!dataLoaded) return; // データ未読み込み時は処理をスキップ（fetch完了後に再度呼ばれるため）
 
-    const paramString = window.location.search || window.location.hash.replace('#', '?');
+    const paramString = window.location.hash.replace('#', '?') || window.location.search;
     const urlParams = new URLSearchParams(paramString);
     const targetWord = urlParams.get('word');
 
     if (targetWord) {
+        if (currentRenderedWord === targetWord) return;
         searchBox.value = targetWord;
         clearBtn.style.display = "flex";
-        doSearch(); // 既存の結果をクリアして新しい単語を検索
+        doSearch(false); // 履歴の二重追加を防ぎつつ検索を実行
     } else {
+        if (currentRenderedWord === null && results.children.length > 0) return;
         // パラメータが消された場合は初期画面にリセットする
+        currentRenderedWord = null;
         searchBox.value = "";
         clearBtn.style.display = "none";
         results.innerHTML = "";
@@ -39,8 +43,9 @@ function handleUrlSearch() {
     }
 }
 
-// 💡 追加：URLのハッシュ（#word=...）が書き換えられたタイミングを検知する
+// 💡 追加：URLのハッシュ（#word=...）やブラウザの「戻る・進む」を検知する
 window.addEventListener("hashchange", handleUrlSearch);
+window.addEventListener("popstate", handleUrlSearch);
 
 // JSON読み込み
 fetch("data.json")
@@ -345,8 +350,6 @@ clearBtn.addEventListener("click", () => {
     suggestionList.innerHTML = "";
     setSuggestionDisplay(false);
     selectedSuggestionIndex = -1;
-    results.innerHTML = "";
-    prependEntry();
     resetZoom(); // ズームリセット関数を実行
     searchBox.focus(); // 検索窓にフォーカスを戻す（次の入力を促す）
 });
@@ -428,15 +431,25 @@ function startAnimation(container, drawFunc) {
     drawFunc();
 }
 
-function doSearch() {
+function doSearch(updateHistory = true) {
     const raw = searchBox.value.trim();
     const query = raw.toLowerCase();
-    results.innerHTML = "";
 
     if (!query) {
-        results.innerHTML = "<p>1900は単語／1000は番号を入力</p>";
         return;
     }
+
+    currentRenderedWord = raw;
+
+    if (updateHistory) {
+        const paramString = window.location.hash.replace('#', '?') || window.location.search;
+        const currentUrlWord = new URLSearchParams(paramString).get('word');
+        if (currentUrlWord !== raw) {
+            window.history.pushState({ word: raw }, "", `#word=${encodeURIComponent(raw)}`);
+        }
+    }
+
+    results.innerHTML = "";
 
     // 数値判定（整数のみ）
     const isNumber = /^[0-9]+$/.test(query);

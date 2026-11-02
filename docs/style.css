@@ -1,9 +1,18 @@
-/* --- 1. 基本設定：ディープモード（暗い背景に白い情報パネル） --- */
+/* ==========================================================================
+   1. 基本設定：ディープモード（暗い背景に白い情報パネル）
+   ========================================================================== */
 /* 「…」の文字（U+2026）にのみ適用する専用のフォントファミリーを定義 */
 @font-face {
     font-family: 'EllipsisFont';
     src: local('Hiragino Sans'), local('Hiragino Kaku Gothic ProN'), local('Yu Gothic'), local('Meiryo'), local('Noto Sans JP');
     unicode-range: U+2026;
+}
+
+:root {
+    --ngram-bg: #ffffff;
+    --ngram-border: #cbd5e1;
+    --ngram-text: #1e293b;
+    --ngram-accent: #0f172a;
 }
 
 body {
@@ -29,7 +38,7 @@ footer {
         display: inline-block;
         vertical-align: middle;
         margin-top: 10px;
-        opacity: 0.8;/
+        opacity: 0.8;
     }
 
     img:hover {
@@ -41,6 +50,7 @@ footer {
     display: none;
 }
 
+/* --- 記号・括弧類の余白調整 --- */
 /* 開きかっこ */
 .margin-left-only {
     margin-left: 0.1em;
@@ -105,7 +115,9 @@ footer {
     display: inline;
 }
 
-/* --- 2. 検索エリア：シャープで目立つ検索バー --- */
+/* ==========================================================================
+   2. 検索エリア：シャープで目立つ検索バー
+   ========================================================================== */
 .search-container {
     width: 95%;
     max-width: 960px;
@@ -125,7 +137,7 @@ footer {
     border-bottom: 1px solid #262626;
 }
 
-/* 💡 検索窓とクリアボタンのラッパー */
+/* 検索窓とクリアボタンのラッパー */
 .search-box-container {
     flex: 4 1 auto;
     width: 100%;
@@ -158,7 +170,7 @@ footer {
     box-shadow: 0 0 0 3px rgba(0, 170, 192, 0.25), inset 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
-/* 💡 クリアボタンのスタイル */
+/* クリアボタンのスタイル */
 .clear-button {
     position: absolute;
     right: 10px;
@@ -205,7 +217,9 @@ footer {
     box-shadow: 0 6px 16px rgba(0, 164, 183, 0.35);
 }
 
-/* --- 3. 結果コンテナとオリジナル構造：タイムライン/パネルビュー --- */
+/* ==========================================================================
+   3. 結果コンテナ・検索結果カード・カレンダー用スタイル
+   ========================================================================== */
 #results {
     width: 95%;
     max-width: 960px;
@@ -213,13 +227,10 @@ footer {
     padding: 0;
 }
 
-/* --- 4. 各検索結果カード：ルーツ（根源）を視覚化する構造 --- */
 .entry {
     background-color: #1E1E1E;
-    /* カード背景は少し明るく */
     border-radius: 12px;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-    /* 強い影で浮遊感を出す */
     margin-bottom: 40px;
     padding: 20px;
     max-width: 100%;
@@ -248,6 +259,7 @@ footer {
     box-sizing: border-box;
 }
 
+/* --- カレンダー表示用スタイル --- */
 .calender_bgc {
     display: inline-flex;
     justify-content: center;
@@ -311,7 +323,9 @@ footer {
     color: #ffee00;
 }
 
-/* --- 5. セクション構造：情報を左右のパネルに分割 --- */
+/* ==========================================================================
+   4. セクション構造：左右パネル・タイムライン・見出し
+   ========================================================================== */
 .section-wrapper {
     display: flex;
     gap: 30px;
@@ -327,14 +341,12 @@ footer {
 .timeline-panel {
     flex: 3;
     min-width: 0;
-    /* マーカー配置のため position: relative; が必須 */
     position: relative;
     border-left: 2px solid #6f6f6f;
-    /* タイムラインの基軸 */
     padding-left: 30px;
 }
 
-/* セクションの一般的なスタイル（タイムライン側で使用） */
+/* セクションの一般的なスタイル */
 .section {
     margin-bottom: 25px;
     position: relative;
@@ -344,15 +356,13 @@ footer {
     box-shadow: 0 4px 10px rgba(218, 218, 218, 0.3);
 }
 
-/* 💡 タイムラインのマーカー (デスクトップ/デフォルト) */
+/* タイムラインのマーカー (デスクトップ/デフォルト) */
 .timeline-panel .section::before {
     content: '';
     position: absolute;
-    /* マーカーの中心を border-left (left: 0) に合わせるため、幅16pxの半分 -8px に修正 */
     left: -38px;
     top: 25px;
     width: 12px;
-    /* マーカー本体12px + border 2px*2 = 16px */
     height: 12px;
     background: #00aac0;
     border: 2px solid #121212;
@@ -369,14 +379,16 @@ footer {
     padding-bottom: 5px;
 }
 
-/* --- 6. コンテンツ共通 --- */
+/* ==========================================================================
+   5. コンテンツ共通・テキスト装飾・音声・画像コンポーネント
+   ========================================================================== */
 .content {
     padding-left: 0;
     font-size: 15px;
     color: #000000;
 }
 
-.content div:not(:has(button)) {
+.content div:not(:has(button)):not(.sample_image) {
     line-height: 1.6;
     margin-bottom: 25px;
     font-size: 15px;
@@ -388,153 +400,9 @@ footer {
     display: block;
 }
 
-/* --- コントラスト・ダークヘッダー --- */
-.w.w-p4-header {
-    display: grid;
-    grid-template-columns: auto 1fr;
-    column-gap: 12px;
-    row-gap: 0;
-    align-items: center;
-    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
-    border-radius: 8px 8px 0 0;
-    padding: 14px 16px;
-    margin-bottom: 0;
-    color: #ffffff;
-    position: relative;
-    overflow: hidden;
-    box-sizing: border-box;
-}
-
-.w.w-p4-header:not(:has(.w-p4-num)) {
-    grid-template-columns: 0px 1fr;
-    column-gap: 0;
-}
-
-/* 親のdiv全体を1つのカードとして影をつける */
-.content>div:has(.w-p4-header) {
-    border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.15);
-    overflow: hidden;
-}
-
-/* 2段目：音声ボタン・発音記号エリア（左端を単語に合わせる） */
-.w-p4-header .audio_box {
-    grid-column: 2;
-    grid-row: 2;
-    display: inline-flex;
-    align-items: center;
-    margin-top: 12px;
-    margin-left: 0;
-}
-
-/* 音声データ取得前（空のとき）は非表示にして余白を作らない */
-.w-p4-header .audio_box:empty {
-    display: none;
-}
-
-/* 発音記号（.ipa-text）の基本スタイル */
-.ipa-text {
-    font-size: 1em;
-    color: #272727;
-    font-weight: 500;
-    margin-left: 6px;
-}
-
-/* ダークヘッダーの背景上で発音記号を見やすい明るい色にする */
-.w-p4-header .ipa-text {
-    color: #e2e8f0;
-}
-
-/* 説明部分（.ml）の上側の角丸とマージンをなくして直結させる */
-.w.w-p4-header+.ml {
-    margin-top: 0;
-    margin-bottom: 0;
-    border-radius: 0 0 8px 8px;
-    box-shadow: none;
-    box-sizing: border-box;
-}
-
-.w.w-p4-header::after {
-    content: "";
-    position: absolute;
-    top: -30px;
-    right: -30px;
-    width: 100px;
-    height: 100px;
-    border-radius: 50%;
-    background: radial-gradient(circle, rgba(56, 189, 248, 0.2) 0%, transparent 70%);
-    pointer-events: none;
-}
-
-.w-p4-top {
-    display: contents;
-}
-
-/* 1段目左：番号 */
-.w-p4-num {
-    grid-column: 1;
-    grid-row: 1;
-    background-color: #f59e0b;
-    color: #0f172a;
-    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-    font-size: 12px;
-    font-weight: 800;
-    padding: 2px 6px;
-    border-radius: 4px;
-    letter-spacing: 0.04em;
-    line-height: 1.4;
-    flex-shrink: 0;
-}
-
-/* 1段目右：英単語 */
-.w-p4-word {
-    grid-column: 2;
-    grid-row: 1;
-    font-size: 24px;
-    font-weight: 800;
-    color: #ffffff;
-    letter-spacing: 0.02em;
-    line-height: 1.2;
-}
-
-/* 3段目：意味（少し上下の間を空け、左端を単語・音声ボタンと合わせる） */
-.w-p4-meanings {
-    grid-column: 2;
-    grid-row: 3;
-    margin-top: 12px;
-    margin-left: 0;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-}
-
-.w-p4-meaning-item {
-    background-color: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.16);
-    color: #f8fafc;
-    font-size: 13px;
-    font-weight: 600;
-    padding: 4px 10px;
-    border-radius: 5px;
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    line-height: 1.4;
-}
-
-.w-p4-dot {
-    width: 5px;
-    height: 5px;
-    border-radius: 50%;
-    background-color: #f59e0b;
-    display: inline-block;
-    flex-shrink: 0;
-}
-
 .ml {
     width: 100%;
     box-sizing: border-box;
-    /* margin-left: 1.2em; */
     margin-top: 1em;
     margin-bottom: 1em;
     padding: 18px 0.8em 10px;
@@ -545,16 +413,10 @@ footer {
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     text-align: justify;
     text-justify: inter-ideograph;
-    /* 日本語と英語が混ざった文章の文字間隔を自然に調整 */
     word-break: normal;
-    /* 英単語の途中での折り返しを防ぎ、ハイフネーションを有効にする */
     overflow-wrap: break-word;
-    /* 要素幅を超える長すぎる英単語がある場合のみ折り返す */
     line-break: strict;
-    /* 禁則処理をより厳密に行い、可能な限り行内に収める */
     hanging-punctuation: allow-end;
-    /* 行末の句読点を枠外に「ぶら下げて」1行に収める（主にSafari/iOS用） */
-    /* font-feature-settings: "palt"; */
 }
 
 .hyphen-auto {
@@ -562,7 +424,6 @@ footer {
     -webkit-hyphens: auto;
     word-break: normal;
     overflow-wrap: break-word;
-    /* 念のための保険 */
 }
 
 .spacer {
@@ -594,25 +455,11 @@ footer {
     font-weight: 700;
 }
 
-.section.h2 b,
-.section.h4 b {
-    width: 100%;
-    margin-bottom: 10px;
-    padding: 2px;
-    border-radius: 5px;
-    display: inline-block;
-    background-color: #fff;
-    border-color: #ccc;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-/* 音声アイコンを囲む外枠 */
+/* --- 音声ボタン・発音記号（共通） --- */
 .audio_box {
     vertical-align: middle;
-    /* 縦方向の中央揃え */
 }
 
-/* スマホでのタップに最適化したボタンデザイン */
 .audio_button {
     display: inline-flex;
     align-items: center;
@@ -625,25 +472,27 @@ footer {
     border-radius: 5px;
     box-shadow: 0 2px 6px rgba(0, 7, 209, 0.15);
     -webkit-tap-highlight-color: transparent;
-    /* スマホ特有のタップ時のグレー/青の半透明枠を消す（重要） */
     transition: transform 0.1s ease, box-shadow 0.1s ease, background-color 0.1s ease;
 }
 
-/* タップした瞬間のフィードバック（スマホではこれが最重要） */
 .audio_button:active {
     transform: scale(0.92);
-    /* 物理ボタンのようにスッと沈み込む */
     box-shadow: 0 1px 2px rgba(0, 7, 209, 0.05);
-    /* 押し込まれたように影を小さくする */
     background-color: #bfd0fd;
-    /* タップした瞬間にほんのり青く光る */
 }
 
+.ipa-text {
+    font-size: 1em;
+    color: #272727;
+    font-weight: 500;
+    margin-left: 6px;
+}
+
+/* --- 画像・サンプル画像アコーディオン --- */
 .related_image {
     display: flex;
     flex-direction: column;
     width: 100%;
-    /* max-width: 500px; */
     margin: 20px auto;
     font-family: sans-serif;
 }
@@ -652,7 +501,7 @@ footer {
     display: flex;
     flex-direction: column;
     width: 100%;
-    margin: 16px auto;
+    margin: 16px auto 10px;
     font-family: inherit;
 
     /* アコーディオンのボタン部分 */
@@ -682,8 +531,7 @@ footer {
         box-shadow: 0 4px 10px rgba(15, 23, 42, 0.1);
     }
 
-    /* --- アイコン作成ここから --- */
-    /* 2本の線の共通スタイル */
+    /* アイコン作成（＋ / ×） */
     .accordion-trigger::before,
     .accordion-trigger::after {
         content: '';
@@ -697,7 +545,6 @@ footer {
         border-radius: 2px;
     }
 
-    /* 初期状態（＋） */
     .accordion-trigger::before {
         transform: translateY(-50%) rotate(0deg);
     }
@@ -705,8 +552,6 @@ footer {
     .accordion-trigger::after {
         transform: translateY(-50%) rotate(90deg);
     }
-
-    /* --- アイコン作成ここまで --- */
 
     /* コンテンツ部分 */
     .accordion-content {
@@ -737,7 +582,6 @@ footer {
             box-shadow: 0 4px 10px rgba(15, 23, 42, 0.18);
         }
 
-        /* --- 開いた時のアイコン（×：アンバー色に変化） --- */
         .accordion-trigger::before {
             background-color: #f59e0b;
             transform: translateY(-50%) rotate(315deg);
@@ -758,7 +602,9 @@ footer {
     }
 }
 
-/* --- 7. h1 partN (語源パーツ) - 左パネルに配置（立体チップ＆＋連結） --- */
+/* ==========================================================================
+   6. セクション別スタイル：h1（語源パーツ）
+   ========================================================================== */
 .section.h1 {
     background-color: #f1f5f9;
 }
@@ -815,12 +661,147 @@ footer {
     pointer-events: none;
 }
 
-/* --- アコーディオン（h3関連語/h5語源）のカスタムデザイン --- */
-/* 1. デフォルトの三角アイコンを非表示にする（全ブラウザ対応） */
+/* ==========================================================================
+   7. セクション別スタイル：h2（メイン単語：コントラスト・ダークヘッダー）
+   ========================================================================== */
+/* 親のdiv全体を1つのカードとして影をつける */
+.content>div:has(.w-p4-header) {
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.15);
+    overflow: hidden;
+}
+
+.w.w-p4-header {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    column-gap: 12px;
+    row-gap: 0;
+    align-items: center;
+    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+    border-radius: 8px 8px 0 0;
+    padding: 14px 16px;
+    margin-bottom: 0;
+    color: #ffffff;
+    position: relative;
+    overflow: hidden;
+    box-sizing: border-box;
+}
+
+.w.w-p4-header:not(:has(.w-p4-num)) {
+    grid-template-columns: 0px 1fr;
+    column-gap: 0;
+}
+
+.w.w-p4-header::after {
+    content: "";
+    position: absolute;
+    top: -30px;
+    right: -30px;
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(56, 189, 248, 0.2) 0%, transparent 70%);
+    pointer-events: none;
+}
+
+.w-p4-top {
+    display: contents;
+}
+
+/* 1段目左：番号 */
+.w-p4-num {
+    grid-column: 1;
+    grid-row: 1;
+    background-color: #f59e0b;
+    color: #0f172a;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 12px;
+    font-weight: 800;
+    padding: 2px 6px;
+    border-radius: 4px;
+    letter-spacing: 0.04em;
+    line-height: 1.4;
+    flex-shrink: 0;
+}
+
+/* 1段目右：英単語 */
+.w-p4-word {
+    grid-column: 2;
+    grid-row: 1;
+    font-size: 24px;
+    font-weight: 800;
+    color: #ffffff;
+    letter-spacing: 0.02em;
+    line-height: 1.2;
+}
+
+/* 2段目：音声ボタン・発音記号エリア（左端を単語に合わせる） */
+.w-p4-header .audio_box {
+    grid-column: 2;
+    grid-row: 2;
+    display: inline-flex;
+    align-items: center;
+    margin-top: 12px;
+    margin-left: 0;
+}
+
+.w-p4-header .audio_box:empty {
+    display: none;
+}
+
+.w-p4-header .ipa-text {
+    color: #e2e8f0;
+}
+
+/* 3段目：意味（少し上下の間を空け、左端を単語・音声ボタンと合わせる） */
+.w-p4-meanings {
+    grid-column: 2;
+    grid-row: 3;
+    margin-top: 12px;
+    margin-left: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.w-p4-meaning-item {
+    background-color: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    color: #f8fafc;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 5px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    line-height: 1.4;
+}
+
+.w-p4-dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background-color: #f59e0b;
+    display: inline-block;
+    flex-shrink: 0;
+}
+
+/* 説明部分（.ml）の上側の角丸とマージンをなくして直結させる */
+.w.w-p4-header+.ml {
+    margin-top: 0;
+    margin-bottom: 0;
+    border-radius: 0 0 8px 8px;
+    box-shadow: none;
+    box-sizing: border-box;
+}
+
+/* ==========================================================================
+   8. アコーディオン共通設定（h3関連語 / h5語源）
+   ========================================================================== */
 .section.h3 details summary::-webkit-details-marker,
 .section.h5 details summary::-webkit-details-marker {
     display: none;
-    /* Webkit系 (Chrome, Safari, Edge) */
 }
 
 .section.h3 details summary,
@@ -831,74 +812,25 @@ footer {
     display: block;
 }
 
+.section.h3 details[open] .ml,
+.section.h5 details[open] .content {
+    display: block;
+    overflow: hidden;
+}
+
+/* ==========================================================================
+   9. セクション別スタイル：h3（関連語：スリム・スレートバー）
+   ========================================================================== */
 .section.h3 .content div:not(.sample_image) {
     padding-top: 0.5em;
     padding-bottom: 0.5em;
 }
 
-/* 3. 洗練された矢印アイコン（∨）を作成（擬似要素 ::after） */
-.section.h3 details summary:has(.h3-p4-bar)::after {
-    content: '';
-    /* テキストは空 */
-    position: absolute;
-    /* 中央（50%）からテキスト半分＋隙間分だけ左へ配置 */
-    left: calc(50% - 2.2em);
-    bottom: 5%;
-    z-index: 2;
-    width: 0.6em;
-    height: 0.6em;
-    border-right: 2px solid #d8d8d8d1;
-    /* 矢印の色 */
-    border-bottom: 2px solid #d8d8d8d1;
-    /* 初期状態：下向き矢印（∨） */
-    transform: translateX(-50%) translateY(-70%) rotate(45deg);
-    /* アニメーションの設定（0.3秒かけて滑らかに） */
-    transition: transform 0.3s ease, border-color 0.3s ease;
-}
-
-/* ホバー時の矢印の色を少し濃くする */
-.section.h3 details summary:has(.h3-p4-bar):hover::after {
-    border-color: #555;
-}
-
-/* 展開時（[open]）のアイコンの状態（∧へ回転） */
-.section.h3 details[open] summary:has(.h3-p4-bar)::after {
-    /* 展開状態：上向き矢印（∧）へ180度回転 */
-    transform: translateX(-50%) translateY(-30%) rotate(225deg);
-    left: 50%;
-}
-
-.section.h3 details summary:has(.h3-p4-bar)::before {
-    content: '説明を表示';
-    position: absolute;
-    /* 中央（50%）から矢印＋隙間分だけ右へ配置し、全体で中央揃えにする */
-    left: 50%;
-    transform: translateX(calc(-50% + 0.9em));
-    bottom: 5%;
-    font-size: 0.7em;
-    color: #d8d8d8d1;
-    white-space: nowrap;
-}
-
-/* スレート背景に合わせて右端の開閉矢印（∨ / ∧）を見やすい色にする */
-.section.h3 details summary:has(.h3-p4-bar):hover::after {
-    border-color: #ffffff;
-}
-
-.section.h3 details[open] summary:has(.h3-p4-bar)::after {
-    border-color: #f59e0b;
-}
-
-.section.h3 details[open] summary:has(.h3-p4-bar)::before {
-    display: none;
-}
-
-/* --- h3 関連語：スリム・スレートバー --- */
 .section.h3 .content>div:has(.h3-p4-bar) {
     padding-top: 0;
     padding-bottom: 0;
     border-bottom: none;
-    margin-bottom: 10px;
+    margin-bottom: 25px;
 }
 
 .h3-p4-bar {
@@ -920,10 +852,6 @@ footer {
     column-gap: 0;
 }
 
-.h3-p4-top {
-    display: contents;
-}
-
 .section.h3 details summary:hover .h3-p4-bar {
     background-color: #263346;
 }
@@ -934,7 +862,7 @@ footer {
     border-radius: 6px 6px 0 0;
 }
 
-/* 1段目左：ナンバー（展開前：グレーベース） */
+/* 1段目左：ナンバー（展開前：グレーベース / 展開時：アンバー） */
 .h3-p4-num {
     grid-column: 1;
     grid-row: 1;
@@ -952,7 +880,6 @@ footer {
     transition: background-color 0.25s ease, color 0.25s ease, border-color 0.25s ease;
 }
 
-/* ナンバー（展開時：黄色・アンバーベースに変化） */
 .section.h3 details[open] summary .h3-p4-num {
     background-color: #f59e0b;
     color: #0f172a;
@@ -969,6 +896,40 @@ footer {
     letter-spacing: 0.02em;
     line-height: 1.3;
     margin: 0;
+}
+
+/* 2段目：音声ボタン・発音記号（左端を単語と合わせる） */
+.h3-p4-bar .audio_box {
+    grid-column: 2;
+    grid-row: 2;
+    display: inline-flex;
+    align-items: center;
+    margin-top: 10px;
+    margin-left: 0;
+    margin-right: 0;
+}
+
+.h3-p4-bar .audio_box:empty {
+    display: none;
+}
+
+.section.h3 .content .h3-p4-bar .audio_box div {
+    padding-top: 0;
+    padding-bottom: 0;
+    border-bottom: none;
+    margin-bottom: 0;
+}
+
+.h3-p4-bar .audio_button {
+    width: 16px;
+    height: 16px;
+    font-size: 8px;
+}
+
+.h3-p4-bar .ipa-text {
+    color: #e2e8f0;
+    font-size: 13.5px;
+    margin-left: 4px;
 }
 
 /* 3段目：意味チップ群（少し上下の間を空け、左端を単語・音声ボタンと合わせる） */
@@ -997,7 +958,6 @@ footer {
     line-height: 1.4;
 }
 
-/* 意味の前のポッチ（展開前：グレーベース） */
 .h3-p4-dot {
     width: 4px;
     height: 4px;
@@ -1008,9 +968,48 @@ footer {
     transition: background-color 0.25s ease;
 }
 
-/* 意味の前のポッチ（展開時：黄色・アンバーベースに変化） */
 .section.h3 details[open] summary .h3-p4-dot {
     background-color: #f59e0b;
+}
+
+/* 開閉インジケーター（「∨ 説明を表示」） */
+.section.h3 details summary:has(.h3-p4-bar)::before {
+    content: '説明を表示';
+    position: absolute;
+    left: 50%;
+    transform: translateX(calc(-50% + 0.9em));
+    bottom: 5%;
+    font-size: 0.7em;
+    color: #d8d8d8d1;
+    white-space: nowrap;
+}
+
+.section.h3 details[open] summary:has(.h3-p4-bar)::before {
+    display: none;
+}
+
+.section.h3 details summary:has(.h3-p4-bar)::after {
+    content: '';
+    position: absolute;
+    left: calc(50% - 2.2em);
+    bottom: 5%;
+    z-index: 2;
+    width: 0.6em;
+    height: 0.6em;
+    border-right: 2px solid #d8d8d8d1;
+    border-bottom: 2px solid #d8d8d8d1;
+    transform: translateX(-50%) translateY(-70%) rotate(45deg);
+    transition: transform 0.3s ease, border-color 0.3s ease;
+}
+
+.section.h3 details summary:has(.h3-p4-bar):hover::after {
+    border-color: #ffffff;
+}
+
+.section.h3 details[open] summary:has(.h3-p4-bar)::after {
+    left: 50%;
+    transform: translateX(-50%) translateY(-30%) rotate(225deg);
+    border-color: #f59e0b;
 }
 
 /* 展開される説明部分（.ml）を上のバーと隙間なく直結させる */
@@ -1024,44 +1023,10 @@ footer {
     box-sizing: border-box;
 }
 
-/* 2段目：h3関連語バー内の音声ボタン・発音記号（左端を単語と合わせる） */
-.h3-p4-bar .audio_box {
-    grid-column: 2;
-    grid-row: 2;
-    display: inline-flex;
-    align-items: center;
-    margin-top: 10px;
-    margin-left: 0;
-    margin-right: 0;
-}
-
-.h3-p4-bar .audio_box:empty {
-    display: none;
-}
-
-/* 既存の .section.h3 .content div の下線・余白ルールが内部divに当たるのを防ぐ */
-.section.h3 .content .h3-p4-bar .audio_box div {
-    padding-top: 0;
-    padding-bottom: 0;
-    border-bottom: none;
-    margin-bottom: 0;
-}
-
-/* h2より少し控えめなボタンサイズに調整 */
-.h3-p4-bar .audio_button {
-    width: 16px;
-    height: 16px;
-    font-size: 8px;
-}
-
-/* スレート背景上で発音記号を見やすい明るい色＆サイズに調整 */
-.h3-p4-bar .ipa-text {
-    color: #e2e8f0;
-    font-size: 13.5px;
-    margin-left: 4px;
-}
-
-/* --- h5「語源」開閉矢印：スレート・ピル（カプセル型） --- */
+/* ==========================================================================
+   10. セクション別スタイル：h5（語源：開閉ピル＆フローカード）
+   ========================================================================== */
+/* 開閉矢印：スレート・ピル（カプセル型） */
 .section.h5 details summary::before {
     content: '';
     position: absolute;
@@ -1077,7 +1042,6 @@ footer {
     transition: background-color 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
 }
 
-/* 矢印（∨）の形状を描画（細めの線で） */
 .section.h5 details summary::after {
     content: '';
     position: absolute;
@@ -1103,17 +1067,7 @@ footer {
     border-color: #f59e0b;
 }
 
-/* 5. 展開されるコンテンツ（span.ml）のアニメーション（JSで制御するため基本設定のみ） */
-.section.h3 details[open] .ml,
-.section.h5 details[open] .content {
-    display: block;
-    /* max-heightを適用させるため */
-    overflow: hidden;
-    /* アニメーション中の要素のはみ出しを防ぐ */
-}
-
-/* --- 8. h5 tag/p (詳細タグ/記述) --- */
-/* --- 8. h5 tag/p (詳細タグ/記述)：案2 フローカード＆矢印（全カード統一） --- */
+/* 詳細タグ（.tag）＆記述（.p）：フローカード＆矢印 */
 .section.h5 .content .tag {
     display: flex;
     align-items: center;
@@ -1128,7 +1082,6 @@ footer {
     box-sizing: border-box;
 }
 
-/* 言語名の左側のポッチ（すべて統一） */
 .section.h5 .content .tag::before {
     content: "";
     width: 6px;
@@ -1138,7 +1091,6 @@ footer {
     flex-shrink: 0;
 }
 
-/* 説明部分（上の言語バーと直結した白カード） */
 .section.h5 .content .p {
     position: relative;
     background-color: #ffffff;
@@ -1155,7 +1107,6 @@ footer {
     box-sizing: border-box;
 }
 
-/* カード間の下向き矢印バッジ（最後のカード以外に表示） */
 .section.h5 .content .p:not(:last-child)::after {
     content: "▼";
     position: absolute;
@@ -1174,24 +1125,13 @@ footer {
     line-height: 1;
 }
 
-/* 最後のカードの下余白を調整 */
 .section.h5 .content .p:last-child {
     margin-bottom: 4px;
 }
 
-/* --- 9. h3の行間margin_bottom 25px --- */
-.section.h3 .content div {
-    margin-bottom: 25px;
-}
-
-/* ===== Google Ngram カスタムデザイン（ダッシュボード風白カード） ===== */
-:root {
-    --ngram-bg: #ffffff;
-    --ngram-border: #cbd5e1;
-    --ngram-text: #1e293b;
-    --ngram-accent: #0f172a;
-}
-
+/* ==========================================================================
+   11. Google Ngram カスタムデザイン（ダッシュボード風白カード）
+   ========================================================================== */
 .content .ngram-box {
     margin-top: 20px;
     margin-bottom: 8px;
@@ -1204,7 +1144,6 @@ footer {
     box-sizing: border-box;
 }
 
-/* コントロールバー（淡いスレート背景でグループ化） */
 .content .ngram-box .ngram-controls {
     display: flex;
     flex-wrap: wrap;
@@ -1261,7 +1200,6 @@ footer {
     box-shadow: 0 0 0 2px rgba(0, 170, 192, 0.2);
 }
 
-/* 追加ボタン（ダークネイビー） */
 .ngram-btn {
     padding: 6px 12px;
     border: 1px solid #0f172a;
@@ -1282,7 +1220,6 @@ footer {
     transform: scale(0.95);
 }
 
-/* 年代プリセットボタン（白背景ピル型） */
 .ngram-preset-btn {
     padding: 5px 10px;
     border: 1px solid #cbd5e1;
@@ -1301,7 +1238,6 @@ footer {
     color: #0f172a;
 }
 
-/* 単語タグ一覧 */
 .content .ngram-box .ngram-tags {
     display: flex;
     flex-wrap: wrap;
@@ -1354,9 +1290,9 @@ footer {
     margin-bottom: 0;
 }
 
-
-
-/* --- 10. レスポンシブ対応：モバイルでは縦積みレイアウトに戻す --- */
+/* ==========================================================================
+   12. レスポンシブ対応
+   ========================================================================== */
 @media (max-width: 900px) {
 
     /* パネル構造を縦積みに */
@@ -1371,7 +1307,6 @@ footer {
         border-left: none;
     }
 
-    /* 💡 タイムラインマーカーなし */
     .timeline-panel .section::before {
         display: none;
     }
@@ -1380,49 +1315,33 @@ footer {
 @media (max-width: 768px) {
     .search-container {
         padding: 15px 10px;
-        /* flex-wrap: wrap; を削除またはコメントアウトし、横並びを維持 */
         flex-wrap: nowrap;
-        /* 明示的に横並びを維持 */
         background-color: #121212;
         backdrop-filter: none;
     }
 
-    /* 💡 変更点: search-box-container のモバイル設定 */
     .search-box-container {
-        /* モバイルでも検索窓が広い幅を占めるよう、flex: 3 を設定 */
         flex: 4 1 auto;
     }
 
     #searchBox {
-        /* 💡 変更点: search-box-container 内で全幅を占めるように */
-        /* width: 100%; */
         font-size: 16px;
-        padding: 12px 0px 12px 10px;
-        /* 右パディングを40pxに調整 */
+        padding: 12px 38px 12px 10px;
         min-width: 0;
-        /* border-radius: 10px; */
     }
 
-    #searchBtn {
-        /* 💡 変更点: ボタンの幅を固定または小さめの比率にする (例: 1) */
-        flex: 1 0 auto;
-        /* 1 の比率、または幅を固定したい場合は flex: 0 0 auto; のままでも可 */
-        max-width: 120px;
-        /* 必要に応じて最大幅を設定 */
-        font-size: 16px;
-        padding: 12px 15px;
-        border-radius: 8px;
-    }
-
-    /* 💡 モバイルでのクリアボタンの位置調整 */
     .clear-button {
-        /* 💡 変更点: search-box-container が基準になったため、right: 15px (searchBoxのpadding-right: 40px内に収まる) */
-        /* right: 0px;
-        top: 50%;
-        transform: translateY(-50%); */
         width: 25px;
         height: 25px;
         font-size: 20px;
+    }
+
+    #searchBtn {
+        flex: 1 0 auto;
+        max-width: 120px;
+        font-size: 16px;
+        padding: 12px 15px;
+        border-radius: 8px;
     }
 
     .entry {
@@ -1437,33 +1356,6 @@ footer {
         margin-bottom: 15px;
     }
 
-    .entry .head::after {
-        font-size: 10px;
-        padding: 3px 8px;
-    }
-
-    .subtitle {
-        font-size: 16px;
-    }
-
-    .content {
-        font-size: 14px;
-    }
-
-    .content div:not(:has(button)) {
-        line-height: 1.6;
-        margin-bottom: 25px;
-        font-size: 14px;
-        word-break: break-word;
-        overflow-wrap: break-word;
-    }
-
-    .timeline-panel {
-        margin-top: 0px;
-        padding-left: 0px;
-        border-left: none;
-    }
-
     .calender_bgc {
         margin: 7px 0px;
         padding: 1px 6px;
@@ -1476,17 +1368,20 @@ footer {
         font-size: 10px;
     }
 
-    /* 💡 タイムラインマーカーなし */
-    .timeline-panel .section::before {
-        display: none;
+    .subtitle {
+        font-size: 16px;
     }
 
-    .ngram-box {
-        padding: 12px;
+    .content {
+        font-size: 14px;
     }
 
-    .ngram-chart-container {
-        height: 240px;
+    .content div:not(:has(button)):not(.sample_image) {
+        line-height: 1.6;
+        margin-bottom: 25px;
+        font-size: 14px;
+        word-break: break-word;
+        overflow-wrap: break-word;
     }
 
     .w.w-p4-header {
@@ -1515,5 +1410,13 @@ footer {
     .h3-p4-meaning-item {
         font-size: 11.5px;
         padding: 2px 6px;
+    }
+
+    .content .ngram-box {
+        padding: 12px;
+    }
+
+    .content .ngram-box .ngram-chart-container {
+        height: 240px;
     }
 }
