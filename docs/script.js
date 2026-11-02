@@ -18,28 +18,69 @@ import { setupNgramInSection } from './ngram.js';
 let data = [];
 let dataLoaded = false;
 let currentRenderedWord = null; // 💡 現在表示中の検索ワードを保持
+let isSelectingSuggestion = false; // 💡 サジェスト選択・履歴移動中のinputイベント抑止フラグ
+let historyDebounceTimer = null; // 💡 戻る・進む連打時のデバウンス用タイマー
+let currentSearchId = 0; // 💡 非同期処理の世代管理用ID
+const audioCache = new Map(); // 💡 音声・発音データのキャッシュ
+const activeAudioTimers = new Set(); // 💡 実行中の音声DOM監視タイマー管理
 
 // 💡 追加：URLの変更を検知して自動検索をリセット・実行する関数
-function handleUrlSearch() {
+function handleUrlSearch(event) {
     if (!dataLoaded) return; // データ未読み込み時は処理をスキップ（fetch完了後に再度呼ばれるため）
 
     const paramString = window.location.hash.replace('#', '?') || window.location.search;
     const urlParams = new URLSearchParams(paramString);
-    const targetWord = urlParams.get('word');
+    const stateWord = (event && event.state && typeof event.state.word === "string") ? event.state.word : null;
+    const targetWord = urlParams.get('word') ?? stateWord;
+
+    // 履歴移動時はサジェストを閉じ、検索窓のフォーカスを解除してIME等の干渉を防ぐ
+    isSelectingSuggestion = true;
+    suggestionList.innerHTML = "";
+    setSuggestionDisplay(false);
+    selectedSuggestionIndex = -1;
+    if (document.activeElement === searchBox) {
+        searchBox.blur();
+    }
 
     if (targetWord) {
-        if (currentRenderedWord === targetWord) return;
         searchBox.value = targetWord;
         clearBtn.style.display = "flex";
-        doSearch(false); // 履歴の二重追加を防ぎつつ検索を実行
     } else {
-        if (currentRenderedWord === null && results.children.length > 0) return;
-        // パラメータが消された場合は初期画面にリセットする
-        currentRenderedWord = null;
         searchBox.value = "";
         clearBtn.style.display = "none";
-        results.innerHTML = "";
-        prependEntry();
+    }
+
+    const executeUrlSearch = () => {
+        historyDebounceTimer = null;
+        isSelectingSuggestion = false;
+
+        if (targetWord) {
+            if (currentRenderedWord === targetWord && results.children.length > 0) return;
+            searchBox.value = targetWord;
+            clearBtn.style.display = "flex";
+            doSearch(false); // 履歴の二重追加を防ぎつつ検索を実行
+        } else {
+            if (currentRenderedWord === null && results.children.length > 0) return;
+            // パラメータが消された場合は初期画面にリセットする
+            currentSearchId++;
+            activeAudioTimers.forEach(id => clearInterval(id));
+            activeAudioTimers.clear();
+            currentRenderedWord = null;
+            searchBox.value = "";
+            clearBtn.style.display = "none";
+            results.innerHTML = "";
+            prependEntry();
+        }
+    };
+
+    if (historyDebounceTimer) {
+        clearTimeout(historyDebounceTimer);
+    }
+
+    if (event) {
+        historyDebounceTimer = setTimeout(executeUrlSearch, 100);
+    } else {
+        executeUrlSearch();
     }
 }
 
@@ -266,8 +307,29 @@ document.addEventListener("click", (e) => {
     }
 });
 
+// 💡 サジェスト候補を選択・確定する共通関数（スマホのIME未確定時にも確実にフォーカス解除・非表示化）
+function selectSuggestionItem(searchValue) {
+    isSelectingSuggestion = true;
+    searchBox.blur();
+    searchBox.value = searchValue;
+    clearBtn.style.display = "flex";
+    suggestionList.innerHTML = "";
+    setSuggestionDisplay(false);
+    selectedSuggestionIndex = -1;
+    doSearch();
+    resetZoom();
+    setTimeout(() => {
+        searchBox.value = searchValue;
+        suggestionList.innerHTML = "";
+        setSuggestionDisplay(false);
+        isSelectingSuggestion = false;
+    }, 150);
+}
+
 // 💡 検索窓への入力監視 (×ボタンの表示/非表示切り替え)
 searchBox.addEventListener("input", () => {
+    if (isSelectingSuggestion) return;
+
     if (searchBox.value.length > 0) {
         clearBtn.style.display = "flex";
     } else {
@@ -324,12 +386,29 @@ searchBox.addEventListener("input", () => {
             }
         });
 
+        let touchStartX = 0;
+        let touchStartY = 0;
+
+        li.addEventListener("touchstart", (e) => {
+            if (e.touches && e.touches.length > 0) {
+                touchStartX = e.touches[0].clientX;
+                touchStartY = e.touches[0].clientY;
+            }
+        }, { passive: true });
+
+        li.addEventListener("touchend", (e) => {
+            if (e.changedTouches && e.changedTouches.length > 0) {
+                const dx = Math.abs(e.changedTouches[0].clientX - touchStartX);
+                const dy = Math.abs(e.changedTouches[0].clientY - touchStartY);
+                if (dx < 10 && dy < 10) {
+                    e.preventDefault();
+                    selectSuggestionItem(item.searchValue);
+                }
+            }
+        });
+
         li.addEventListener("click", () => {
-            searchBox.value = item.searchValue;
-            suggestionList.innerHTML = "";
-            setSuggestionDisplay(false);
-            selectedSuggestionIndex = -1;
-            searchBtn.click();
+            selectSuggestionItem(item.searchValue);
         });
 
         suggestionList.appendChild(li);
@@ -345,12 +424,15 @@ searchBox.addEventListener("input", () => {
 
 // 💡 クリアボタン押下時の処理
 clearBtn.addEventListener("click", () => {
+    if (historyDebounceTimer) {
+        clearTimeout(historyDebounceTimer);
+        historyDebounceTimer = null;
+    }
     searchBox.value = ""; // 検索窓の文字を空にする
     clearBtn.style.display = "none"; // ×ボタンを非表示にする
     suggestionList.innerHTML = "";
     setSuggestionDisplay(false);
     selectedSuggestionIndex = -1;
-    resetZoom(); // ズームリセット関数を実行
     searchBox.focus(); // 検索窓にフォーカスを戻す（次の入力を促す）
 });
 
@@ -416,7 +498,8 @@ searchBox.addEventListener("keydown", (e) => {
         }
         if (isSuggestionVisible && selectedSuggestionIndex >= 0 && items[selectedSuggestionIndex]) {
             e.preventDefault();
-            searchBox.value = items[selectedSuggestionIndex].dataset.searchValue;
+            selectSuggestionItem(items[selectedSuggestionIndex].dataset.searchValue);
+            return;
         }
         setSuggestionDisplay(false);
         selectedSuggestionIndex = -1;
@@ -432,12 +515,21 @@ function startAnimation(container, drawFunc) {
 }
 
 function doSearch(updateHistory = true) {
+    if (historyDebounceTimer) {
+        clearTimeout(historyDebounceTimer);
+        historyDebounceTimer = null;
+    }
+
     const raw = searchBox.value.trim();
     const query = raw.toLowerCase();
 
     if (!query) {
         return;
     }
+
+    const searchId = ++currentSearchId;
+    activeAudioTimers.forEach(id => clearInterval(id));
+    activeAudioTimers.clear();
 
     currentRenderedWord = raw;
 
@@ -446,6 +538,8 @@ function doSearch(updateHistory = true) {
         const currentUrlWord = new URLSearchParams(paramString).get('word');
         if (currentUrlWord !== raw) {
             window.history.pushState({ word: raw }, "", `#word=${encodeURIComponent(raw)}`);
+        } else {
+            window.history.replaceState({ word: raw }, "", `#word=${encodeURIComponent(raw)}`);
         }
     }
 
@@ -666,7 +760,7 @@ function doSearch(updateHistory = true) {
         results.appendChild(div);
 
         // 💡 最後に非同期で音声をAPIから取得し、先ほどのdiv内にアイコンを生成
-        fetchAndSetAudio(item.word, item.num, item.partOfSpeech);
+        fetchAndSetAudio(item.word, item.num, item.partOfSpeech, searchId);
 
         // 💡 関連語（h3）の音声・発音記号も非同期で取得
         div.querySelectorAll(".h3-audio-box").forEach(box => {
@@ -677,7 +771,7 @@ function doSearch(updateHistory = true) {
                     w => w.word && w.word.toLowerCase() === relWord.toLowerCase()
                 );
                 const relPos = matchedWordObj ? (matchedWordObj.partOfSpeech || "") : "";
-                fetchAndSetAudio(relWord, relKey, relPos);
+                fetchAndSetAudio(relWord, relKey, relPos, searchId);
             }
         });
 
@@ -714,171 +808,193 @@ function doSearch(updateHistory = true) {
 
 // 💡 Merriam-Webster APIから音声を取得し、該当のdiv要素内にアイコンを描画する関数
 // ※呼び出し元を fetchAndSetAudio(word, num, partOfSpeech) となるよう調整してください
-async function fetchAndSetAudio(word, num, partOfSpeech = "") {
+async function fetchAndSetAudio(word, num, partOfSpeech = "", searchId = currentSearchId) {
     try {
-        const k = "74a8b9a7-6973-4b74-b19d-1425e02f3912";
-        const apiUrl = `https://www.dictionaryapi.com/api/v3/references/collegiate/json/${encodeURIComponent(word)}?key=${k}`;
+        if (searchId !== currentSearchId) return;
 
-        const response = await fetch(apiUrl);
-        if (!response.ok) return;
-
-        const data = await response.json();
-        let audioFileName = "";
-        let rawMwPron = ""; // MW独自の独自発音表記を格納する変数
-
-        // Merriam-WebsterのJSONから音声ファイル名と発音文字列を抽出
-        if (Array.isArray(data) && data.length > 0 && typeof data[0] === 'object') {
-            let targetEntry = data[0]; // デフォルトは一番最初の検索結果
-
-            // エクセルから取得した品詞(partOfSpeech)の指定がある場合、一致するものを探す
-            if (partOfSpeech) {
-                const searchPos = partOfSpeech.trim().toLowerCase();
-                const matchedEntry = data.find(entry => {
-                    if (!entry.fl) return false;
-                    const fl = entry.fl.toLowerCase();
-                    return fl === searchPos || fl.includes(searchPos);
-                });
-
-                if (matchedEntry) {
-                    targetEntry = matchedEntry;
-                }
-            }
-
-            // 発音データ(prs)と音声データ(sound.audio)が存在するかチェック
-            if (targetEntry.hwi && targetEntry.hwi.prs && targetEntry.hwi.prs.length > 0) {
-                const prsObj = targetEntry.hwi.prs[0];
-                if (prsObj.sound) {
-                    audioFileName = prsObj.sound.audio;
-                }
-                if (prsObj.mw) {
-                    rawMwPron = prsObj.mw;
-                }
-            }
-
-            // 音声や発音記号がない場合、最初のエントリから取得
-            if ((!audioFileName || !rawMwPron) && data[0].hwi && data[0].hwi.prs && data[0].hwi.prs.length > 0) {
-                const firstPrsObj = data[0].hwi.prs[0];
-                if (!audioFileName && firstPrsObj.sound) {
-                    audioFileName = firstPrsObj.sound.audio;
-                }
-                if (!rawMwPron && firstPrsObj.mw) {
-                    rawMwPron = firstPrsObj.mw;
-                }
-            }
-        }
-
+        const cacheKey = `${String(word).toLowerCase()}__${String(partOfSpeech).trim().toLowerCase()}`;
         let audioUrl = "";
+        let ipaText = "";
 
-        // ファイル名からMerriam-Websterの仕様に従って mp3 の URL を組み立てる
-        if (audioFileName) {
-            let subdir = audioFileName.charAt(0);
-            if (audioFileName.startsWith("bix")) subdir = "bix";
-            else if (audioFileName.startsWith("gg")) subdir = "gg";
-            else if (/^[^a-zA-Z]/.test(subdir)) subdir = "number"; // 数字や記号で始まる場合
+        if (audioCache.has(cacheKey)) {
+            const cached = audioCache.get(cacheKey);
+            audioUrl = cached.audioUrl;
+            ipaText = cached.ipaText;
+        } else {
+            const k = "74a8b9a7-6973-4b74-b19d-1425e02f3912";
+            const apiUrl = `https://www.dictionaryapi.com/api/v3/references/collegiate/json/${encodeURIComponent(word)}?key=${k}`;
 
-            audioUrl = `https://media.merriam-webster.com/audio/prons/en/us/mp3/${subdir}/${audioFileName}.mp3`;
+            const response = await fetch(apiUrl);
+            if (!response.ok || searchId !== currentSearchId) return;
+
+            const data = await response.json();
+            if (searchId !== currentSearchId) return;
+
+            let audioFileName = "";
+            let rawMwPron = ""; // MW独自の独自発音表記を格納する変数
+
+            // Merriam-WebsterのJSONから音声ファイル名と発音文字列を抽出
+            if (Array.isArray(data) && data.length > 0 && typeof data[0] === 'object') {
+                let targetEntry = data[0]; // デフォルトは一番最初の検索結果
+
+                // エクセルから取得した品詞(partOfSpeech)の指定がある場合、一致するものを探す
+                if (partOfSpeech) {
+                    const searchPos = partOfSpeech.trim().toLowerCase();
+                    const matchedEntry = data.find(entry => {
+                        if (!entry.fl) return false;
+                        const fl = entry.fl.toLowerCase();
+                        return fl === searchPos || fl.includes(searchPos);
+                    });
+
+                    if (matchedEntry) {
+                        targetEntry = matchedEntry;
+                    }
+                }
+
+                // 発音データ(prs)と音声データ(sound.audio)が存在するかチェック
+                if (targetEntry.hwi && targetEntry.hwi.prs && targetEntry.hwi.prs.length > 0) {
+                    const prsObj = targetEntry.hwi.prs[0];
+                    if (prsObj.sound) {
+                        audioFileName = prsObj.sound.audio;
+                    }
+                    if (prsObj.mw) {
+                        rawMwPron = prsObj.mw;
+                    }
+                }
+
+                // 音声や発音記号がない場合、最初のエントリから取得
+                if ((!audioFileName || !rawMwPron) && data[0].hwi && data[0].hwi.prs && data[0].hwi.prs.length > 0) {
+                    const firstPrsObj = data[0].hwi.prs[0];
+                    if (!audioFileName && firstPrsObj.sound) {
+                        audioFileName = firstPrsObj.sound.audio;
+                    }
+                    if (!rawMwPron && firstPrsObj.mw) {
+                        rawMwPron = firstPrsObj.mw;
+                    }
+                }
+            }
+
+            // ファイル名からMerriam-Websterの仕様に従って mp3 の URL を組み立てる
+            if (audioFileName) {
+                let subdir = audioFileName.charAt(0);
+                if (audioFileName.startsWith("bix")) subdir = "bix";
+                else if (audioFileName.startsWith("gg")) subdir = "gg";
+                else if (/^[^a-zA-Z]/.test(subdir)) subdir = "number"; // 数字や記号で始まる場合
+
+                audioUrl = `https://media.merriam-webster.com/audio/prons/en/us/mp3/${subdir}/${audioFileName}.mp3`;
+            }
+
+            // MWの独自表記を日本人向けの読みやすいIPAに変換する関数（網羅版）
+            function convertMwToIpa(mwStr) {
+                if (!mwStr) return "";
+                let ipa = mwStr
+                    // カッコ書きの省略可能な発音表記や強勢記号の整理
+                    .replace(/\([ˈˌ]\)/g, '')
+                    .replace(/\*/g, 'ˈ')
+                    .replace(/\\u02cc/g, 'ˌ')
+                    // 2文字以上の組み合わせ（先に置換する必要があるもの）
+                    .replace(/au̇/g, 'aʊ')
+                    .replace(/aù/g, 'aʊ')
+                    .replace(/ȯi/g, 'ɔɪ')
+                    .replace(/yü/g, 'juː')
+                    .replace(/yu̇/g, 'jʊ')
+                    .replace(/t͟h/g, 'ð')   // 有声のth (thisなど)
+                    .replace(/th/g, 'θ')   // 無声のth (thinkなど)
+                    .replace(/sh/g, 'ʃ')
+                    .replace(/zh/g, 'ʒ')
+                    .replace(/ch/g, 'tʃ')
+                    // 単母音・長母音・子音の置換
+                    .replace(/j/g, 'dʒ')
+                    .replace(/y/g, 'j')    // MWの y はIPAの j (yes -> jes)
+                    .replace(/ē/g, 'iː')
+                    .replace(/ā/g, 'eɪ')
+                    .replace(/ī/g, 'aɪ')
+                    .replace(/ō/g, 'oʊ')
+                    .replace(/ü/g, 'uː')
+                    .replace(/ū/g, 'uː')
+                    .replace(/u̇/g, 'ʊ')
+                    .replace(/ȯ/g, 'ɔː')
+                    .replace(/ä/g, 'ɑː')
+                    .replace(/ȧ/g, 'ɑ')
+                    .replace(/a/g, 'æ')    // 単体の a は æ (catなど) ※長音・二重母音変換後に実行
+                    .replace(/æː/g, 'ɑː')  // 上記の置換で ä などが影響を受けないよう調整
+                    .replace(/ə̆/g, 'ə')
+                    .replace(/ᵊ/g, 'ə')
+                    // 音節区切りのハイフンやアンダーバーの整理
+                    .replace(/-/g, '')
+                    .replace(/_/g, '')
+                    // 空白を使ってアクセント記号を見やすくする
+                    .replace(/\s*([ˈˌ])/g, ' $1');
+
+                return `/${ipa}/`;
+            }
+
+            // aの置換順序による干渉を防ぐため、安全に変換処理を実行
+            function safeConvertMwToIpa(mwStr) {
+                if (!mwStr) return "";
+                let ipa = mwStr
+                    .replace(/\([ˈˌ]\)/g, '')
+                    .replace(/\*/g, 'ˈ')
+                    .replace(/\\u02cc/g, 'ˌ')
+                    // 二重母音・特殊子音を先に一時退避または変換
+                    .replace(/au̇|aù/g, 'A_U')
+                    .replace(/ā/g, 'E_I')
+                    .replace(/ī/g, 'A_I')
+                    .replace(/ä/g, 'A_H')
+                    .replace(/ȧ/g, 'A_H')
+                    .replace(/ȯi/g, 'ɔɪ')
+                    .replace(/yü/g, 'J_U_LONG')
+                    .replace(/yu̇/g, 'J_U_SHORT')
+                    .replace(/t͟h/g, 'ð')
+                    .replace(/th/g, 'θ')
+                    .replace(/sh/g, 'ʃ')
+                    .replace(/zh/g, 'ʒ')
+                    .replace(/ch/g, 'tʃ')
+                    .replace(/j/g, 'dʒ')
+                    .replace(/y/g, 'j')
+                    // 残った単体の a を æ に変換
+                    .replace(/a/g, 'æ')
+                    // 退避したものを戻す
+                    .replace(/A_U/g, 'aʊ')
+                    .replace(/E_I/g, 'eɪ')
+                    .replace(/A_I/g, 'aɪ')
+                    .replace(/A_H/g, 'ɑ')
+                    .replace(/J_U_LONG/g, 'juː')
+                    .replace(/J_U_SHORT/g, 'jʊ')
+                    // その他の母音
+                    .replace(/ē/g, 'iː')
+                    .replace(/ō/g, 'oʊ')
+                    .replace(/ü|ū/g, 'uː')
+                    .replace(/u̇/g, 'ʊ')
+                    .replace(/ȯ/g, 'ɔ')
+                    .replace(/ə̆|ᵊ/g, 'ə')
+                    // 区切り記号の除去
+                    .replace(/[-_]/g, '')
+                    // 空白を使ってアクセント記号を見やすくする
+                    .replace(/\s*([ˈˌ])/g, ' $1');
+
+                return `/${ipa}/`;
+            }
+
+            ipaText = safeConvertMwToIpa(rawMwPron);
+            audioCache.set(cacheKey, { audioUrl, ipaText });
         }
-
-        // MWの独自表記を日本人向けの読みやすいIPAに変換する関数（網羅版）
-        function convertMwToIpa(mwStr) {
-            if (!mwStr) return "";
-            let ipa = mwStr
-                // カッコ書きの省略可能な発音表記や強勢記号の整理
-                .replace(/\([ˈˌ]\)/g, '')
-                .replace(/\*/g, 'ˈ')
-                .replace(/\\u02cc/g, 'ˌ')
-                // 2文字以上の組み合わせ（先に置換する必要があるもの）
-                .replace(/au̇/g, 'aʊ')
-                .replace(/aù/g, 'aʊ')
-                .replace(/ȯi/g, 'ɔɪ')
-                .replace(/yü/g, 'juː')
-                .replace(/yu̇/g, 'jʊ')
-                .replace(/t͟h/g, 'ð')   // 有声のth (thisなど)
-                .replace(/th/g, 'θ')   // 無声のth (thinkなど)
-                .replace(/sh/g, 'ʃ')
-                .replace(/zh/g, 'ʒ')
-                .replace(/ch/g, 'tʃ')
-                // 単母音・長母音・子音の置換
-                .replace(/j/g, 'dʒ')
-                .replace(/y/g, 'j')    // MWの y はIPAの j (yes -> jes)
-                .replace(/ē/g, 'iː')
-                .replace(/ā/g, 'eɪ')
-                .replace(/ī/g, 'aɪ')
-                .replace(/ō/g, 'oʊ')
-                .replace(/ü/g, 'uː')
-                .replace(/ū/g, 'uː')
-                .replace(/u̇/g, 'ʊ')
-                .replace(/ȯ/g, 'ɔː')
-                .replace(/ä/g, 'ɑː')
-                .replace(/ȧ/g, 'ɑ')
-                .replace(/a/g, 'æ')    // 単体の a は æ (catなど) ※長音・二重母音変換後に実行
-                .replace(/æː/g, 'ɑː')  // 上記の置換で ä などが影響を受けないよう調整
-                .replace(/ə̆/g, 'ə')
-                .replace(/ᵊ/g, 'ə')
-                // 音節区切りのハイフンやアンダーバーの整理
-                .replace(/-/g, '')
-                .replace(/_/g, '')
-                // 空白を使ってアクセント記号を見やすくする
-                .replace(/\s*([ˈˌ])/g, ' $1');
-
-            return `/${ipa}/`;
-        }
-
-        // aの置換順序による干渉を防ぐため、安全に変換処理を実行
-        function safeConvertMwToIpa(mwStr) {
-            if (!mwStr) return "";
-            let ipa = mwStr
-                .replace(/\([ˈˌ]\)/g, '')
-                .replace(/\*/g, 'ˈ')
-                .replace(/\\u02cc/g, 'ˌ')
-                // 二重母音・特殊子音を先に一時退避または変換
-                .replace(/au̇|aù/g, 'A_U')
-                .replace(/ā/g, 'E_I')
-                .replace(/ī/g, 'A_I')
-                .replace(/ä/g, 'A_H')
-                .replace(/ȧ/g, 'A_H')
-                .replace(/ȯi/g, 'ɔɪ')
-                .replace(/yü/g, 'J_U_LONG')
-                .replace(/yu̇/g, 'J_U_SHORT')
-                .replace(/t͟h/g, 'ð')
-                .replace(/th/g, 'θ')
-                .replace(/sh/g, 'ʃ')
-                .replace(/zh/g, 'ʒ')
-                .replace(/ch/g, 'tʃ')
-                .replace(/j/g, 'dʒ')
-                .replace(/y/g, 'j')
-                // 残った単体の a を æ に変換
-                .replace(/a/g, 'æ')
-                // 退避したものを戻す
-                .replace(/A_U/g, 'aʊ')
-                .replace(/E_I/g, 'eɪ')
-                .replace(/A_I/g, 'aɪ')
-                .replace(/A_H/g, 'ɑ')
-                .replace(/J_U_LONG/g, 'juː')
-                .replace(/J_U_SHORT/g, 'jʊ')
-                // その他の母音
-                .replace(/ē/g, 'iː')
-                .replace(/ō/g, 'oʊ')
-                .replace(/ü|ū/g, 'uː')
-                .replace(/u̇/g, 'ʊ')
-                .replace(/ȯ/g, 'ɔ')
-                .replace(/ə̆|ᵊ/g, 'ə')
-                // 区切り記号の除去
-                .replace(/[-_]/g, '')
-                // 空白を使ってアクセント記号を見やすくする
-                .replace(/\s*([ˈˌ])/g, ' $1');
-
-            return `/${ipa}/`;
-        }
-
-        const ipaText = safeConvertMwToIpa(rawMwPron);
 
         // 1回目の検索でDOM生成前だったり、親要素のinnerHTML更新で上書きされても確実に反映する
         const renderId = String(Date.now() + Math.random());
         let attempts = 0;
         const maxAttempts = 30; // 50ms × 30回（最大1.5秒間、要素の出現と上書きを監視）
+        let timerId = null;
 
         const applyToDom = () => {
+            if (searchId !== currentSearchId) {
+                if (timerId !== null) {
+                    clearInterval(timerId);
+                    activeAudioTimers.delete(timerId);
+                }
+                return;
+            }
+
             const audioBox = document.getElementById(`audio-box-${num}`);
             if (audioBox) {
                 if (audioBox.dataset.renderId !== renderId || !audioBox.querySelector('div')) {
@@ -895,9 +1011,9 @@ async function fetchAndSetAudio(word, num, partOfSpeech = "") {
                     if (audioUrl) {
                         const btn = audioBox.querySelector('.audio_button');
                         const audio = new Audio(audioUrl);
-                        audio.preload = 'auto';
+                        audio.preload = 'none';
 
-                       btn.addEventListener('click', function (e) {
+                        btn.addEventListener('click', function (e) {
                             e.preventDefault();
                             e.stopPropagation();
                             if (btn.dataset.playing === 'true') return;
@@ -927,12 +1043,14 @@ async function fetchAndSetAudio(word, num, partOfSpeech = "") {
             }
 
             attempts++;
-            if (attempts >= maxAttempts) {
+            if (attempts >= maxAttempts && timerId !== null) {
                 clearInterval(timerId);
+                activeAudioTimers.delete(timerId);
             }
         };
 
-        const timerId = setInterval(applyToDom, 50);
+        timerId = setInterval(applyToDom, 50);
+        activeAudioTimers.add(timerId);
         applyToDom();
     } catch (error) {
         // エラー時の処理
