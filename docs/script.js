@@ -97,12 +97,29 @@ function clearAllRecentSearches() {
     recentSearches = [];
     try {
         localStorage.removeItem(RECENT_SEARCHES_STORAGE_KEY);
-    } catch (e) {  }
+    } catch (e) { }
 }
 
 // 💡 ブラウザ標準のスクロール位置自動復元を無効化（戻る・進む時のチラつき防止）
 if ("scrollRestoration" in window.history) {
     window.history.scrollRestoration = "manual";
+}
+
+// 💡 画面書き換え前にCanvasや画像のGPUメモリを明示的に解放する関数（クラッシュ防止）
+function cleanupResultsResources() {
+    if (!results) return;
+    results.querySelectorAll("canvas").forEach(canvas => {
+        const ctx = canvas.getContext("2d");
+        if (ctx) {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
+        canvas.width = 0;
+        canvas.height = 0;
+    });
+    results.querySelectorAll("img").forEach(img => {
+        img.src = "";
+    });
+    results.innerHTML = "";
 }
 
 // 💡 追加：URLの変更を検知して自動検索をリセット・実行する関数
@@ -113,11 +130,6 @@ function handleUrlSearch(event) {
     if (suggestionSelectTimer) {
         clearTimeout(suggestionSelectTimer);
         suggestionSelectTimer = null;
-    }
-
-    if (historyDebounceTimer) {
-        clearTimeout(historyDebounceTimer);
-        historyDebounceTimer = null;
     }
 
     const paramString = window.location.hash.replace('#', '?') || window.location.search;
@@ -145,34 +157,63 @@ function handleUrlSearch(event) {
         clearBtn.style.display = "none";
     }
 
-    isSelectingSuggestion = false;
+    // 💡 チラつき防止のため、スクロール位置のリセットと古い画面のクリアだけは即座（0ms）に実行する
+    const isSameTarget = targetWord
+        ? (currentRenderedWord !== null && currentRenderedWord.toLowerCase() === targetWord.trim().toLowerCase() && results.children.length > 0)
+        : (currentRenderedWord === null && results.children.length > 0);
 
-    if (targetWord) {
-        if (
-            currentRenderedWord !== null &&
-            currentRenderedWord.toLowerCase() === targetWord.trim().toLowerCase() &&
-            results.children.length > 0
-        ) {
-            return;
-        }
-        window.scrollTo(0, 0);
-        searchBox.value = targetWord;
-        clearBtn.style.display = "flex";
-        doSearch(false); // 履歴の二重追加を防ぎつつ検索を実行
-        window.scrollTo(0, 0);
-    } else {
-        if (currentRenderedWord === null && results.children.length > 0) return;
-        // パラメータが消された場合は初期画面にリセットする
+    if (!isSameTarget) {
         window.scrollTo(0, 0);
         currentSearchId++;
         activeAudioTimers.forEach(id => clearInterval(id));
         activeAudioTimers.clear();
-        currentRenderedWord = null;
-        searchBox.value = "";
-        clearBtn.style.display = "none";
-        results.innerHTML = "";
-        prependEntry();
-        window.scrollTo(0, 0);
+        cleanupResultsResources();
+        currentRenderedWord = "__PENDING__"; // 連打中の仮状態マーク
+    }
+
+    const executeUrlSearch = () => {
+        historyDebounceTimer = null;
+        isSelectingSuggestion = false;
+
+        if (targetWord) {
+            if (
+                currentRenderedWord !== null &&
+                currentRenderedWord !== "__PENDING__" &&
+                currentRenderedWord.toLowerCase() === targetWord.trim().toLowerCase() &&
+                results.children.length > 0
+            ) {
+                return;
+            }
+            window.scrollTo(0, 0);
+            searchBox.value = targetWord;
+            clearBtn.style.display = "flex";
+            doSearch(false); // 履歴の二重追加を防ぎつつ検索を実行
+            window.scrollTo(0, 0);
+        } else {
+            if (currentRenderedWord === null && results.children.length > 0) return;
+            // パラメータが消された場合は初期画面にリセットする
+            window.scrollTo(0, 0);
+            currentSearchId++;
+            activeAudioTimers.forEach(id => clearInterval(id));
+            activeAudioTimers.clear();
+            currentRenderedWord = null;
+            searchBox.value = "";
+            clearBtn.style.display = "none";
+            cleanupResultsResources();
+            prependEntry();
+            window.scrollTo(0, 0);
+        }
+    };
+
+    if (historyDebounceTimer) {
+        clearTimeout(historyDebounceTimer);
+    }
+
+    // 💡 戻る・進む連打時は80ms待ってから最終ページの1回分だけを描画する（メモリ枯渇・クラッシュ防止）
+    if (event) {
+        historyDebounceTimer = setTimeout(executeUrlSearch, 80);
+    } else {
+        executeUrlSearch();
     }
 }
 
@@ -272,9 +313,9 @@ Object.assign(suggestionList.style, {
 });
 searchBoxContainer.appendChild(suggestionList);
 
-// 💡 スマホ判定関数
+// 💡 スマホ・タブレット判定関数（画面幅1024px以下 または タッチ操作主体端末）
 function isMobileView() {
-    return window.matchMedia("(max-width: 767px)").matches;
+    return window.matchMedia("(max-width: 1024px), (pointer: coarse)").matches;
 }
 
 // 💡 検索候補表示中の背景スクロール禁止制御
@@ -285,6 +326,46 @@ function setSuggestionDisplay(show) {
     } else {
         suggestionList.style.display = "none";
         document.body.style.overflow = "";
+    }
+}
+
+// 💡 候補が少ないときもスクロールして全項目を選択できるよう下部余白と高さを調整する関数
+function setupSuggestionScrollPadding() {
+    suggestionList.querySelectorAll(".suggestion-spacer").forEach(el => el.remove());
+    suggestionList.style.maxHeight = "240px";
+
+    const items = suggestionList.querySelectorAll("li");
+    if (items.length === 0) return;
+
+    if (isMobileView()) {
+        const firstLi = items[0];
+        const lastLi = items[items.length - 1];
+        const naturalHeight = lastLi.offsetTop + lastLi.offsetHeight;
+        const visibleHeight = Math.min(naturalHeight, 240);
+
+        // 枠の見た目の高さは本来の候補数分の高さ（最大240px）に抑える
+        suggestionList.style.maxHeight = `${visibleHeight}px`;
+
+        const firstCenter = firstLi.offsetTop + firstLi.offsetHeight / 2;
+        const lastCenter = lastLi.offsetTop + lastLi.offsetHeight / 2;
+        const travelDistance = Math.max(0, lastCenter - firstCenter);
+        // 候補が1件のときも少しスクロール感を持たせ、2件以上のときは最後の項目まで確実にスクロールできる余白を確保
+        const extraScrollSpace = items.length > 1 ? travelDistance : 24;
+        const requiredScrollHeight = visibleHeight + extraScrollSpace;
+        const spacerHeight = Math.max(0, Math.ceil(requiredScrollHeight - naturalHeight));
+
+        if (spacerHeight > 0) {
+            const spacer = document.createElement("div");
+            spacer.className = "suggestion-spacer";
+            spacer.setAttribute("aria-hidden", "true");
+            Object.assign(spacer.style, {
+                height: `${spacerHeight}px`,
+                width: "100%",
+                flexShrink: "0",
+                pointerEvents: "none"
+            });
+            suggestionList.appendChild(spacer);
+        }
     }
 }
 
@@ -307,8 +388,10 @@ function normalizeForMatch(str) {
 
 // 💡 キーボード操作・ドラムロール表示用の選択インデックスとハイライト更新関数
 let selectedSuggestionIndex = -1;
+let isKeyboardScrollLock = false;
+let keyboardScrollLockTimer = null;
 
-function updateSuggestionHighlight() {
+function updateSuggestionHighlight({ fromKeyboard = false } = {}) {
     const items = suggestionList.querySelectorAll("li");
     if (items.length === 0) return;
 
@@ -318,20 +401,43 @@ function updateSuggestionHighlight() {
         const firstCenter = firstLi.offsetTop + firstLi.offsetHeight / 2;
         const lastCenter = lastLi.offsetTop + lastLi.offsetHeight / 2;
         const maxScroll = suggestionList.scrollHeight - suggestionList.clientHeight;
-        const scrollRatio = maxScroll > 0 ? Math.min(Math.max(suggestionList.scrollTop / maxScroll, 0), 1) : 0;
-        const focusCenter = firstCenter + (lastCenter - firstCenter) * scrollRatio;
 
-        let closestIndex = 0;
-        let minDistance = Infinity;
-        items.forEach((li, index) => {
-            const itemCenter = li.offsetTop + li.offsetHeight / 2;
-            const dist = Math.abs(itemCenter - focusCenter);
-            if (dist < minDistance) {
-                minDistance = dist;
-                closestIndex = index;
+        let focusCenter = firstCenter;
+
+        if (fromKeyboard && selectedSuggestionIndex >= 0 && selectedSuggestionIndex < items.length) {
+            // キーボードの矢印キー操作時は、選択された項目に合わせてスクロール位置を移動する
+            const targetLi = items[selectedSuggestionIndex];
+            const targetCenter = targetLi.offsetTop + targetLi.offsetHeight / 2;
+            focusCenter = targetCenter;
+
+            if (maxScroll > 0 && lastCenter > firstCenter) {
+                const targetRatio = (targetCenter - firstCenter) / (lastCenter - firstCenter);
+                const targetScrollTop = Math.round(Math.min(Math.max(targetRatio, 0), 1) * maxScroll);
+                isKeyboardScrollLock = true;
+                if (keyboardScrollLockTimer) clearTimeout(keyboardScrollLockTimer);
+                suggestionList.scrollTop = targetScrollTop;
+                keyboardScrollLockTimer = setTimeout(() => {
+                    isKeyboardScrollLock = false;
+                    keyboardScrollLockTimer = null;
+                }, 120);
             }
-        });
-        selectedSuggestionIndex = closestIndex;
+        } else {
+            // スクロール操作時は、現在のスクロール位置から最も近い項目を選択状態にする
+            const scrollRatio = maxScroll > 0 ? Math.min(Math.max(suggestionList.scrollTop / maxScroll, 0), 1) : 0;
+            focusCenter = firstCenter + (lastCenter - firstCenter) * scrollRatio;
+
+            let closestIndex = 0;
+            let minDistance = Infinity;
+            items.forEach((li, index) => {
+                const itemCenter = li.offsetTop + li.offsetHeight / 2;
+                const dist = Math.abs(itemCenter - focusCenter);
+                if (dist < minDistance) {
+                    minDistance = dist;
+                    closestIndex = index;
+                }
+            });
+            selectedSuggestionIndex = closestIndex;
+        }
 
         const listHeight = suggestionList.clientHeight || 240;
         items.forEach((li, index) => {
@@ -339,13 +445,13 @@ function updateSuggestionHighlight() {
             const ratio = (itemCenter - focusCenter) / (listHeight / 2);
             const absRatio = Math.min(Math.abs(ratio), 1.2);
             const rotateX = -ratio * 25;
-            const scale = index === closestIndex ? 1.03 : Math.max(0.9, 1 - absRatio * 0.1);
-            const opacity = index === closestIndex ? 1 : Math.max(0.45, 1 - absRatio * 0.5);
+            const scale = index === selectedSuggestionIndex ? 1.03 : Math.max(0.9, 1 - absRatio * 0.1);
+            const opacity = index === selectedSuggestionIndex ? 1 : Math.max(0.45, 1 - absRatio * 0.5);
 
             li.style.transform = `perspective(500px) rotateX(${rotateX.toFixed(1)}deg) scale(${scale.toFixed(3)})`;
             li.style.opacity = String(opacity.toFixed(2));
 
-            if (index === closestIndex) {
+            if (index === selectedSuggestionIndex) {
                 li.style.backgroundColor = "#f0f4f8";
                 li.style.zIndex = "3";
                 li.style.boxShadow = "0 6px 14px rgba(0, 0, 0, 0.18)";
@@ -364,14 +470,28 @@ function updateSuggestionHighlight() {
 
     items.forEach((li, index) => {
         li.style.opacity = "1";
-        li.style.fontWeight = "normal";
+        li.style.fontWeight = index === selectedSuggestionIndex ? "600" : "normal";
         if (index === selectedSuggestionIndex) {
             li.style.backgroundColor = "#f0f4f8";
             li.style.zIndex = "2";
             li.style.transform = "scale(1.02)";
             li.style.boxShadow = "0 4px 12px rgba(0, 0, 0, 0.18)";
             li.style.borderRadius = "4px";
-            li.scrollIntoView({ block: "nearest" });
+
+            if (fromKeyboard) {
+                const headerEl = suggestionList.querySelector(".suggestion-header");
+                const headerHeight = headerEl ? headerEl.offsetHeight : 0;
+                const itemTop = li.offsetTop;
+                const itemBottom = itemTop + li.offsetHeight;
+                const viewTop = suggestionList.scrollTop + headerHeight;
+                const viewBottom = suggestionList.scrollTop + suggestionList.clientHeight;
+
+                if (itemTop < viewTop) {
+                    suggestionList.scrollTop = itemTop - headerHeight;
+                } else if (itemBottom > viewBottom) {
+                    suggestionList.scrollTop = itemBottom - suggestionList.clientHeight;
+                }
+            }
         } else {
             li.style.backgroundColor = "#ffffff";
             li.style.zIndex = "1";
@@ -382,13 +502,16 @@ function updateSuggestionHighlight() {
     });
 }
 
-// 💡 スマホでのスクロール時にドラムロール表示を更新（requestAnimationFrameで負荷軽減）
+// 💡 スマホ・タブレットでのスクロール時にドラムロール表示を更新（requestAnimationFrameで負荷軽減）
 let isSuggestionScrollTicking = false;
 suggestionList.addEventListener("scroll", () => {
+    if (isKeyboardScrollLock) return;
     if (!isSuggestionScrollTicking && isMobileView() && suggestionList.style.display === "block") {
         isSuggestionScrollTicking = true;
         requestAnimationFrame(() => {
-            updateSuggestionHighlight();
+            if (!isKeyboardScrollLock) {
+                updateSuggestionHighlight();
+            }
             isSuggestionScrollTicking = false;
         });
     }
@@ -599,9 +722,10 @@ function renderRecentSuggestions() {
     });
 
     setSuggestionDisplay(true);
+    setupSuggestionScrollPadding();
+    suggestionList.scrollTop = 0;
 
     if (mobile) {
-        suggestionList.scrollTop = 0;
         updateSuggestionHighlight();
     }
 }
@@ -725,9 +849,10 @@ searchBox.addEventListener("input", () => {
 
     suggestionList.appendChild(fragment);
     setSuggestionDisplay(true);
+    setupSuggestionScrollPadding();
+    suggestionList.scrollTop = 0;
 
     if (mobile) {
-        suggestionList.scrollTop = 0;
         updateSuggestionHighlight();
     }
 });
@@ -828,34 +953,66 @@ searchBtn.addEventListener("click", () => {
     resetZoom();
 });
 
-// Enter押下 ＆ 上下矢印キーでのサジェスト移動
+// Enter押下 ＆ 上下矢印キーでのサジェスト・検索履歴移動（スマホ・タブレット・PC共通）
 searchBox.addEventListener("keydown", (e) => {
     if (e.isComposing || e.keyCode === 229) return;
+
+    if (e.key === "Escape") {
+        if (suggestionList.style.display === "block") {
+            e.preventDefault();
+            suggestionList.innerHTML = "";
+            setSuggestionDisplay(false);
+            selectedSuggestionIndex = -1;
+        }
+        return;
+    }
+
+    // リストが閉じている状態で上下矢印キーが押された場合、履歴または候補を再表示する
+    if ((e.key === "ArrowDown" || e.key === "ArrowUp") && suggestionList.style.display === "none") {
+        if (searchBox.value.length === 0 && recentSearches.length > 0) {
+            e.preventDefault();
+            renderRecentSuggestions();
+            const restoredItems = suggestionList.querySelectorAll("li");
+            if (restoredItems.length > 0) {
+                selectedSuggestionIndex = e.key === "ArrowDown" ? 0 : restoredItems.length - 1;
+                updateSuggestionHighlight({ fromKeyboard: true });
+            }
+            return;
+        }
+    }
 
     const items = suggestionList.querySelectorAll("li");
     const isSuggestionVisible = suggestionList.style.display === "block" && items.length > 0;
 
     if (e.key === "ArrowDown" && isSuggestionVisible) {
         e.preventDefault();
-        selectedSuggestionIndex = (selectedSuggestionIndex + 1) % items.length;
-        updateSuggestionHighlight();
+        if (selectedSuggestionIndex < 0) {
+            selectedSuggestionIndex = 0;
+        } else {
+            selectedSuggestionIndex = (selectedSuggestionIndex + 1) % items.length;
+        }
+        updateSuggestionHighlight({ fromKeyboard: true });
         return;
     }
 
     if (e.key === "ArrowUp" && isSuggestionVisible) {
         e.preventDefault();
-        selectedSuggestionIndex = (selectedSuggestionIndex - 1 + items.length) % items.length;
-        updateSuggestionHighlight();
+        if (selectedSuggestionIndex < 0) {
+            selectedSuggestionIndex = items.length - 1;
+        } else {
+            selectedSuggestionIndex = (selectedSuggestionIndex - 1 + items.length) % items.length;
+        }
+        updateSuggestionHighlight({ fromKeyboard: true });
         return;
     }
 
     if (e.key === "Enter") {
+        e.preventDefault();
         if (!dataLoaded) {
             results.innerHTML = "<p>データを読み込み中です。少し待ってから再試行してください。</p>";
             return;
         }
         if (isSuggestionVisible && selectedSuggestionIndex >= 0 && items[selectedSuggestionIndex]) {
-            e.preventDefault();
             selectSuggestionItem(items[selectedSuggestionIndex].dataset.searchValue);
             return;
         }
@@ -901,7 +1058,7 @@ function doSearch(updateHistory = true) {
         }
     }
 
-    results.innerHTML = "";
+    cleanupResultsResources();
     window.scrollTo(0, 0);
 
     // 数値判定（整数のみ）
@@ -1240,6 +1397,11 @@ function safeConvertMwToIpa(mwStr) {
     return `/${ipa}/`;
 }
 
+// 💡 音声再生用の共有Audioインスタンス（複数生成によるメモリ肥大化を防止）
+const sharedAudioPlayer = new Audio();
+sharedAudioPlayer.preload = "none";
+let activePlayingBtn = null;
+
 // 💡 Merriam-Webster APIから音声を取得し、該当のdiv要素内にアイコンを描画する関数
 // ※呼び出し元を fetchAndSetAudio(word, num, partOfSpeech) となるよう調整してください
 async function fetchAndSetAudio(word, num, partOfSpeech = "", searchId = currentSearchId) {
@@ -1352,33 +1514,38 @@ async function fetchAndSetAudio(word, num, partOfSpeech = "", searchId = current
                     // 音声URLが存在する場合のみイベントリスナーを設定
                     if (audioUrl) {
                         const btn = audioBox.querySelector('.audio_button');
-                        const audio = new Audio(audioUrl);
-                        audio.preload = 'none';
 
                         btn.addEventListener('click', function (e) {
                             e.preventDefault();
                             e.stopPropagation();
                             if (btn.dataset.playing === 'true') return;
 
+                            // 他のボタンが再生中ならリセット
+                            if (activePlayingBtn && activePlayingBtn !== btn) {
+                                activePlayingBtn.dataset.playing = 'false';
+                                activePlayingBtn.style.opacity = '1';
+                            }
+
+                            activePlayingBtn = btn;
                             btn.dataset.playing = 'true';
                             btn.style.opacity = '0.5';
 
-                            audio.currentTime = 0;
+                            sharedAudioPlayer.pause();
+                            sharedAudioPlayer.src = audioUrl;
+                            sharedAudioPlayer.currentTime = 0;
 
-                            audio.onended = () => {
+                            const resetBtn = () => {
                                 btn.dataset.playing = 'false';
                                 btn.style.opacity = '1';
+                                if (activePlayingBtn === btn) {
+                                    activePlayingBtn = null;
+                                }
                             };
 
-                            audio.onerror = () => {
-                                btn.dataset.playing = 'false';
-                                btn.style.opacity = '1';
-                            };
+                            sharedAudioPlayer.onended = resetBtn;
+                            sharedAudioPlayer.onerror = resetBtn;
 
-                            audio.play().catch(() => {
-                                btn.dataset.playing = 'false';
-                                btn.style.opacity = '1';
-                            });
+                            sharedAudioPlayer.play().catch(resetBtn);
                         });
                     }
                 }
