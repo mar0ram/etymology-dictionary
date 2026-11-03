@@ -203,4 +203,13 @@ export function setupTearAnimation() {
         tearBtn.style.opacity = "1";
         tearBtn.style.pointerEvents = "auto";
     });
+
+    return () => {
+        window.removeEventListener('resize', handleResize);
+        if (wrapper) {
+            gsap.killTweensOf(wrapper.children);
+            wrapper.remove();
+            wrapper = null;
+        }
+    };
 }

@@ -206,4 +206,23 @@ export function drawPrecedeModel() {
         renderer.render(scene, camera);
     }
     animate();
+
+    return () => {
+        isPlaying = false;
+        window.removeEventListener('resize', handleResize);
+        scene.traverse(obj => {
+            if (obj.geometry) obj.geometry.dispose();
+            if (obj.material) {
+                if (Array.isArray(obj.material)) {
+                    obj.material.forEach(m => m.dispose());
+                } else {
+                    obj.material.dispose();
+                }
+            }
+        });
+        renderer.dispose();
+        if (typeof renderer.forceContextLoss === 'function') {
+            renderer.forceContextLoss();
+        }
+    };
 }

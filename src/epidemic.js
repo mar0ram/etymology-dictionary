@@ -269,9 +269,35 @@ export function drawEpidemicModel() {
 
     window.addEventListener('resize', handleResize);
 
+    let rafId = 0;
     function animate() {
-        requestAnimationFrame(animate);
+        rafId = requestAnimationFrame(animate);
         renderer.render(scene, camera);
     }
     animate();
+
+    return () => {
+        currentType = null;
+        cancelAnimationFrame(rafId);
+        window.removeEventListener('resize', handleResize);
+        clearCircles();
+        gsap.killTweensOf(controlsContainer.querySelectorAll('span'));
+        mapTexture.dispose();
+        scene.traverse(obj => {
+            gsap.killTweensOf(obj.scale);
+            if (obj.geometry) obj.geometry.dispose();
+            if (obj.material) {
+                gsap.killTweensOf(obj.material);
+                if (Array.isArray(obj.material)) {
+                    obj.material.forEach(m => m.dispose());
+                } else {
+                    obj.material.dispose();
+                }
+            }
+        });
+        renderer.dispose();
+        if (typeof renderer.forceContextLoss === 'function') {
+            renderer.forceContextLoss();
+        }
+    };
 }

@@ -706,4 +706,8 @@ export function prependEntry() {
 
     results.prepend(entry);
     // results.prepend(calendarEntry);
+
+    return () => {
+        entry.remove();
+    };
 }

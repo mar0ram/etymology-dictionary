@@ -282,4 +282,14 @@ export function setupWarnAnimation() {
     
     handleResize(); // 初期実行
     window.addEventListener('resize', handleResize);
+
+    return () => {
+        window.removeEventListener('resize', handleResize);
+        if (pulseAnim) pulseAnim.kill();
+        if (topScrollAnim) topScrollAnim.kill();
+        if (bottomScrollAnim) bottomScrollAnim.kill();
+        if (screen) {
+            screen.remove();
+        }
+    };
 }

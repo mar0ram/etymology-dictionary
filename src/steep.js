@@ -174,9 +174,22 @@ export function drawSteepModel() {
 
     window.addEventListener('resize', handleResize);
 
+    let rafId = 0;
     function animate() {
-        requestAnimationFrame(animate);
+        rafId = requestAnimationFrame(animate);
         renderer.render(scene, camera);
     }
     animate();
+
+    return () => {
+        cancelAnimationFrame(rafId);
+        window.removeEventListener('resize', handleResize);
+        gsap.killTweensOf(mountainParams);
+        gridGeo.dispose();
+        gridMat.dispose();
+        renderer.dispose();
+        if (typeof renderer.forceContextLoss === 'function') {
+            renderer.forceContextLoss();
+        }
+    };
 }

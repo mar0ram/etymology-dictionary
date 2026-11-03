@@ -332,10 +332,32 @@ export function drawFiberModel() {
 
     window.addEventListener('resize', handleResize);
 
+    let rafId = 0;
     function animate() {
-        requestAnimationFrame(animate);
+        rafId = requestAnimationFrame(animate);
         if (isPlaying) animateAll();
         renderer.render(scene, camera);
     }
     animate();
+
+    return () => {
+        isPlaying = false;
+        cancelAnimationFrame(rafId);
+        window.removeEventListener('resize', handleResize);
+        gsap.killTweensOf(controlsContainer.querySelectorAll('span'));
+        scene.traverse(obj => {
+            if (obj.geometry) obj.geometry.dispose();
+            if (obj.material) {
+                if (Array.isArray(obj.material)) {
+                    obj.material.forEach(m => m.dispose());
+                } else {
+                    obj.material.dispose();
+                }
+            }
+        });
+        renderer.dispose();
+        if (typeof renderer.forceContextLoss === 'function') {
+            renderer.forceContextLoss();
+        }
+    };
 }

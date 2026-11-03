@@ -209,8 +209,9 @@ export function drawScatterAnimation() {
   window.addEventListener('resize', handleResize);
 
   let time = 0;
+  let rafId = 0;
   const animate = () => {
-    requestAnimationFrame(animate);
+    rafId = requestAnimationFrame(animate);
     time += 0.005;
     if (particles) {
       particles.rotation.y += 0.001;
@@ -220,4 +221,16 @@ export function drawScatterAnimation() {
     renderer.render(scene, camera);
   };
   animate();
+
+  return () => {
+    cancelAnimationFrame(rafId);
+    window.removeEventListener('resize', handleResize);
+    animations.forEach(anim => anim.kill());
+    geometry.dispose();
+    material.dispose();
+    renderer.dispose();
+    if (typeof renderer.forceContextLoss === 'function') {
+      renderer.forceContextLoss();
+    }
+  };
 }

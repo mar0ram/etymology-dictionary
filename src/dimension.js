@@ -353,12 +353,34 @@ export function drawDimensionModel() {
 
     window.addEventListener('resize', handleResize);
 
+    let rafId = 0;
     function animate() {
-        requestAnimationFrame(animate);
+        rafId = requestAnimationFrame(animate);
         if (isPlaying) {
             scene.rotation.y += 0.002;
         }
         renderer.render(scene, camera);
     }
     animate();
+
+    return () => {
+        cancelAnimationFrame(rafId);
+        window.removeEventListener('resize', handleResize);
+        animations.forEach(anim => anim.kill());
+        gsap.killTweensOf(controlsContainer.querySelectorAll('span'));
+        scene.traverse(obj => {
+            if (obj.geometry) obj.geometry.dispose();
+            if (obj.material) {
+                if (Array.isArray(obj.material)) {
+                    obj.material.forEach(m => m.dispose());
+                } else {
+                    obj.material.dispose();
+                }
+            }
+        });
+        renderer.dispose();
+        if (typeof renderer.forceContextLoss === 'function') {
+            renderer.forceContextLoss();
+        }
+    };
 }

@@ -141,7 +141,7 @@ function parseNgramResponse(rawText) {
     return null;
 }
 
-async function fetchNgramTimeseries(word) {
+async function fetchNgramTimeseries(word, signal) {
     const cleanWord = word.trim();
     if (ngramDataCache[cleanWord]) {
         return ngramDataCache[cleanWord];
@@ -155,7 +155,7 @@ async function fetchNgramTimeseries(word) {
     // 1. Google Apps Script プロキシ（設定されている場合は最優先で使用）
     if (GAS_PROXY_URL) {
         fetchers.push(async () => {
-            const res = await fetch(`${GAS_PROXY_URL}?word=${encodeURIComponent(cleanWord)}`);
+            const res = await fetch(`${GAS_PROXY_URL}?word=${encodeURIComponent(cleanWord)}`, { signal });
             if (!res.ok) throw new Error(`GAS HTTP ${res.status}`);
             return await res.json();
         });
@@ -163,34 +163,37 @@ async function fetchNgramTimeseries(word) {
 
     // 2. フォールバック用公開プロキシ
     fetchers.push(async () => {
-        const res = await fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(jsonUrl)}`);
+        const res = await fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(jsonUrl)}`, { signal });
         if (!res.ok) throw new Error(`allorigins raw HTTP ${res.status}`);
         const text = await res.text();
         return parseNgramResponse(text);
     });
 
     fetchers.push(async () => {
-        const res = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(jsonUrl)}`);
+        const res = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(jsonUrl)}`, { signal });
         if (!res.ok) throw new Error(`allorigins get HTTP ${res.status}`);
         const wrapper = await res.json();
         return parseNgramResponse(wrapper.contents);
     });
 
     fetchers.push(async () => {
-        const res = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(graphUrl)}`);
+        const res = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(graphUrl)}`, { signal });
         if (!res.ok) throw new Error(`allorigins graph HTTP ${res.status}`);
         const wrapper = await res.json();
         return parseNgramResponse(wrapper.contents);
     });
 
     fetchers.push(async () => {
-        const res = await fetch(`https://api.codetabs.com/v1/proxy/?quest=${encodeURIComponent(jsonUrl)}`);
+        const res = await fetch(`https://api.codetabs.com/v1/proxy/?quest=${encodeURIComponent(jsonUrl)}`, { signal });
         if (!res.ok) throw new Error(`codetabs HTTP ${res.status}`);
         const text = await res.text();
         return parseNgramResponse(text);
     });
 
     for (const fetcher of fetchers) {
+        if (signal && signal.aborted) {
+            throw new DOMException("Aborted", "AbortError");
+        }
         try {
             const json = await fetcher();
             if (Array.isArray(json)) {
@@ -202,6 +205,7 @@ async function fetchNgramTimeseries(word) {
                 return null;
             }
         } catch (e) {
+            if (signal && signal.aborted) throw e;
             console.warn("Ngramプロキシ試行失敗:", e.message || e);
         }
     }
@@ -446,9 +450,14 @@ export function setupNgramInSection(container, initialWord) {
         if (e.touches.length > 0) handlePointer(e.touches[0].clientX);
     }, { passive: true });
 
+    let isDisposed = false;
+    const abortController = new AbortController();
+    const { signal } = abortController;
+
+    let ro = null;
     if (typeof ResizeObserver !== "undefined") {
-        const ro = new ResizeObserver(() => {
-            drawCustomChart();
+        ro = new ResizeObserver(() => {
+            if (!isDisposed) drawCustomChart();
         });
         ro.observe(chartContainer);
     } else {
@@ -470,21 +479,21 @@ export function setupNgramInSection(container, initialWord) {
             const label = explicitMatch[2].toUpperCase();
             const def = POS_DEFINITIONS.find(p => p.label === label);
             if (def) {
-                const series = await fetchNgramTimeseries(`${base}_${def.tag}`);
+                const series = await fetchNgramTimeseries(`${base}_${def.tag}`, signal);
                 return series ? [{ displayWord: `${base}(${def.label})`, series }] : [];
             }
         }
 
         // 単一の英単語以外（フレーズ等）はそのまま検索
         if (!/^[a-zA-Z]+$/.test(word)) {
-            const series = await fetchNgramTimeseries(word);
+            const series = await fetchNgramTimeseries(word, signal);
             return series ? [{ displayWord: word, series }] : [];
         }
 
         // 辞書APIでその単語が持つ品詞を確認（失敗時はNgramデータのみで判定）
         let dictPosSet = null;
         try {
-            const res = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(word.toLowerCase())}`);
+            const res = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(word.toLowerCase())}`, { signal });
             if (res.ok) {
                 const data = await res.json();
                 if (Array.isArray(data)) {
@@ -500,6 +509,7 @@ export function setupNgramInSection(container, initialWord) {
                 }
             }
         } catch (e) {
+            if (signal.aborted) throw e;
             // 辞書APIが利用できない場合はNgramの頻度判定にフォールバック
         }
 
@@ -512,7 +522,7 @@ export function setupNgramInSection(container, initialWord) {
             const results = await Promise.all(
                 candidateDefs.map(async (def) => {
                     try {
-                        const series = await fetchNgramTimeseries(`${word}_${def.tag}`);
+                        const series = await fetchNgramTimeseries(`${word}_${def.tag}`, signal);
                         if (!series) return null;
                         const maxVal = Math.max(...series);
                         return maxVal > 0 ? { def, series, maxVal } : null;
@@ -521,6 +531,8 @@ export function setupNgramInSection(container, initialWord) {
                     }
                 })
             );
+
+            if (signal.aborted) throw new DOMException("Aborted", "AbortError");
 
             const validResults = results.filter(Boolean);
             if (validResults.length >= 2) {
@@ -538,14 +550,17 @@ export function setupNgramInSection(container, initialWord) {
         }
 
         // 品詞が1つしかない場合は通常の単語として検索
-        const series = await fetchNgramTimeseries(word);
+        const series = await fetchNgramTimeseries(word, signal);
         return series ? [{ displayWord: word, series }] : [];
     }
 
     async function addWordToGraph(targetWord) {
+        if (isDisposed || signal.aborted) return;
+
         if (/[,、]/.test(targetWord)) {
             const words = targetWord.split(/[,、]/).map(s => s.trim()).filter(Boolean);
             for (const word of words) {
+                if (isDisposed || signal.aborted) return;
                 await addWordToGraph(word);
             }
             return;
@@ -564,6 +579,8 @@ export function setupNgramInSection(container, initialWord) {
 
         try {
             const entries = await resolveWordEntries(w);
+            if (isDisposed || signal.aborted) return;
+
             if (entries.length === 0) {
                 statusEl.textContent = `「${w}」のデータが見つかりませんでした。`;
             } else {
@@ -585,9 +602,12 @@ export function setupNgramInSection(container, initialWord) {
                 drawCustomChart();
             }
         } catch (err) {
+            if (isDisposed || signal.aborted) return;
             statusEl.textContent = "データの取得に失敗しました。時間をおいて再試行してください。";
         } finally {
-            addBtn.disabled = false;
+            if (!isDisposed) {
+                addBtn.disabled = false;
+            }
         }
     }
 
@@ -615,4 +635,18 @@ export function setupNgramInSection(container, initialWord) {
     });
 
     addWordToGraph(initialWord);
+
+    return () => {
+        isDisposed = true;
+        abortController.abort();
+        if (ro) {
+            ro.disconnect();
+            ro = null;
+        } else {
+            window.removeEventListener("resize", drawCustomChart);
+        }
+        activeWords = [];
+        canvas.width = 0;
+        canvas.height = 0;
+    };
 }

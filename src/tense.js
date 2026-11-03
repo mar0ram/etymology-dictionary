@@ -284,8 +284,9 @@ export function drawTenseLineModel() {
     handleResize();
     window.addEventListener('resize', handleResize);
 
+    let rafId = 0;
     function animate() {
-        requestAnimationFrame(animate);
+        rafId = requestAnimationFrame(animate);
         if (isPlaying) {
             state.time += 0.5;
             update();
@@ -295,4 +296,20 @@ export function drawTenseLineModel() {
         renderer.render(scene, camera);
     }
     animate();
+
+    return () => {
+        isPlaying = false;
+        cancelAnimationFrame(rafId);
+        window.removeEventListener('resize', handleResize);
+        animations.forEach(anim => anim.kill());
+        gsap.killTweensOf(controlsContainer.querySelectorAll('span'));
+        geometry.dispose();
+        material.dispose();
+        pinGeo.dispose();
+        pinMat.dispose();
+        renderer.dispose();
+        if (typeof renderer.forceContextLoss === 'function') {
+            renderer.forceContextLoss();
+        }
+    };
 }

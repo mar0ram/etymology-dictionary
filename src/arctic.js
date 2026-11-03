@@ -360,8 +360,9 @@ export function drawArcticModel() {
     window.addEventListener('resize', handleResize);
 
     let time = 0;
+    let rafId = 0;
     function animate() {
-        requestAnimationFrame(animate);
+        rafId = requestAnimationFrame(animate);
         time += 0.02;
 
         scene.children.forEach(child => {
@@ -385,4 +386,21 @@ export function drawArcticModel() {
         renderer.render(scene, camera);
     }
     animate();
+
+    return () => {
+        cancelAnimationFrame(rafId);
+        window.removeEventListener('resize', handleResize);
+        gsap.killTweensOf(buttonContainer.querySelectorAll('span'));
+        scene.traverse(obj => {
+            if (obj.geometry) obj.geometry.dispose();
+            if (obj.material) {
+                if (obj.material.map) obj.material.map.dispose();
+                obj.material.dispose();
+            }
+        });
+        renderer.dispose();
+        if (typeof renderer.forceContextLoss === 'function') {
+            renderer.forceContextLoss();
+        }
+    };
 }
