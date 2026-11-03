@@ -592,7 +592,7 @@ export function prependEntry() {
     const head = document.createElement('div');
     head.className = 'head';
     head.id = 'head';
-    head.textContent = '現代英語に関わるさまざまな言語';
+    head.textContent = '現代の英語に関わるさまざまな言語';
 
     entry.appendChild(head);
 
