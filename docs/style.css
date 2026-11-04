@@ -193,9 +193,11 @@ footer {
     transition: background-color 0.2s ease, color 0.2s ease;
 }
 
-.clear-button:hover {
-    background: rgba(239, 68, 68, 0.2);
-    color: #f87171;
+@media (hover: hover) {
+    .clear-button:not(.no-hover):hover {
+        background: rgba(239, 68, 68, 0.2);
+        color: #f87171;
+    }
 }
 
 #searchBtn {

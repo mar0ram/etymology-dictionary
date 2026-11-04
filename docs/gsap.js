@@ -1,0 +1,1 @@
+export{gsap as t}from"https://unpkg.com/gsap/index.js";

@@ -1,55 +1,22 @@
 import { prependEntry } from "./prependEntry.js";
-import { drawEclipticModel } from "./eclipticModel.js";
-import { drawArcticModel } from "./arctic.js";
-import { drawDimensionModel } from "./dimension.js";
-import { drawSchemeModel } from "./scheme.js";
-import { drawPostponeModel } from "./postpone.js";
-import { drawFiberModel } from "./fiber.js";
-import { drawTenseLineModel } from "./tense.js";
-import { drawScatterAnimation } from "./scatter.js";
-import { drawTransparentAnimation } from "./transparent.js";
-import { drawSteepModel } from "./steep.js";
-import { drawPrecedeModel } from "./precede.js";
-import { drawEpidemicModel } from "./epidemic.js";
-import { setupTearAnimation } from "./tear.js";
-import { setupWarnAnimation } from "./warn.js";
 import { setupNgramInSection } from "./ngram.js";
+import {
+    CleanupFn,
+    Disposable,
+    AnimationResult,
+    DictionaryEntry,
+    DictionaryData,
+    SuggestionItem,
+    RecentSearchItem,
+    activeCleanups,
+    registerCleanup
+} from "./types.js";
+import { fetchAndSetAudio, stopSharedAudio } from "./audio.js";
+import { createFormatter } from "./formatter.js";
+import { resetZoom, setupDetailsAnimation, insertSampleImages } from "./ui.js";
 
-// --- 型定義 ---
-export type CleanupFn = () => void;
-export interface Disposable {
-    dispose: () => void;
-}
-export type AnimationResult = CleanupFn | Disposable | void;
-
-interface DictionaryEntry {
-    num?: number | string;
-    word?: string;
-    partOfSpeech?: string;
-    [key: string]: any;
-}
-
-interface DictionaryData {
-    words?: DictionaryEntry[];
-    idioms?: DictionaryEntry[];
-}
-
-interface SuggestionItem {
-    word: string;
-    normalizedWord: string;
-    searchValue: string;
-    numStr?: string;
-}
-
-interface RecentSearchItem {
-    searchValue: string;
-    label: string;
-}
-
-interface AudioCacheEntry {
-    audioUrl: string;
-    ipaText: string;
-}
+export type { CleanupFn, Disposable, AnimationResult };
+export { registerCleanup };
 
 // --- 状態管理 ---
 let data: DictionaryData = { words: [], idioms: [] };
@@ -64,41 +31,6 @@ let lastHandledUrl = "";
 
 // 非同期通信・描画の世代および中断管理
 let currentSearchAbortController: AbortController | null = null;
-const activeCleanups = new Set<CleanupFn>();
-
-export function registerCleanup(result: AnimationResult): void {
-    if (!result) return;
-    if (typeof result === "function") {
-        activeCleanups.add(result);
-    } else if (typeof result === "object" && typeof result.dispose === "function") {
-        activeCleanups.add(() => result.dispose());
-    }
-}
-
-// --- 音声キャッシュ管理（localStorage連携・最大500件） ---
-const AUDIO_CACHE_STORAGE_KEY = "mw_audio_cache_v1";
-let initialAudioCacheEntries: [string, AudioCacheEntry][] = [];
-try {
-    initialAudioCacheEntries = JSON.parse(localStorage.getItem(AUDIO_CACHE_STORAGE_KEY) || "[]");
-} catch {
-    initialAudioCacheEntries = [];
-}
-const audioCache = new Map<string, AudioCacheEntry>(initialAudioCacheEntries);
-
-function saveAudioCache(key: string, value: AudioCacheEntry): void {
-    audioCache.set(key, value);
-    try {
-        if (audioCache.size > 500) {
-            const oldestKey = audioCache.keys().next().value;
-            if (oldestKey !== undefined) {
-                audioCache.delete(oldestKey);
-            }
-        }
-        localStorage.setItem(AUDIO_CACHE_STORAGE_KEY, JSON.stringify([...audioCache]));
-    } catch {
-        // ストレージ容量上限などの場合はメモリキャッシュのみ継続利用
-    }
-}
 
 // --- 最近調べた単語（検索履歴）の管理（localStorage連携・最大10件） ---
 const RECENT_SEARCHES_STORAGE_KEY = "recent_searches_v1";
@@ -168,11 +100,6 @@ const clearBtn = document.getElementById("clearBtn") as HTMLElement;
 const viewportMeta = document.querySelector<HTMLMetaElement>("meta[name=viewport]");
 const searchBoxContainer = document.querySelector<HTMLElement>(".search-box-container")!;
 
-// 音声再生用の共有Audioインスタンス
-const sharedAudioPlayer = new Audio();
-sharedAudioPlayer.preload = "none";
-let activePlayingBtn: HTMLElement | null = null;
-
 // --- 進行中の非同期処理・アニメーション・タイマーを完全停止しリソースを解放する関数 ---
 function abortPendingOperations(): void {
     if (currentSearchAbortController) {
@@ -183,12 +110,7 @@ function abortPendingOperations(): void {
         clearTimeout(heavyRenderTimer);
         heavyRenderTimer = null;
     }
-    sharedAudioPlayer.pause();
-    if (activePlayingBtn) {
-        activePlayingBtn.dataset.playing = "false";
-        activePlayingBtn.style.opacity = "1";
-        activePlayingBtn = null;
-    }
+    stopSharedAudio();
 }
 
 function cleanupResultsResources(): void {
@@ -407,32 +329,10 @@ searchBoxContainer.appendChild(suggestionList);
 function setSuggestionDisplay(show: boolean): void {
     if (show) {
         suggestionList.style.display = "block";
-        document.body.style.overflow = "hidden";
     } else {
         suggestionList.style.display = "none";
-        document.body.style.overflow = "";
     }
 }
-
-document.addEventListener(
-    "wheel",
-    (e: WheelEvent) => {
-        if (suggestionList.style.display === "block" && !suggestionList.contains(e.target as Node)) {
-            e.preventDefault();
-        }
-    },
-    { passive: false }
-);
-
-document.addEventListener(
-    "touchmove",
-    (e: TouchEvent) => {
-        if (suggestionList.style.display === "block" && !suggestionList.contains(e.target as Node)) {
-            e.preventDefault();
-        }
-    },
-    { passive: false }
-);
 
 function normalizeForMatch(str: string): string {
     return String(str).toLowerCase().replace(/[ \u3000]+/g, "");
@@ -485,6 +385,18 @@ document.addEventListener("click", (e: MouseEvent) => {
     }
 });
 
+function clearButtonRedState(): void {
+    clearBtn.blur();
+    clearBtn.classList.add("no-hover");
+    const restoreHover = (): void => {
+        clearBtn.classList.remove("no-hover");
+        window.removeEventListener("mousemove", restoreHover);
+        window.removeEventListener("touchstart", restoreHover);
+    };
+    window.addEventListener("mousemove", restoreHover, { once: true, passive: true });
+    window.addEventListener("touchstart", restoreHover, { once: true, passive: true });
+}
+
 function selectSuggestionItem(searchValue: string): void {
     if (suggestionSelectTimer) {
         clearTimeout(suggestionSelectTimer);
@@ -492,6 +404,7 @@ function selectSuggestionItem(searchValue: string): void {
     }
     isSelectingSuggestion = true;
     searchBox.blur();
+    clearButtonRedState();
     searchBox.value = searchValue;
     clearBtn.style.display = "flex";
     suggestionList.innerHTML = "";
@@ -499,7 +412,7 @@ function selectSuggestionItem(searchValue: string): void {
     selectedSuggestionIndex = -1;
     doSearch();
     window.scrollTo({ top: 0, left: 0, behavior: "instant" });
-    resetZoom();
+    resetZoom(viewportMeta);
     suggestionSelectTimer = setTimeout(() => {
         suggestionSelectTimer = null;
         searchBox.value = searchValue;
@@ -805,6 +718,7 @@ clearBtn.addEventListener("click", () => {
         suggestionSelectTimer = null;
         isSelectingSuggestion = false;
     }
+    clearButtonRedState();
     searchBox.value = "";
     clearBtn.style.display = "none";
     suggestionList.innerHTML = "";
@@ -868,27 +782,16 @@ searchBox.addEventListener("click", () => {
     }
 });
 
-function resetZoom(): void {
-    if (document.activeElement instanceof HTMLElement) {
-        document.activeElement.blur();
-    }
-    setTimeout(() => {
-        window.scrollTo({ top: 0, left: 0, behavior: "instant" });
-        if (viewportMeta) {
-            viewportMeta.setAttribute("content", "width=device-width, initial-scale=1.0, maximum-scale=1.0");
-        }
-    }, 100);
-}
-
 searchBtn.addEventListener("click", () => {
     if (!dataLoaded) {
         results.innerHTML = "<p>データを読み込み中です。少し待ってから再試行してください。</p>";
         return;
     }
+    clearButtonRedState();
     setSuggestionDisplay(false);
     selectedSuggestionIndex = -1;
     doSearch();
-    resetZoom();
+    resetZoom(viewportMeta);
 });
 
 searchBox.addEventListener("keydown", (e: KeyboardEvent) => {
@@ -955,18 +858,37 @@ searchBox.addEventListener("keydown", (e: KeyboardEvent) => {
                 return;
             }
         }
+        searchBox.blur();
+        clearButtonRedState();
         setSuggestionDisplay(false);
         selectedSuggestionIndex = -1;
         doSearch();
-        resetZoom();
+        resetZoom(viewportMeta);
     }
 });
 
-// 単語イメージのアニメーション実行と破棄関数の登録
-function startAnimation(container: Element | null, drawFunc: () => AnimationResult): void {
+// 単語イメージのアニメーション遅延読み込み・実行と破棄関数の登録
+function startAnimation(
+    container: Element | null,
+    loadAndDraw: () => Promise<AnimationResult>,
+    signal: AbortSignal
+): void {
     if (!container) return;
-    const cleanupResult = drawFunc();
-    registerCleanup(cleanupResult);
+    void loadAndDraw()
+        .then(cleanupResult => {
+            if (signal.aborted || !container.isConnected) {
+                if (typeof cleanupResult === "function") {
+                    cleanupResult();
+                } else if (cleanupResult && typeof cleanupResult === "object" && typeof cleanupResult.dispose === "function") {
+                    cleanupResult.dispose();
+                }
+                return;
+            }
+            registerCleanup(cleanupResult);
+        })
+        .catch(err => {
+            console.error("Animation load error:", err);
+        });
 }
 
 // --- 検索メイン処理 ---
@@ -1035,102 +957,7 @@ function doSearch(updateHistory = true): void {
         }
     }
 
-    let relAudioCount = 0;
-
-    const nl2br = (text: string): string => {
-        if (!text) return "";
-
-        const headerPlaceholders: string[] = [];
-        const preprocessedText = text
-            .replace(
-                /<span class="w">\s*<b>\s*【?\s*(?:(\d+)\s*\.\s*)?([^：:]+?)\s*[：:]\s*([\s\S]+?)\s*】?\s*<\/b>(?:<\/b>)?\s*<\/span>(?:<div id="(audio-box-[^"]+)" class="audio_box"[^>]*><\/div>)?(?:\r?\n)?/g,
-                (_match, num, word, meaningStr, audioBoxId) => {
-                    const meanings = String(meaningStr)
-                        .split(/\s*[,，、]\s*/)
-                        .map(s => s.trim())
-                        .filter(Boolean);
-                    const meaningTags = meanings
-                        .map(m => `<span class="w-p4-meaning-item"><span class="w-p4-dot"></span><span>${m}</span></span>`)
-                        .join("");
-                    const numBadge = num ? `<span class="w-p4-num">${String(num).trim()}</span>` : "";
-                    const audioBoxHtml = audioBoxId ? `<span id="${audioBoxId}" class="audio_box"></span>` : "";
-                    const headerHtml = `<span class="w w-p4-header"><span class="w-p4-top">${numBadge}<span class="w-p4-word" lang="en">${String(word).trim()}</span>${audioBoxHtml}</span><span class="w-p4-meanings">${meaningTags}</span></span>`;
-                    const placeholder = `<!--W_P4_HEADER_${headerPlaceholders.length}-->`;
-                    headerPlaceholders.push(headerHtml);
-                    return placeholder;
-                }
-            )
-            .replace(
-                /<b>\s*【\s*(?:(\d+)\s*\.\s*)?([^：:]+?)\s*[：:]\s*([\s\S]+?)\s*】\s*<\/b>/g,
-                (_match, num, word, meaningStr) => {
-                    const cleanWord = String(word).trim();
-                    const relAudioKey = `rel-${++relAudioCount}`;
-                    const meanings = String(meaningStr)
-                        .split(/\s*[,，、]\s*/)
-                        .map(s => s.trim())
-                        .filter(Boolean);
-                    const meaningTags = meanings
-                        .map(m => `<span class="h3-p4-meaning-item"><span class="h3-p4-dot"></span><span>${m}</span></span>`)
-                        .join("");
-                    const numBadge = num ? `<span class="h3-p4-num">${String(num).trim()}</span>` : "";
-                    const relAudioHtml = `<span id="audio-box-${relAudioKey}" class="audio_box h3-audio-box" data-audio-key="${relAudioKey}" data-word="${cleanWord}"></span>`;
-                    const isWordInDict = (data.words || []).some(
-                        w => w.word && w.word.toLowerCase() === cleanWord.toLowerCase() && w.word.toLowerCase() !== query
-                    );
-                    const wordSpanHtml = isWordInDict
-                        ? `<span class="h3-p4-word h3-word-link" lang="en" data-target-word="${cleanWord}" title="「${cleanWord}」を検索" style="cursor: pointer; text-decoration: underline; text-underline-offset: 3px;">${cleanWord}<i class="fa-solid fa-arrow-up-right-from-square fa-2xs" style="margin-left: 4px; opacity: 0.75;"></i></span>`
-                        : `<span class="h3-p4-word" lang="en">${cleanWord}</span>`;
-                    const barHtml = `<span class="h3-p4-bar">${numBadge}${wordSpanHtml}${relAudioHtml}<span class="h3-p4-meanings">${meaningTags}</span></span>`;
-                    const placeholder = `<!--W_P4_HEADER_${headerPlaceholders.length}-->`;
-                    headerPlaceholders.push(barHtml);
-                    return placeholder;
-                }
-            );
-
-        let html = preprocessedText.replace(/(<[^>]+>)|([a-zA-Z][a-zA-Z'-]*)/g, (match, tag, word) => {
-            if (tag) return tag;
-            if (word) return `<span lang="en" class="hyphen-auto">${word}</span>`;
-            return match;
-        });
-
-        html = html.replace(/\r?\n/g, "<br>");
-        html = html.replace(/([「『（【［〔〈《｛〚｟])/g, '<span class="margin-left-only">$1</span>');
-        html = html.replace(/([」』）】］〕〉》｝〛｠])/g, '<span class="margin-right-bracket">$1</span>');
-        html = html.replace(/([、。])/g, '<span class="margin-right-punctuation">$1</span>');
-        html = html.replace(/([・])/g, '<span class="margin-both">$1</span>');
-        html = html.replace(/([：])/g, '<span class="margin-both">$1</span>');
-
-        html = html.replace(
-            /(<span class="margin-right-bracket"[^>]*>[」』）】］〕〉》｝〛｠]<\/span>)<span class="margin-both"[^>]*>([・])<\/span>/g,
-            '$1<span class="margin-both margin-reduce-bracket-dot">$2</span>'
-        );
-        html = html.replace(
-            /(<span class="margin-right-bracket"[^>]*>[」』）】］〕〉》｝〛｠]<\/span>)<span class="margin-both"[^>]*>([：])<\/span>/g,
-            '$1<span class="margin-both margin-reduce-bracket-colon">$2</span>'
-        );
-        html = html.replace(
-            /(<span class="margin-both"[^>]*>[・]<\/span>)<span class="margin-left-only"[^>]*>([「『（【［〔〈《｛〚｟])<\/span>/g,
-            '$1<span class="margin-left-only margin-reduce-dot-bracket">$2</span>'
-        );
-        html = html.replace(
-            /(<span class="margin-both"[^>]*>[：]<\/span>)<span class="margin-left-only"[^>]*>([「『（【［〔〈《｛〚｟])<\/span>/g,
-            '$1<span class="margin-left-only margin-reduce-colon-bracket">$2</span>'
-        );
-        html = html.replace(
-            /(<span class="margin-right-punctuation"[^>]*>[」』）】］〕〉》｝〛｠]<\/span>)<span class="margin-right-punctuation"[^>]*>([、。])<\/span>/g,
-            '$1<span class="margin-right-punctuation margin-reduce-bracket-punctuation">$2</span>'
-        );
-        html = html.replace(
-            /(<span class="margin-right-punctuation"[^>]*>[、。]<\/span>)<span class="margin-left-only"[^>]*>([「『（【［〔〈《｛〚｟])<\/span>/g,
-            '$1<span class="margin-left-only margin-reduce-punctuation-bracket">$2</span>'
-        );
-
-        headerPlaceholders.forEach((headerHtml, idx) => {
-            html = html.replace(`<!--W_P4_HEADER_${idx}-->`, headerHtml);
-        });
-
-        return html;
-    };
+    const nl2br = createFormatter(query, data.words || []);
 
     filtered.forEach(item => {
         const div = document.createElement("div");
@@ -1269,27 +1096,27 @@ function doSearch(updateHistory = true): void {
                 }
             });
 
-            const configs: { sel: string; func: () => AnimationResult }[] = [
-                { sel: ".tropic", func: drawEclipticModel },
-                { sel: ".arctic", func: drawArcticModel },
-                { sel: ".dimension", func: drawDimensionModel },
-                { sel: ".scheme", func: drawSchemeModel },
-                { sel: ".postpone", func: drawPostponeModel },
-                { sel: ".fiber", func: drawFiberModel },
-                { sel: ".tense", func: drawTenseLineModel },
-                { sel: ".scatter", func: drawScatterAnimation },
-                { sel: ".transparent", func: drawTransparentAnimation },
-                { sel: ".steep", func: drawSteepModel },
-                { sel: ".precede", func: drawPrecedeModel },
-                { sel: ".epidemic", func: drawEpidemicModel },
-                { sel: ".tear", func: setupTearAnimation },
-                { sel: ".warn", func: setupWarnAnimation }
+            const configs: { sel: string; load: () => Promise<AnimationResult> }[] = [
+                { sel: ".tropic", load: () => import("./eclipticModel.js").then(m => m.drawEclipticModel()) },
+                { sel: ".arctic", load: () => import("./arctic.js").then(m => m.drawArcticModel()) },
+                { sel: ".dimension", load: () => import("./dimension.js").then(m => m.drawDimensionModel()) },
+                { sel: ".scheme", load: () => import("./scheme.js").then(m => m.drawSchemeModel()) },
+                { sel: ".postpone", load: () => import("./postpone.js").then(m => m.drawPostponeModel()) },
+                { sel: ".fiber", load: () => import("./fiber.js").then(m => m.drawFiberModel()) },
+                { sel: ".tense", load: () => import("./tense.js").then(m => m.drawTenseLineModel()) },
+                { sel: ".scatter", load: () => import("./scatter.js").then(m => m.drawScatterAnimation()) },
+                { sel: ".transparent", load: () => import("./transparent.js").then(m => m.drawTransparentAnimation()) },
+                { sel: ".steep", load: () => import("./steep.js").then(m => m.drawSteepModel()) },
+                { sel: ".precede", load: () => import("./precede.js").then(m => m.drawPrecedeModel()) },
+                { sel: ".epidemic", load: () => import("./epidemic.js").then(m => m.drawEpidemicModel()) },
+                { sel: ".tear", load: () => import("./tear.js").then(m => m.setupTearAnimation()) },
+                { sel: ".warn", load: () => import("./warn.js").then(m => m.setupWarnAnimation()) }
             ];
 
             configs.forEach(config => {
                 const target = div.querySelector(config.sel);
                 if (target) {
-                    startAnimation(target, config.func);
+                    startAnimation(target, config.load, signal);
                 }
             });
         };
@@ -1301,417 +1128,6 @@ function doSearch(updateHistory = true): void {
                 heavyRenderTimer = null;
                 runHeavyFeatures();
             }, 150);
-        }
-    });
-}
-
-// --- MWの独自表記を日本人向けの読みやすいIPAに変換 ---
-function safeConvertMwToIpa(mwStr: string): string {
-    if (!mwStr) return "";
-    const ipa = mwStr
-        .replace(/\([ˈˌ]\)/g, "")
-        .replace(/\*/g, "ˈ")
-        .replace(/\\u02cc/g, "ˌ")
-        .replace(/au̇|aù/g, "A_U")
-        .replace(/ā/g, "E_I")
-        .replace(/ī/g, "A_I")
-        .replace(/ä/g, "A_H")
-        .replace(/ȧ/g, "A_H")
-        .replace(/ȯi/g, "ɔɪ")
-        .replace(/yü/g, "J_U_LONG")
-        .replace(/yu̇/g, "J_U_SHORT")
-        .replace(/t͟h/g, "ð")
-        .replace(/th/g, "θ")
-        .replace(/sh/g, "ʃ")
-        .replace(/zh/g, "ʒ")
-        .replace(/ch/g, "tʃ")
-        .replace(/j/g, "dʒ")
-        .replace(/y/g, "j")
-        .replace(/a/g, "æ")
-        .replace(/A_U/g, "aʊ")
-        .replace(/E_I/g, "eɪ")
-        .replace(/A_I/g, "aɪ")
-        .replace(/A_H/g, "ɑ")
-        .replace(/J_U_LONG/g, "juː")
-        .replace(/J_U_SHORT/g, "jʊ")
-        .replace(/ē/g, "iː")
-        .replace(/ō/g, "oʊ")
-        .replace(/ü|ū/g, "uː")
-        .replace(/u̇/g, "ʊ")
-        .replace(/ȯ/g, "ɔ")
-        .replace(/ə̆|ᵊ/g, "ə")
-        .replace(/[-_]/g, "")
-        .replace(/\s*([ˈˌ])/g, " $1");
-
-    return `/${ipa}/`;
-}
-
-// --- Merriam-Webster API 音声取得（AbortSignal対応・ポーリング廃止） ---
-async function fetchAndSetAudio(
-    word: string,
-    num: string,
-    partOfSpeech = "",
-    signal?: AbortSignal
-): Promise<void> {
-    try {
-        if (signal?.aborted) return;
-
-        const cacheKey = `${String(word).toLowerCase()}__${String(partOfSpeech).trim().toLowerCase()}`;
-        let audioUrl = "";
-        let ipaText = "";
-
-        if (audioCache.has(cacheKey)) {
-            const cached = audioCache.get(cacheKey)!;
-            audioUrl = cached.audioUrl;
-            ipaText = cached.ipaText;
-        } else {
-            const k = "74a8b9a7-6973-4b74-b19d-1425e02f3912";
-            const apiUrl = `https://www.dictionaryapi.com/api/v3/references/collegiate/json/${encodeURIComponent(word)}?key=${k}`;
-
-            const response = await fetch(apiUrl, { signal });
-            if (!response.ok || signal?.aborted) return;
-
-            const apiData = await response.json();
-            if (signal?.aborted) return;
-
-            let audioFileName = "";
-            let rawMwPron = "";
-
-            if (Array.isArray(apiData) && apiData.length > 0 && typeof apiData[0] === "object") {
-                let targetEntry = apiData[0];
-
-                if (partOfSpeech) {
-                    const searchPos = partOfSpeech.trim().toLowerCase();
-                    const matchedEntry = apiData.find((entry: any) => {
-                        if (!entry.fl) return false;
-                        const fl = String(entry.fl).toLowerCase();
-                        return fl === searchPos || fl.includes(searchPos);
-                    });
-
-                    if (matchedEntry) {
-                        targetEntry = matchedEntry;
-                    }
-                }
-
-                if (targetEntry.hwi && targetEntry.hwi.prs && targetEntry.hwi.prs.length > 0) {
-                    const prsObj = targetEntry.hwi.prs[0];
-                    if (prsObj.sound) {
-                        audioFileName = prsObj.sound.audio;
-                    }
-                    if (prsObj.mw) {
-                        rawMwPron = prsObj.mw;
-                    }
-                }
-
-                if ((!audioFileName || !rawMwPron) && apiData[0].hwi && apiData[0].hwi.prs && apiData[0].hwi.prs.length > 0) {
-                    const firstPrsObj = apiData[0].hwi.prs[0];
-                    if (!audioFileName && firstPrsObj.sound) {
-                        audioFileName = firstPrsObj.sound.audio;
-                    }
-                    if (!rawMwPron && firstPrsObj.mw) {
-                        rawMwPron = firstPrsObj.mw;
-                    }
-                }
-            }
-
-            if (audioFileName) {
-                let subdir = audioFileName.charAt(0);
-                if (audioFileName.startsWith("bix")) subdir = "bix";
-                else if (audioFileName.startsWith("gg")) subdir = "gg";
-                else if (/^[^a-zA-Z]/.test(subdir)) subdir = "number";
-
-                audioUrl = `https://media.merriam-webster.com/audio/prons/en/us/mp3/${subdir}/${audioFileName}.mp3`;
-            }
-
-            ipaText = safeConvertMwToIpa(rawMwPron);
-            saveAudioCache(cacheKey, { audioUrl, ipaText });
-        }
-
-        if (signal?.aborted) return;
-
-        const audioBox = document.getElementById(`audio-box-${num}`);
-        if (!audioBox) return;
-
-        audioBox.innerHTML = `
-            <div style="display: inline-flex; align-items: center; gap: 6px; margin-bottom: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
-                ${audioUrl ? `<span class="audio_button" style="cursor:pointer; display: inline-flex; align-items: center;"><i class="fa-solid fa-volume-high fa-rotate-by fa-sm" style="color: #ffffff; --fa-rotate-angle: 340deg;"></i></span>` : ""}
-                ${ipaText ? `<span class="ipa-text">${ipaText}</span>` : ""}
-            </div>
-        `;
-
-        if (audioUrl) {
-            const btn = audioBox.querySelector<HTMLElement>(".audio_button");
-            if (btn) {
-                btn.addEventListener("click", (e: MouseEvent) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    if (btn.dataset.playing === "true") return;
-
-                    if (activePlayingBtn && activePlayingBtn !== btn) {
-                        activePlayingBtn.dataset.playing = "false";
-                        activePlayingBtn.style.opacity = "1";
-                    }
-
-                    activePlayingBtn = btn;
-                    btn.dataset.playing = "true";
-                    btn.style.opacity = "0.5";
-
-                    sharedAudioPlayer.pause();
-                    sharedAudioPlayer.src = audioUrl;
-                    sharedAudioPlayer.currentTime = 0;
-
-                    const resetBtn = (): void => {
-                        btn.dataset.playing = "false";
-                        btn.style.opacity = "1";
-                        if (activePlayingBtn === btn) {
-                            activePlayingBtn = null;
-                        }
-                    };
-
-                    sharedAudioPlayer.onended = resetBtn;
-                    sharedAudioPlayer.onerror = resetBtn;
-
-                    sharedAudioPlayer.play().catch(resetBtn);
-                });
-            }
-        }
-    } catch (error: any) {
-        if (error && error.name === "AbortError") return;
-    }
-}
-
-// --- アコーディオンアニメーション共通関数 ---
-function playAccordionAnimation(
-    content: HTMLElement,
-    isOpening: boolean,
-    triggerElement: HTMLElement,
-    initialTop: number,
-    onFinish?: () => void
-): void {
-    content.style.overflow = "hidden";
-
-    const style = window.getComputedStyle(content);
-    const marginTop = style.marginTop;
-    const marginBottom = style.marginBottom;
-    const paddingTop = style.paddingTop;
-    const paddingBottom = style.paddingBottom;
-
-    const br = content.previousElementSibling as HTMLElement | null;
-    const hasBr = Boolean(br && br.tagName === "BR");
-
-    let brHeight = 0;
-    if (hasBr && br) {
-        brHeight = br.getBoundingClientRect().height || (isOpening ? 16 : 0);
-        br.style.display = "none";
-    }
-
-    const adjustedMarginTop = hasBr ? `calc(${marginTop} + ${brHeight}px)` : marginTop;
-
-    let lastTop = initialTop;
-    let isAnimatingScroll = true;
-    let rafId = 0;
-
-    const cancelScrollFix = (): void => {
-        isAnimatingScroll = false;
-    };
-    window.addEventListener("wheel", cancelScrollFix, { passive: true });
-    window.addEventListener("touchmove", cancelScrollFix, { passive: true });
-
-    const cleanupScrollListeners = (): void => {
-        isAnimatingScroll = false;
-        if (rafId) cancelAnimationFrame(rafId);
-        window.removeEventListener("wheel", cancelScrollFix);
-        window.removeEventListener("touchmove", cancelScrollFix);
-    };
-    registerCleanup(cleanupScrollListeners);
-
-    const maintainScroll = (): void => {
-        if (!isAnimatingScroll || !triggerElement.isConnected) return;
-        const currentTop = triggerElement.getBoundingClientRect().top;
-        const diff = currentTop - lastTop;
-
-        if (Math.abs(diff) > 0.5) {
-            window.scrollBy(0, diff);
-            lastTop = triggerElement.getBoundingClientRect().top;
-        }
-        rafId = requestAnimationFrame(maintainScroll);
-    };
-    rafId = requestAnimationFrame(maintainScroll);
-
-    const keyframes = isOpening
-        ? [
-              {
-                  opacity: 0,
-                  maxHeight: "0px",
-                  marginTop: "0px",
-                  marginBottom: "0px",
-                  paddingTop: "0px",
-                  paddingBottom: "0px"
-              },
-              {
-                  opacity: 1,
-                  maxHeight: content.scrollHeight + "px",
-                  marginTop: adjustedMarginTop,
-                  marginBottom: marginBottom,
-                  paddingTop: paddingTop,
-                  paddingBottom: paddingBottom
-              }
-          ]
-        : [
-              {
-                  opacity: 1,
-                  maxHeight: content.scrollHeight + "px",
-                  marginTop: adjustedMarginTop,
-                  marginBottom: marginBottom,
-                  paddingTop: paddingTop,
-                  paddingBottom: paddingBottom
-              },
-              {
-                  opacity: 0,
-                  maxHeight: "0px",
-                  marginTop: "0px",
-                  marginBottom: "0px",
-                  paddingTop: "0px",
-                  paddingBottom: "0px"
-              }
-          ];
-
-    const animation = content.animate(keyframes, { duration: 700, easing: "ease-out" });
-
-    animation.onfinish = () => {
-        content.style.overflow = "";
-        if (hasBr && br) {
-            br.style.display = "";
-        }
-        cleanupScrollListeners();
-        activeCleanups.delete(cleanupScrollListeners);
-        if (onFinish) onFinish();
-    };
-}
-
-function setupDetailsAnimation(container: HTMLElement): void {
-    container.querySelectorAll<HTMLDetailsElement>(".section.h3 details, .section.h5 details").forEach(details => {
-        const summary = details.querySelector<HTMLElement>("summary");
-        const content = (details.querySelector<HTMLElement>(".ml") ||
-            details.querySelector<HTMLElement>(".content"));
-
-        if (!summary || !content) return;
-
-        let isAnimating = false;
-
-        summary.addEventListener("click", (e: MouseEvent) => {
-            const target = e.target as HTMLElement;
-            if (target.closest(".audio_button") || target.closest(".h3-word-link")) return;
-            e.preventDefault();
-
-            if (isAnimating) return;
-            isAnimating = true;
-
-            const initialTop = summary.getBoundingClientRect().top;
-
-            if (details.open) {
-                playAccordionAnimation(content, false, summary, initialTop, () => {
-                    details.removeAttribute("open");
-                    isAnimating = false;
-                });
-            } else {
-                details.setAttribute("open", "true");
-                playAccordionAnimation(content, true, summary, initialTop, () => {
-                    isAnimating = false;
-                });
-            }
-        });
-    });
-}
-
-function insertSampleImages(container: ParentNode = document): void {
-    const targetElements = container.querySelectorAll<HTMLElement>("div.sample_image");
-    if (targetElements.length === 0) return;
-
-    targetElements.forEach(el => {
-        if (el.dataset.sampleInitialized === "true") return;
-        const imageName = el.classList[1];
-
-        if (imageName) {
-            el.dataset.sampleInitialized = "true";
-
-            const trigger = document.createElement("span");
-            trigger.classList.add("accordion-trigger");
-            trigger.textContent = "イメージを表示";
-
-            const content = document.createElement("span");
-            content.classList.add("accordion-content");
-            content.style.display = "none";
-
-            const img = document.createElement("img");
-            img.src = `./sample_images/${imageName}.png`;
-            img.alt = imageName;
-
-            img.addEventListener("click", (e: MouseEvent) => {
-                e.stopPropagation();
-
-                const modal = document.createElement("div");
-                modal.className = "sample-image-modal";
-                Object.assign(modal.style, {
-                    position: "fixed",
-                    top: "0",
-                    left: "0",
-                    width: "100vw",
-                    height: "100vh",
-                    backgroundColor: "rgba(0, 0, 0, 0.8)",
-                    display: "flex",
-                    justifyContent: "center",
-                    alignItems: "center",
-                    zIndex: "9999",
-                    cursor: "pointer"
-                });
-
-                const modalImg = document.createElement("img");
-                modalImg.src = img.src;
-                Object.assign(modalImg.style, {
-                    maxWidth: "95%",
-                    maxHeight: "95%",
-                    objectFit: "contain"
-                });
-
-                modal.appendChild(modalImg);
-                document.body.appendChild(modal);
-                document.body.style.overflow = "hidden";
-
-                modal.addEventListener("click", () => {
-                    modal.remove();
-                    document.body.style.overflow = "";
-                });
-            });
-
-            content.appendChild(img);
-            el.appendChild(trigger);
-            el.appendChild(content);
-
-            let isAnimating = false;
-
-            trigger.addEventListener("click", (e: MouseEvent) => {
-                e.preventDefault();
-
-                if (isAnimating) return;
-                isAnimating = true;
-
-                const initialTop = trigger.getBoundingClientRect().top;
-
-                if (el.classList.contains("is-active")) {
-                    playAccordionAnimation(content, false, trigger, initialTop, () => {
-                        el.classList.remove("is-active");
-                        content.style.display = "none";
-                        isAnimating = false;
-                    });
-                } else {
-                    el.classList.add("is-active");
-                    content.style.display = "";
-                    playAccordionAnimation(content, true, trigger, initialTop, () => {
-                        isAnimating = false;
-                    });
-                }
-            });
         }
     });
 }
