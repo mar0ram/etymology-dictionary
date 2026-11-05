@@ -118,21 +118,28 @@ footer {
 /* ==========================================================================
    2. 検索エリア：シャープで目立つ検索バー
    ========================================================================== */
+/* ヘッダーを最上部に固定 */
+.site-header > button {
+    position: sticky;
+    top: 0;
+    z-index: 101;
+}
+
+/* 検索バーはヘッダーの下に追従して固定 */
 .search-container {
     width: 95%;
     max-width: 960px;
     display: flex;
     justify-content: center;
     align-items: center;
-    /* 検索バーを画面上部に固定する（ナビゲーション的役割） */
     position: sticky;
-    top: 0;
+    /* ヘッダーの高さ分（約61px）下から追従開始 */
+    top: 61px;
     z-index: 100;
     margin: 0 auto;
-    padding: 16px 0;
+    padding: 14px 0;
     gap: 14px;
-    /* 背景にぼかし効果をつけ、コンテンツと分離 */
-    background-color: rgba(18, 18, 18, 0.88);
+    background-color: rgba(18, 18, 18, 0.7);
     backdrop-filter: blur(10px);
     border-bottom: 1px solid #262626;
 }
@@ -466,8 +473,8 @@ footer {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 20px;
-    height: 20px;
+    width: 22px;
+    height: 22px;
     font-size: 10px;
     background-color: #333333;
     border: 1.5px solid rgb(115, 115, 115);
@@ -923,9 +930,9 @@ footer {
 }
 
 .h3-p4-bar .audio_button {
-    width: 16px;
-    height: 16px;
-    font-size: 8px;
+    width: 20px;
+    height: 20px;
+    font-size: 10px;
 }
 
 .h3-p4-bar .ipa-text {
@@ -980,7 +987,7 @@ footer {
     position: absolute;
     left: 50%;
     transform: translateX(calc(-50% + 0.9em));
-    bottom: 7%;
+    bottom: 5%;
     font-size: 0.7em;
     color: #d8d8d8d1;
     white-space: nowrap;
@@ -994,7 +1001,7 @@ footer {
     content: '';
     position: absolute;
     left: calc(50% - 2.2em);
-    bottom: 7%;
+    bottom: 5%;
     z-index: 2;
     width: 0.6em;
     height: 0.6em;
@@ -1318,7 +1325,6 @@ footer {
     .search-container {
         padding: 15px 10px;
         flex-wrap: nowrap;
-        background-color: #121212;
         backdrop-filter: none;
     }
 
@@ -1401,7 +1407,7 @@ footer {
     }
 
     .h3-p4-bar {
-        padding: 8px 12px 30px;
+        padding: 8px 12px 40px;
         column-gap: 10px;
     }
 

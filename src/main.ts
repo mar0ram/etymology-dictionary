@@ -423,11 +423,51 @@ function selectSuggestionItem(searchValue: string): void {
     }, 150);
 }
 
+function resetToHomeScreen(): void {
+    if (historyDebounceTimer) {
+        clearTimeout(historyDebounceTimer);
+        historyDebounceTimer = null;
+    }
+    if (suggestionSelectTimer) {
+        clearTimeout(suggestionSelectTimer);
+        suggestionSelectTimer = null;
+    }
+    isSelectingSuggestion = false;
+
+    searchBox.blur();
+    clearButtonRedState();
+    searchBox.value = "";
+    clearBtn.style.display = "none";
+    suggestionList.innerHTML = "";
+    setSuggestionDisplay(false);
+    selectedSuggestionIndex = -1;
+
+    if (window.location.hash || window.location.search) {
+        window.history.pushState(null, "", window.location.pathname);
+        lastHandledUrl = window.location.href;
+    }
+
+    window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+    resetZoom(viewportMeta);
+
+    if (currentRenderedWord === null && results.children.length > 0) {
+        return;
+    }
+
+    currentRenderedWord = null;
+    cleanupResultsResources();
+    const res = prependEntry() as AnimationResult;
+    registerCleanup(res);
+}
+
 initBookmarkSystem(
     () => data,
     () => recentSearches,
     targetVal => {
         selectSuggestionItem(targetVal);
+    },
+    () => {
+        resetToHomeScreen();
     }
 );
 

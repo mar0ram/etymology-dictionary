@@ -45,7 +45,7 @@ export function createFormatter(query: string, words: DictionaryEntry[]): (text:
                         w => w.word && w.word.toLowerCase() === cleanWord.toLowerCase() && w.word.toLowerCase() !== query
                     );
                     const wordSpanHtml = isWordInDict
-                        ? `<span class="h3-p4-word h3-word-link" lang="en" data-target-word="${cleanWord}" style="cursor: pointer; text-decoration: underline; text-underline-offset: 3px;">${cleanWord}<i class="fa-solid fa-arrow-up-right-from-square fa-2xs" style="margin-left: 4px; opacity: 0.75;"></i></span>`
+                        ? `<span class="h3-p4-word" lang="en" data-target-word="${cleanWord}"><span class="h3-word-link" data-target-word="${cleanWord}" style="display: inline-block; width: fit-content; align-self: flex-start; justify-self: start; cursor: pointer; text-decoration: underline; text-underline-offset: 3px;">${cleanWord}<i class="fa-solid fa-arrow-up-right-from-square fa-2xs" style="margin-left: 4px; opacity: 0.75;"></i></span></span>`
                         : `<span class="h3-p4-word" lang="en">${cleanWord}</span>`;
                     const barHtml = `<span class="h3-p4-bar">${numBadge}${wordSpanHtml}${relAudioHtml}<span class="h3-p4-meanings">${meaningTags}</span></span>`;
                     const placeholder = `<!--W_P4_HEADER_${headerPlaceholders.length}-->`;

@@ -245,25 +245,116 @@ function updateNavBadge(): void {
     navBadgeEl.style.display = bookmarks.length > 0 ? "inline-flex" : "none";
 }
 
-// 検索バー横の「★ 単語帳」ボタンと復習モーダルの初期化
+// ヘッダーと右端の「★ 単語帳」ボタンおよび復習モーダルの初期化
 export function initBookmarkSystem(
     getData: () => DictionaryData,
     getRecentSearches: () => RecentSearchItem[],
-    onSelectWord: (searchValue: string) => void
+    onSelectWord: (searchValue: string) => void,
+    onReturnHome: () => void
 ): void {
     const searchContainer = document.querySelector<HTMLElement>(".search-container");
-    if (!searchContainer) return;
+    if (!searchContainer || !searchContainer.parentElement) return;
 
+    const existingHeader = document.getElementById("siteHeader");
+    if (existingHeader) existingHeader.remove();
+
+    // ヘッダー要素の生成
+    const headerEl = document.createElement("header");
+    headerEl.id = "siteHeader";
+    headerEl.className = "site-header";
+    Object.assign(headerEl.style, {
+        width: "95%",
+        maxWidth: "960px",
+        margin: "0 auto",
+        padding: "14px 0 6px 0",
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+        gap: "12px",
+        boxSizing: "border-box",
+        cursor: "pointer",
+        userSelect: "none"
+    });
+
+    // 左側：タイトル・ロゴ領域（クリックで初期画面へ）
+    const brandArea = document.createElement("div");
+    brandArea.className = "site-header-brand";
+    Object.assign(brandArea.style, {
+        display: "inline-flex",
+        alignItems: "center",
+        gap: "10px",
+        minWidth: "0",
+        transition: "opacity 0.2s ease"
+    });
+
+    const brandIconWrap = document.createElement("span");
+    Object.assign(brandIconWrap.style, {
+        width: "32px",
+        height: "32px",
+        borderRadius: "8px",
+        background: "linear-gradient(135deg, rgba(0, 180, 204, 0.22) 0%, rgba(0, 143, 161, 0.1) 100%)",
+        border: "1px solid rgba(0, 180, 204, 0.4)",
+        display: "inline-flex",
+        alignItems: "center",
+        justifyContent: "center",
+        flexShrink: "0"
+    });
+
+    const brandIcon = document.createElement("i");
+    brandIcon.className = "fa-solid fa-book-open";
+    brandIcon.style.color = "#00b4cc";
+    brandIcon.style.fontSize = "14px";
+    brandIconWrap.appendChild(brandIcon);
+
+    const titleTextWrap = document.createElement("div");
+    Object.assign(titleTextWrap.style, {
+        display: "flex",
+        flexDirection: "column",
+        minWidth: "0"
+    });
+
+    const mainTitle = document.createElement("span");
+    mainTitle.textContent = "Etymology Dictionary";
+    Object.assign(mainTitle.style, {
+        fontSize: "17px",
+        fontWeight: "800",
+        color: "#f8fafc",
+        letterSpacing: "0.03em",
+        lineHeight: "1.2",
+        whiteSpace: "nowrap",
+        overflow: "hidden",
+        textOverflow: "ellipsis"
+    });
+
+    const subTitle = document.createElement("span");
+    subTitle.textContent = "語源・コアイメージ辞典";
+    Object.assign(subTitle.style, {
+        fontSize: "11px",
+        color: "#94a3b8",
+        lineHeight: "1.2",
+        marginTop: "2px"
+    });
+
+    titleTextWrap.appendChild(mainTitle);
+    titleTextWrap.appendChild(subTitle);
+    brandArea.appendChild(brandIconWrap);
+    brandArea.appendChild(titleTextWrap);
+
+    // 右端：「★ 単語帳」ボタン（スクロールしても画面に追従するフローティング仕様）
     const openModalBtn = document.createElement("button");
     openModalBtn.type = "button";
     openModalBtn.id = "openBookmarkModalBtn";
     openModalBtn.title = "マイ単語帳・フラッシュカード復習";
     Object.assign(openModalBtn.style, {
-        padding: "16px 16px",
-        flex: "0 0 auto",
-        fontSize: "16px",
+        position: "fixed",
+        top: "16px",
+        right: "16px",
+        zIndex: "105", // .search-container(100)より手前に配置
+        padding: "10px 15px",
+        fontSize: "14px",
         border: "1px solid #334155",
-        backgroundColor: "#1e293b",
+        backgroundColor: "rgba(30, 41, 59, 0.92)",
+        backdropFilter: "blur(8px)",
         color: "#f8fafc",
         borderRadius: "10px",
         cursor: "pointer",
@@ -271,6 +362,7 @@ export function initBookmarkSystem(
         alignItems: "center",
         gap: "7px",
         fontWeight: "700",
+        boxShadow: "0 4px 12px rgba(0, 0, 0, 0.35)",
         transition: "all 0.2s ease"
     });
 
@@ -285,12 +377,12 @@ export function initBookmarkSystem(
     Object.assign(navBadgeEl.style, {
         backgroundColor: "#00b4cc",
         color: "#ffffff",
-        fontSize: "12px",
+        fontSize: "11px",
         fontWeight: "700",
-        padding: "1px 7px",
+        padding: "1px 6px",
         borderRadius: "999px",
         minWidth: "18px",
-        height: "20px",
+        height: "18px",
         alignItems: "center",
         justifyContent: "center",
         lineHeight: "1"
@@ -310,11 +402,33 @@ export function initBookmarkSystem(
         openModalBtn.style.backgroundColor = "#1e293b";
     });
 
-    searchContainer.appendChild(openModalBtn);
-
-    openModalBtn.addEventListener("click", () => {
+    // 単語帳ボタン押下時はモーダルのみを開き、ヘッダーの初期画面復帰を発火させない
+    openModalBtn.addEventListener("click", (e: MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
         openBookmarkModal(getData, getRecentSearches, onSelectWord);
     });
+
+    // 単語帳ボタン以外のヘッダー領域をクリックしたときは検索前の初期画面へ戻る
+    headerEl.addEventListener("mouseenter", (e: MouseEvent) => {
+        if (!openModalBtn.contains(e.target as Node)) {
+            brandArea.style.opacity = "0.82";
+        }
+    });
+    headerEl.addEventListener("mouseleave", () => {
+        brandArea.style.opacity = "1";
+    });
+    headerEl.addEventListener("click", (e: MouseEvent) => {
+        if (openModalBtn.contains(e.target as Node)) return;
+        e.preventDefault();
+        onReturnHome();
+    });
+
+    headerEl.appendChild(brandArea);
+    headerEl.appendChild(openModalBtn);
+
+    // 検索バー（.search-container）の直前にヘッダーを挿入
+    searchContainer.parentElement.insertBefore(headerEl, searchContainer);
 }
 
 function openBookmarkModal(
