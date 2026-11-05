@@ -1,4 +1,5 @@
 import { DictionaryData, DictionaryEntry, RecentSearchItem } from "./types.js";
+import { createFormatter } from "./formatter.js";
 
 export interface BookmarkItem {
     searchValue: string;
@@ -12,7 +13,7 @@ interface FlashcardData {
     word: string;
     numStr: string;
     meanings: string[];
-    etymologyHint: string;
+    mlHtml: string;
 }
 
 const BOOKMARK_STORAGE_KEY = "word_bookmarks_v1";
@@ -158,7 +159,7 @@ export function attachBookmarkButton(
     headEl.appendChild(btn);
 }
 
-// 辞書データからフラッシュカード用の「意味」と「語源・コアイメージヒント」を抽出
+// 辞書データからフラッシュカード用の「意味（単語・熟語対応）」と「.ml要素のHTML全文（画像除く）」を抽出
 function buildFlashcardData(
     searchValue: string,
     fallbackWord: string,
@@ -170,62 +171,151 @@ function buildFlashcardData(
     let entry: DictionaryEntry | undefined;
     if (isNum) {
         const num = parseInt(cleanVal, 10);
-        entry = (data.idioms || []).find(item => item.num === num);
+        entry =
+            (data.idioms || []).find(item => Number(item.num) === num) ||
+            (data.words || []).find(item => Number(item.num) === num);
     } else {
-        entry = (data.words || []).find(
-            item => item.word && String(item.word).toLowerCase() === cleanVal.toLowerCase()
-        );
+        entry =
+            (data.words || []).find(
+                item => item.word && String(item.word).toLowerCase() === cleanVal.toLowerCase()
+            ) ||
+            (data.idioms || []).find(
+                item => item.word && String(item.word).toLowerCase() === cleanVal.toLowerCase()
+            );
     }
 
-    if (!entry) {
-        entry = (data.words || []).find(
-            item => item.word && String(item.word).toLowerCase() === fallbackWord.toLowerCase()
-        );
+    if (!entry && fallbackWord) {
+        const cleanFallback = fallbackWord.trim().toLowerCase();
+        entry =
+            (data.words || []).find(
+                item => item.word && String(item.word).toLowerCase() === cleanFallback
+            ) ||
+            (data.idioms || []).find(
+                item => item.word && String(item.word).toLowerCase() === cleanFallback
+            );
     }
 
     const word = String(entry?.word || fallbackWord).trim();
     const numStr = entry?.num !== undefined && entry?.num !== "" ? String(entry.num) : "";
 
     const meanings: string[] = [];
-    let etymologyHint = "";
+    const mlHtmlParts: string[] = [];
 
     if (entry) {
-        const i2Raw = String(entry.i2 || "");
-        const headerMatch = i2Raw.match(
-            /<span class="w">\s*<b>\s*【?\s*(?:\d+\s*\.\s*)?[^：:]+?\s*[：:]\s*([\s\S]+?)\s*】?\s*<\/b>/
+        const nl2br = createFormatter(word.toLowerCase(), data.words || []);
+        const allKeys = Object.keys(entry);
+        const contentKeys = allKeys.filter(
+            k =>
+                k !== "num" &&
+                k !== "word" &&
+                k !== "partOfSpeech" &&
+                !/^h\d+/i.test(k) &&
+                !k.startsWith("related") &&
+                !/^tag\d+/i.test(k) &&
+                !/^p\d+/i.test(k) &&
+                typeof entry[k] === "string" &&
+                String(entry[k]).trim() !== ""
         );
-        if (headerMatch && headerMatch[1]) {
-            headerMatch[1]
+
+        const pushMeaningString = (rawMeaning: string): void => {
+            const cleaned = rawMeaning
+                .replace(/<[^>]+>/g, "")
+                .replace(/^[\s【]+|[\s】]+$/g, "")
+                .trim();
+            if (!cleaned) return;
+            cleaned
                 .split(/\s*[,，、]\s*/)
-                .map(s => s.replace(/<[^>]+>/g, "").trim())
+                .map(s => s.trim())
+                .filter(Boolean)
+                .forEach(m => {
+                    if (!meanings.includes(m)) {
+                        meanings.push(m);
+                    }
+                });
+        };
+
+        contentKeys.forEach(k => {
+            const rawText = String(entry[k]);
+            const fixedText = rawText.replace(
+                /<\/span>(\r?\n)?<span class="ml">/g,
+                '</b></span>$1<span class="ml">'
+            );
+
+            // 1. <span class="w">...</span> から意味を抽出（単語・熟語共通）
+            const wMatches = [...fixedText.matchAll(/<span class="w">([\s\S]*?)<\/span>/g)];
+            wMatches.forEach(m => {
+                const inner = m[1]
+                    .replace(/<[^>]+>/g, "")
+                    .replace(/^[\s【]+|[\s】]+$/g, "")
+                    .trim();
+                if (!inner) return;
+                const colonIdx = inner.search(/[：:]/);
+                if (colonIdx >= 0) {
+                    pushMeaningString(inner.slice(colonIdx + 1));
+                } else {
+                    pushMeaningString(inner.replace(/^\d+\s*\.\s*/, ""));
+                }
+            });
+
+            // 2. <span class="w"> がない場合の <b>【...】</b> パターンからの意味抽出
+            if (wMatches.length === 0) {
+                const withoutMl = fixedText.replace(/<span class="ml">[\s\S]*/g, "");
+                const bMatches = [
+                    ...withoutMl.matchAll(/<b>\s*【([\s\S]*?)】\s*(?:<\/b>)?/g),
+                    ...withoutMl.matchAll(/【([^】]+)】/g)
+                ];
+                bMatches.forEach(m => {
+                    const inner = m[1].replace(/<[^>]+>/g, "").trim();
+                    if (!inner) return;
+                    const colonIdx = inner.search(/[：:]/);
+                    if (colonIdx >= 0) {
+                        pushMeaningString(inner.slice(colonIdx + 1));
+                    } else {
+                        pushMeaningString(inner.replace(/^\d+\s*\.\s*/, ""));
+                    }
+                });
+            }
+
+            // 3. 辞書ページの .ml 要素の内容をすべて抽出（画像は省き、CSSが効くようHTML構造を維持）
+            const formattedHtml = nl2br(fixedText);
+            const tempDiv = document.createElement("div");
+            tempDiv.innerHTML = formattedHtml;
+
+            // .ml 内の画像要素（div.sample_image や img）および直後の余分な改行を除去
+            tempDiv.querySelectorAll(".sample_image, img").forEach(imgEl => {
+                const next = imgEl.nextElementSibling;
+                if (next && next.tagName === "BR") {
+                    next.remove();
+                }
+                imgEl.remove();
+            });
+
+            const mlEls = Array.from(tempDiv.querySelectorAll<HTMLElement>(".ml")).filter(
+                el => !el.parentElement?.closest(".ml")
+            );
+            mlEls.forEach(el => {
+                mlHtmlParts.push(`<div>${el.outerHTML}</div>`);
+            });
+        });
+    }
+
+    if (meanings.length === 0 && entry) {
+        // 万一特殊フォーマットの熟語等で上記に該当しなかった場合の最終抽出
+        const fallbackRaw = String(entry.i2 || entry.i1 || "");
+        const beforeMl = fallbackRaw.split(/<span class="ml">/)[0] || "";
+        const plain = beforeMl
+            .replace(/<[^>]+>/g, "")
+            .replace(/^[\s【]+|[\s】]+$/g, "")
+            .trim();
+        if (plain) {
+            const colonIdx = plain.search(/[：:]/);
+            const targetPart = colonIdx >= 0 ? plain.slice(colonIdx + 1) : plain.replace(/^\d+\s*\.\s*/, "");
+            targetPart
+                .split(/\s*[,，、]\s*/)
+                .map(s => s.trim())
                 .filter(Boolean)
                 .forEach(m => meanings.push(m));
         }
-
-        const stripHtml = (html: string): string =>
-            html
-                .replace(/<span class="w">[\s\S]*?<\/span>/g, "")
-                .replace(/<[^>]+>/g, " ")
-                .replace(/\s+/g, " ")
-                .trim();
-
-        const i1Text = stripHtml(String(entry.i1 || ""));
-        const i2Body = stripHtml(i2Raw);
-        const rawHint = i1Text || i2Body;
-
-        if (rawHint) {
-            const escapedWord = word.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-            const wordRegex = new RegExp(`\\b${escapedWord}\\b`, "gi");
-            const masked = rawHint.replace(wordRegex, " [ ___ ] ");
-            etymologyHint = masked.length > 140 ? masked.slice(0, 140) + "…" : masked;
-        }
-    }
-
-    if (meanings.length === 0) {
-        meanings.push("（辞書ページで詳細を確認）");
-    }
-    if (!etymologyHint) {
-        etymologyHint = "コアイメージ・語源の詳細は「辞書で開く」から確認できます。";
     }
 
     return {
@@ -233,7 +323,7 @@ function buildFlashcardData(
         word,
         numStr,
         meanings,
-        etymologyHint
+        mlHtml: mlHtmlParts.join("")
     };
 }
 
@@ -245,7 +335,6 @@ function updateNavBadge(): void {
     navBadgeEl.style.display = bookmarks.length > 0 ? "inline-flex" : "none";
 }
 
-// ヘッダーと右端の「★ 単語帳」ボタンおよび復習モーダルの初期化
 export function initBookmarkSystem(
     getData: () => DictionaryData,
     getRecentSearches: () => RecentSearchItem[],
@@ -258,7 +347,10 @@ export function initBookmarkSystem(
     const existingHeader = document.getElementById("siteHeader");
     if (existingHeader) existingHeader.remove();
 
-    // ヘッダー要素の生成
+    const existingFloatingBtn = document.getElementById("openBookmarkModalBtn");
+    if (existingFloatingBtn) existingFloatingBtn.remove();
+
+    // 1. ヘッダー要素の生成（タイトル・ロゴのみ。クリックで初期画面へ）
     const headerEl = document.createElement("header");
     headerEl.id = "siteHeader";
     headerEl.className = "site-header";
@@ -268,15 +360,13 @@ export function initBookmarkSystem(
         margin: "0 auto",
         padding: "14px 0 6px 0",
         display: "flex",
-        justifyContent: "space-between",
+        justifyContent: "flex-start",
         alignItems: "center",
-        gap: "12px",
         boxSizing: "border-box",
         cursor: "pointer",
         userSelect: "none"
     });
 
-    // 左側：タイトル・ロゴ領域（クリックで初期画面へ）
     const brandArea = document.createElement("div");
     brandArea.className = "site-header-brand";
     Object.assign(brandArea.style, {
@@ -339,8 +429,22 @@ export function initBookmarkSystem(
     titleTextWrap.appendChild(subTitle);
     brandArea.appendChild(brandIconWrap);
     brandArea.appendChild(titleTextWrap);
+    headerEl.appendChild(brandArea);
 
-    // 右端：「★ 単語帳」ボタン（スクロールしても画面に追従するフローティング仕様）
+    headerEl.addEventListener("mouseenter", () => {
+        brandArea.style.opacity = "0.82";
+    });
+    headerEl.addEventListener("mouseleave", () => {
+        brandArea.style.opacity = "1";
+    });
+    headerEl.addEventListener("click", (e: MouseEvent) => {
+        e.preventDefault();
+        onReturnHome();
+    });
+
+    searchContainer.parentElement.insertBefore(headerEl, searchContainer);
+
+    // 2. 「★ 単語帳」ボタン（画面上部に常に固定追従するフローティング仕様）
     const openModalBtn = document.createElement("button");
     openModalBtn.type = "button";
     openModalBtn.id = "openBookmarkModalBtn";
@@ -349,9 +453,9 @@ export function initBookmarkSystem(
         position: "fixed",
         top: "16px",
         right: "16px",
-        zIndex: "105", // .search-container(100)より手前に配置
-        padding: "10px 15px",
-        fontSize: "14px",
+        zIndex: "105",
+        padding: "10px 14px",
+        fontSize: "13.5px",
         border: "1px solid #334155",
         backgroundColor: "rgba(30, 41, 59, 0.92)",
         backdropFilter: "blur(8px)",
@@ -360,7 +464,7 @@ export function initBookmarkSystem(
         cursor: "pointer",
         display: "inline-flex",
         alignItems: "center",
-        gap: "7px",
+        gap: "6px",
         fontWeight: "700",
         boxShadow: "0 4px 12px rgba(0, 0, 0, 0.35)",
         transition: "all 0.2s ease"
@@ -399,36 +503,16 @@ export function initBookmarkSystem(
     });
     openModalBtn.addEventListener("mouseleave", () => {
         openModalBtn.style.borderColor = "#334155";
-        openModalBtn.style.backgroundColor = "#1e293b";
+        openModalBtn.style.backgroundColor = "rgba(30, 41, 59, 0.92)";
     });
 
-    // 単語帳ボタン押下時はモーダルのみを開き、ヘッダーの初期画面復帰を発火させない
     openModalBtn.addEventListener("click", (e: MouseEvent) => {
         e.preventDefault();
         e.stopPropagation();
         openBookmarkModal(getData, getRecentSearches, onSelectWord);
     });
 
-    // 単語帳ボタン以外のヘッダー領域をクリックしたときは検索前の初期画面へ戻る
-    headerEl.addEventListener("mouseenter", (e: MouseEvent) => {
-        if (!openModalBtn.contains(e.target as Node)) {
-            brandArea.style.opacity = "0.82";
-        }
-    });
-    headerEl.addEventListener("mouseleave", () => {
-        brandArea.style.opacity = "1";
-    });
-    headerEl.addEventListener("click", (e: MouseEvent) => {
-        if (openModalBtn.contains(e.target as Node)) return;
-        e.preventDefault();
-        onReturnHome();
-    });
-
-    headerEl.appendChild(brandArea);
-    headerEl.appendChild(openModalBtn);
-
-    // 検索バー（.search-container）の直前にヘッダーを挿入
-    searchContainer.parentElement.insertBefore(headerEl, searchContainer);
+    document.body.appendChild(openModalBtn);
 }
 
 function openBookmarkModal(
@@ -741,8 +825,8 @@ function openBookmarkModal(
             fontSize: "13px"
         });
         dirSelect.innerHTML = `
-            <option value="en-to-ja" ${cardDirection === "en-to-ja" ? "selected" : ""}>英語 ➔ 意味・コアイメージ</option>
-            <option value="ja-to-en" ${cardDirection === "ja-to-en" ? "selected" : ""}>意味・語源ヒント ➔ 英語</option>
+            <option value="en-to-ja" ${cardDirection === "en-to-ja" ? "selected" : ""}>英語→日本語</option>
+            <option value="ja-to-en" ${cardDirection === "ja-to-en" ? "selected" : ""}>日本語→英語</option>
         `;
         dirSelect.addEventListener("change", () => {
             cardDirection = dirSelect.value as "en-to-ja" | "ja-to-en";
@@ -794,14 +878,16 @@ function openBookmarkModal(
 
         const currentCard = deck[currentCardIndex];
 
-        // カード本体
+        // カード本体（表面・裏面でサイズが変わらないよう高さを固定）
         const cardBox = document.createElement("div");
         Object.assign(cardBox.style, {
-            minHeight: "230px",
+            height: "340px",
+            boxSizing: "border-box",
+            overflow: "hidden",
             backgroundColor: isCardFlipped ? "#152238" : "#1e293b",
-            border: isCardFlipped ? "2px solid #00b4cc" : "1px solid #334155",
+            border: isCardFlipped ? "2px solid #00b4cc" : "2px solid #334155",
             borderRadius: "12px",
-            padding: "24px 20px",
+            padding: "36px 20px 18px 20px",
             display: "flex",
             flexDirection: "column",
             justifyContent: "center",
@@ -838,9 +924,17 @@ function openBookmarkModal(
 
         const contentWrap = document.createElement("div");
         Object.assign(contentWrap.style, {
-            marginTop: "12px",
-            width: "100%"
+            width: "100%",
+            height: "100%",
+            minHeight: "0",
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: isCardFlipped && currentCard.mlHtml ? "flex-start" : "center",
+            alignItems: "center",
+            overflow: isCardFlipped ? "hidden" : "auto"
         });
+
+        let mlScrollBox: HTMLElement | null = null;
 
         if (!isCardFlipped) {
             // 表面
@@ -855,37 +949,26 @@ function openBookmarkModal(
                 wordTitle.textContent = currentCard.word;
                 contentWrap.appendChild(wordTitle);
             } else {
+                // ⑤ 日本語→英語のとき、カード表面は単語の意味のみを表示（下のヒント部分は削除）
                 const meaningTitle = document.createElement("div");
                 Object.assign(meaningTitle.style, {
-                    fontSize: "22px",
+                    fontSize: "24px",
                     fontWeight: "700",
                     color: "#38bdf8",
-                    marginBottom: "14px"
+                    lineHeight: "1.5"
                 });
                 meaningTitle.textContent = currentCard.meanings.join(" ・ ");
-
-                const hintBox = document.createElement("div");
-                Object.assign(hintBox.style, {
-                    fontSize: "14px",
-                    color: "#cbd5e1",
-                    lineHeight: "1.6",
-                    backgroundColor: "rgba(15, 23, 42, 0.6)",
-                    padding: "12px",
-                    borderRadius: "8px"
-                });
-                hintBox.textContent = currentCard.etymologyHint;
-
                 contentWrap.appendChild(meaningTitle);
-                contentWrap.appendChild(hintBox);
             }
         } else {
             // 裏面（解答）
             const ansWord = document.createElement("div");
             Object.assign(ansWord.style, {
-                fontSize: "26px",
+                fontSize: "24px",
                 fontWeight: "700",
                 color: "#ffffff",
-                marginBottom: "8px"
+                marginBottom: "6px",
+                flexShrink: "0"
             });
             ansWord.textContent = currentCard.numStr
                 ? `${currentCard.numStr}. ${currentCard.word}`
@@ -893,52 +976,124 @@ function openBookmarkModal(
 
             const ansMeaning = document.createElement("div");
             Object.assign(ansMeaning.style, {
-                fontSize: "18px",
+                fontSize: "17px",
                 fontWeight: "700",
                 color: "#fbbf24",
-                marginBottom: "12px"
+                marginBottom: currentCard.mlHtml ? "10px" : "0",
+                flexShrink: "0"
             });
             ansMeaning.textContent = currentCard.meanings.join(" ・ ");
 
-            const ansHint = document.createElement("div");
-            Object.assign(ansHint.style, {
-                fontSize: "13px",
-                color: "#cbd5e1",
-                lineHeight: "1.6",
-                backgroundColor: "rgba(15, 23, 42, 0.7)",
-                padding: "10px 12px",
-                borderRadius: "8px",
-                textAlign: "left"
-            });
-            ansHint.textContent = currentCard.etymologyHint;
-
             contentWrap.appendChild(ansWord);
             contentWrap.appendChild(ansMeaning);
-            contentWrap.appendChild(ansHint);
+
+            // ④ 辞書ページの .ml 要素の内容（画像除く）をすべて表示し、固定カード内の残り領域でスクロール可能にする
+            if (currentCard.mlHtml) {
+                if (!document.getElementById("flashcard-scroll-style")) {
+                    const styleEl = document.createElement("style");
+                    styleEl.id = "flashcard-scroll-style";
+                    styleEl.textContent = `
+                        .flashcard-ml-scroll {
+                            scrollbar-width: thin;
+                            scrollbar-color: rgba(0, 180, 204, 0.5) rgba(15, 23, 42, 0.6);
+                        }
+                        .flashcard-ml-scroll::-webkit-scrollbar {
+                            width: 6px;
+                        }
+                        .flashcard-ml-scroll::-webkit-scrollbar-track {
+                            background: rgba(15, 23, 42, 0.6);
+                            border-radius: 999px;
+                            margin: 6px 0;
+                        }
+                        .flashcard-ml-scroll::-webkit-scrollbar-thumb {
+                            background: linear-gradient(180deg, rgba(0, 180, 204, 0.65) 0%, rgba(56, 189, 248, 0.45) 100%);
+                            border-radius: 999px;
+                            border: 1px solid rgba(15, 23, 42, 0.4);
+                        }
+                        .flashcard-ml-scroll::-webkit-scrollbar-thumb:hover {
+                            background: linear-gradient(180deg, #00b4cc 0%, #38bdf8 100%);
+                        }
+                        .flashcard-ml-scroll::-webkit-scrollbar-corner {
+                            background: transparent;
+                        }
+                    `;
+                    document.head.appendChild(styleEl);
+                }
+
+                mlScrollBox = document.createElement("div");
+                mlScrollBox.className = "content flashcard-ml-scroll";
+                Object.assign(mlScrollBox.style, {
+                    backgroundColor: "rgba(15, 23, 42, 0.7)",
+                    padding: "12px 14px",
+                    borderRadius: "8px",
+                    textAlign: "left",
+                    flex: "1 1 auto",
+                    minHeight: "0",
+                    overflowY: "auto",
+                    overscrollBehavior: "contain",
+                    touchAction: "pan-y",
+                    boxSizing: "border-box",
+                    width: "100%"
+                });
+                mlScrollBox.innerHTML = currentCard.mlHtml;
+                contentWrap.appendChild(mlScrollBox);
+            }
         }
 
+        // スクロール操作やテキストドラッグ時に誤ってカードがめくれないように判定
+        let downX = 0;
+        let downY = 0;
+        let downScrollTop = 0;
+        let isScrollbarClick = false;
+
+        cardBox.addEventListener(
+            "pointerdown",
+            (e: PointerEvent) => {
+                downX = e.clientX;
+                downY = e.clientY;
+                downScrollTop = mlScrollBox ? mlScrollBox.scrollTop : 0;
+                isScrollbarClick = false;
+                if (mlScrollBox && mlScrollBox.contains(e.target as Node)) {
+                    const rect = mlScrollBox.getBoundingClientRect();
+                    if (e.clientX - rect.left > mlScrollBox.clientWidth) {
+                        isScrollbarClick = true;
+                    }
+                }
+            },
+            { passive: true }
+        );
+
         cardBox.appendChild(contentWrap);
-        cardBox.addEventListener("click", () => {
+        cardBox.addEventListener("click", (e: MouseEvent) => {
+            const moveDist = Math.hypot(e.clientX - downX, e.clientY - downY);
+            const scrolled = mlScrollBox ? Math.abs(mlScrollBox.scrollTop - downScrollTop) > 2 : false;
+            if (moveDist > 8 || scrolled || isScrollbarClick) {
+                return;
+            }
             isCardFlipped = !isCardFlipped;
             renderCardView();
         });
         bodyArea.appendChild(cardBox);
 
-        // 下部ナビゲーションボタン
+        // ①・② 下部ナビゲーションボタン（prev / 辞書ページへ / next・折り返し防止）
         const navBar = document.createElement("div");
         Object.assign(navBar.style, {
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
             marginTop: "16px",
-            gap: "10px"
+            gap: "8px",
+            flexWrap: "nowrap"
         });
 
         const prevBtn = document.createElement("button");
         prevBtn.type = "button";
-        prevBtn.textContent = "← 前へ";
+        prevBtn.textContent = "prev";
         Object.assign(prevBtn.style, {
-            padding: "10px 16px",
+            padding: "9px clamp(12px, 3vw, 18px)",
+            fontSize: "clamp(12px, 3.5vw, 15px)",
+            whiteSpace: "nowrap",
+            flexShrink: "0",
             backgroundColor: "#1e293b",
             color: "#f8fafc",
             border: "1px solid #334155",
@@ -954,9 +1109,12 @@ function openBookmarkModal(
 
         const openDictBtn = document.createElement("button");
         openDictBtn.type = "button";
-        openDictBtn.textContent = "辞書で詳しく見る";
+        openDictBtn.textContent = "辞書ページへ";
         Object.assign(openDictBtn.style, {
-            padding: "10px 16px",
+            padding: "9px clamp(12px, 3vw, 18px)",
+            fontSize: "clamp(12px, 3.5vw, 15px)",
+            whiteSpace: "nowrap",
+            flexShrink: "0",
             backgroundColor: "rgba(0, 180, 204, 0.18)",
             color: "#38bdf8",
             border: "1px solid #00b4cc",
@@ -971,9 +1129,12 @@ function openBookmarkModal(
 
         const nextBtn = document.createElement("button");
         nextBtn.type = "button";
-        nextBtn.textContent = "次へ →";
+        nextBtn.textContent = "next";
         Object.assign(nextBtn.style, {
-            padding: "10px 16px",
+            padding: "9px clamp(12px, 3vw, 18px)",
+            fontSize: "clamp(12px, 3.5vw, 15px)",
+            whiteSpace: "nowrap",
+            flexShrink: "0",
             backgroundColor: "#1e293b",
             color: "#f8fafc",
             border: "1px solid #334155",
