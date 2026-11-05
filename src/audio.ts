@@ -1,4 +1,6 @@
 import { AudioCacheEntry } from "./types.js";
+import { renderInteractiveIpaHtml, bindInteractiveIpaEvents } from "./ipa.js";
+
 
 // --- 音声キャッシュ管理（localStorage連携・最大500件） ---
 const AUDIO_CACHE_STORAGE_KEY = "mw_audio_cache_v1";
@@ -169,9 +171,13 @@ export async function fetchAndSetAudio(
         audioBox.innerHTML = `
             <div style="display: inline-flex; align-items: center; gap: 6px; margin-bottom: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
                 ${audioUrl ? `<span class="audio_button" style="cursor:pointer; display: inline-flex; align-items: center;"><i class="fa-solid fa-volume-high fa-rotate-by fa-sm" style="color: #ffffff; --fa-rotate-angle: 340deg;"></i></span>` : ""}
-                ${ipaText ? `<span class="ipa-text">${ipaText}</span>` : ""}
+                ${ipaText ? `<span class="ipa-text">${renderInteractiveIpaHtml(ipaText)}</span>` : ""}
             </div>
         `;
+
+       if (ipaText) {
+            bindInteractiveIpaEvents(audioBox, ipaText, word);
+        }
 
         if (audioUrl) {
             const btn = audioBox.querySelector<HTMLElement>(".audio_button");

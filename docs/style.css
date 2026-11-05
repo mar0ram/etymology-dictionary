@@ -842,7 +842,7 @@ footer {
     row-gap: 0;
     align-items: center;
     background-color: #334155;
-    padding: 9px 14px 35px;
+    padding: 9px 14px 40px;
     border-radius: 6px;
     color: #ffffff;
     box-sizing: border-box;
@@ -980,7 +980,7 @@ footer {
     position: absolute;
     left: 50%;
     transform: translateX(calc(-50% + 0.9em));
-    bottom: 5%;
+    bottom: 7%;
     font-size: 0.7em;
     color: #d8d8d8d1;
     white-space: nowrap;
@@ -994,7 +994,7 @@ footer {
     content: '';
     position: absolute;
     left: calc(50% - 2.2em);
-    bottom: 5%;
+    bottom: 7%;
     z-index: 2;
     width: 0.6em;
     height: 0.6em;

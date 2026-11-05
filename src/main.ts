@@ -14,6 +14,9 @@ import {
 import { fetchAndSetAudio, stopSharedAudio } from "./audio.js";
 import { createFormatter } from "./formatter.js";
 import { resetZoom, setupDetailsAnimation, insertSampleImages } from "./ui.js";
+import { findDidYouMeanCandidates } from "./fuzzy.js";
+import { setupEtymologyNetwork } from "./network.js";
+import { attachBookmarkButton, initBookmarkSystem } from "./bookmark.js";
 
 export type { CleanupFn, Disposable, AnimationResult };
 export { registerCleanup };
@@ -179,8 +182,8 @@ function handleUrlSearch(event?: PopStateEvent | HashChangeEvent): void {
 
     const isSameTarget = targetWord
         ? currentRenderedWord !== null &&
-          currentRenderedWord.toLowerCase() === targetWord.trim().toLowerCase() &&
-          results.children.length > 0
+        currentRenderedWord.toLowerCase() === targetWord.trim().toLowerCase() &&
+        results.children.length > 0
         : currentRenderedWord === null && results.children.length > 0;
 
     if (!isSameTarget) {
@@ -391,10 +394,8 @@ function clearButtonRedState(): void {
     const restoreHover = (): void => {
         clearBtn.classList.remove("no-hover");
         window.removeEventListener("mousemove", restoreHover);
-        window.removeEventListener("touchstart", restoreHover);
     };
     window.addEventListener("mousemove", restoreHover, { once: true, passive: true });
-    window.addEventListener("touchstart", restoreHover, { once: true, passive: true });
 }
 
 function selectSuggestionItem(searchValue: string): void {
@@ -421,6 +422,14 @@ function selectSuggestionItem(searchValue: string): void {
         isSelectingSuggestion = false;
     }, 150);
 }
+
+initBookmarkSystem(
+    () => data,
+    () => recentSearches,
+    targetVal => {
+        selectSuggestionItem(targetVal);
+    }
+);
 
 function renderRecentSuggestions(): void {
     if (isSelectingSuggestion || !dataLoaded) return;
@@ -641,7 +650,91 @@ searchBox.addEventListener("input", () => {
     }
 
     if (matchedItems.length === 0) {
-        setSuggestionDisplay(false);
+        const fuzzyCandidates = !isNumberQuery ? findDidYouMeanCandidates(normalizedQuery, data.words || []) : [];
+        if (fuzzyCandidates.length === 0) {
+            setSuggestionDisplay(false);
+            return;
+        }
+
+        const headerDiv = document.createElement("div");
+        headerDiv.className = "suggestion-header";
+        Object.assign(headerDiv.style, {
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            padding: "6px 12px",
+            backgroundColor: "#f8f9fa",
+            borderBottom: "1px solid #e0e0e0",
+            fontSize: "12px",
+            color: "#666666",
+            position: "sticky",
+            top: "0",
+            zIndex: "5"
+        });
+        headerDiv.textContent = "もしかして";
+        suggestionList.appendChild(headerDiv);
+
+        const fuzzyFragment = document.createDocumentFragment();
+
+        fuzzyCandidates.forEach((cand, index) => {
+            const li = document.createElement("li");
+            li.innerHTML = cand.highlightedHtml;
+            li.dataset.searchValue = cand.word;
+            Object.assign(li.style, {
+                padding: "8px 12px",
+                cursor: "pointer",
+                borderBottom: "1px solid #eeeeee",
+                color: "#333333",
+                backgroundColor: "#ffffff",
+                position: "relative",
+                zIndex: "1",
+                transition: "transform 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease"
+            });
+
+            li.addEventListener("mouseenter", () => {
+                selectedSuggestionIndex = index;
+                updateSuggestionHighlight();
+            });
+            li.addEventListener("mouseleave", () => {
+                selectedSuggestionIndex = -1;
+                updateSuggestionHighlight();
+            });
+
+            let touchStartX = 0;
+            let touchStartY = 0;
+
+            li.addEventListener(
+                "touchstart",
+                (e: TouchEvent) => {
+                    if (e.touches && e.touches.length > 0) {
+                        touchStartX = e.touches[0].clientX;
+                        touchStartY = e.touches[0].clientY;
+                    }
+                },
+                { passive: true }
+            );
+
+            li.addEventListener("touchend", (e: TouchEvent) => {
+                if (e.changedTouches && e.changedTouches.length > 0) {
+                    const dx = Math.abs(e.changedTouches[0].clientX - touchStartX);
+                    const dy = Math.abs(e.changedTouches[0].clientY - touchStartY);
+                    if (dx < 10 && dy < 10) {
+                        e.preventDefault();
+                        selectSuggestionItem(cand.word);
+                    }
+                }
+            });
+
+            li.addEventListener("click", () => {
+                selectSuggestionItem(cand.word);
+            });
+
+            fuzzyFragment.appendChild(li);
+        });
+
+        suggestionList.appendChild(fuzzyFragment);
+        setSuggestionDisplay(true);
+        suggestionList.scrollTop = 0;
         return;
     }
 
@@ -787,6 +880,7 @@ searchBtn.addEventListener("click", () => {
         results.innerHTML = "<p>データを読み込み中です。少し待ってから再試行してください。</p>";
         return;
     }
+    searchBox.blur();
     clearButtonRedState();
     setSuggestionDisplay(false);
     selectedSuggestionIndex = -1;
@@ -944,7 +1038,70 @@ function doSearch(updateHistory = true): void {
     }
 
     if (filtered.length === 0) {
-        results.innerHTML = "<p>該当なし</p>";
+        const candidates = !isNumber ? findDidYouMeanCandidates(query, data.words || []) : [];
+        if (candidates.length === 0) {
+            results.innerHTML = "<p>該当なし</p>";
+            return;
+        }
+
+        const container = document.createElement("div");
+        container.style.padding = "16px 8px";
+
+        const msg = document.createElement("p");
+        msg.textContent = `「${raw}」に一致する単語は見つかりませんでした。`;
+        msg.style.marginBottom = "12px";
+        container.appendChild(msg);
+
+        const subTitle = document.createElement("div");
+        subTitle.textContent = "もしかして：";
+        Object.assign(subTitle.style, {
+            fontSize: "15px",
+            color: "#94a3b8",
+            marginBottom: "10px"
+        });
+        container.appendChild(subTitle);
+
+        const listWrap = document.createElement("div");
+        Object.assign(listWrap.style, {
+            display: "flex",
+            flexWrap: "wrap",
+            gap: "10px"
+        });
+
+        candidates.forEach(cand => {
+            const btn = document.createElement("button");
+            btn.type = "button";
+            btn.lang = "en";
+            btn.innerHTML = cand.highlightedHtml;
+            Object.assign(btn.style, {
+                padding: "8px 16px",
+                fontSize: "18px",
+                backgroundColor: "#1e293b",
+                color: "#ffffff",
+                border: "1px solid #334155",
+                borderRadius: "8px",
+                cursor: "pointer",
+                letterSpacing: "0.03em",
+                transition: "border-color 0.2s ease, background-color 0.2s ease"
+            });
+
+            btn.addEventListener("mouseenter", () => {
+                btn.style.borderColor = "#00aac0";
+                btn.style.backgroundColor = "#0f172a";
+            });
+            btn.addEventListener("mouseleave", () => {
+                btn.style.borderColor = "#334155";
+                btn.style.backgroundColor = "#1e293b";
+            });
+            btn.addEventListener("click", () => {
+                selectSuggestionItem(cand.word);
+            });
+
+            listWrap.appendChild(btn);
+        });
+
+        container.appendChild(listWrap);
+        results.appendChild(container);
         return;
     }
 
@@ -969,6 +1126,7 @@ function doSearch(updateHistory = true): void {
         }
 
         div.innerHTML = `<div class="head">${displayNum}. ${item.word}</div>`;
+        attachBookmarkButton(div, item, isNumber);
 
         const wrapper = document.createElement("div");
         wrapper.className = "section-wrapper";
@@ -1056,9 +1214,44 @@ function doSearch(updateHistory = true): void {
         results.appendChild(div);
 
         div.querySelectorAll<HTMLElement>(".h3-word-link").forEach(linkEl => {
+            let touchStartX = 0;
+            let touchStartY = 0;
+            let handledByTouch = false;
+
+            linkEl.addEventListener(
+                "touchstart",
+                (e: TouchEvent) => {
+                    if (e.touches && e.touches.length > 0) {
+                        touchStartX = e.touches[0].clientX;
+                        touchStartY = e.touches[0].clientY;
+                    }
+                },
+                { passive: true }
+            );
+
+            linkEl.addEventListener("touchend", (e: TouchEvent) => {
+                if (e.changedTouches && e.changedTouches.length > 0) {
+                    const dx = Math.abs(e.changedTouches[0].clientX - touchStartX);
+                    const dy = Math.abs(e.changedTouches[0].clientY - touchStartY);
+                    if (dx < 10 && dy < 10) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        handledByTouch = true;
+                        setTimeout(() => {
+                            handledByTouch = false;
+                        }, 400);
+                        const targetWord = linkEl.dataset.targetWord;
+                        if (targetWord) {
+                            selectSuggestionItem(targetWord);
+                        }
+                    }
+                }
+            });
+
             linkEl.addEventListener("click", (e: MouseEvent) => {
                 e.preventDefault();
                 e.stopPropagation();
+                if (handledByTouch) return;
                 const targetWord = linkEl.dataset.targetWord;
                 if (targetWord) {
                     selectSuggestionItem(targetWord);
@@ -1068,6 +1261,10 @@ function doSearch(updateHistory = true): void {
 
         insertSampleImages(div);
         setupDetailsAnimation(div);
+        const networkCleanup = setupEtymologyNetwork(div, item, data.words || [], targetWord => {
+            selectSuggestionItem(targetWord);
+        });
+        registerCleanup(networkCleanup);
 
         const runHeavyFeatures = (): void => {
             if (signal.aborted || !div.isConnected) return;

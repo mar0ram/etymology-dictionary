@@ -133,7 +133,13 @@ export function setupDetailsAnimation(container: HTMLElement): void {
 
         summary.addEventListener("click", (e: MouseEvent) => {
             const target = e.target as HTMLElement;
-            if (target.closest(".audio_button") || target.closest(".h3-word-link")) return;
+            if (
+                target.closest(".audio_button") ||
+                target.closest(".h3-word-link") ||
+                target.closest(".ipa-text")
+            ) {
+                return;
+            }
             e.preventDefault();
 
             if (isAnimating) return;
