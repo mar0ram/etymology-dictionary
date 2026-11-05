@@ -404,7 +404,7 @@ export function initBookmarkSystem(
     });
 
     const mainTitle = document.createElement("span");
-    mainTitle.textContent = "Etymology Dictionary";
+    mainTitle.textContent = "単語学習 補助ツール";
     Object.assign(mainTitle.style, {
         fontSize: "17px",
         fontWeight: "800",
@@ -417,12 +417,12 @@ export function initBookmarkSystem(
     });
 
     const subTitle = document.createElement("span");
-    subTitle.textContent = "語源・コアイメージ辞典";
+    subTitle.textContent = "語源・コアイメージで覚える";
     Object.assign(subTitle.style, {
         fontSize: "11px",
         color: "#94a3b8",
         lineHeight: "1.2",
-        marginTop: "2px"
+        marginTop: "4px"
     });
 
     titleTextWrap.appendChild(mainTitle);
