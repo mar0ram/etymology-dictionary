@@ -350,7 +350,7 @@ export function initBookmarkSystem(
     const existingFloatingBtn = document.getElementById("openBookmarkModalBtn");
     if (existingFloatingBtn) existingFloatingBtn.remove();
 
-    // 1. ヘッダー要素の生成（タイトル・ロゴのみ。クリックで初期画面へ）
+    // ヘッダー要素の生成
     const headerEl = document.createElement("header");
     headerEl.id = "siteHeader";
     headerEl.className = "site-header";
@@ -360,13 +360,15 @@ export function initBookmarkSystem(
         margin: "0 auto",
         padding: "14px 0 6px 0",
         display: "flex",
-        justifyContent: "flex-start",
+        justifyContent: "space-between",
         alignItems: "center",
+        gap: "12px",
         boxSizing: "border-box",
         cursor: "pointer",
         userSelect: "none"
     });
 
+    // 左側：タイトル・ロゴ領域（クリックで初期画面へ）
     const brandArea = document.createElement("div");
     brandArea.className = "site-header-brand";
     Object.assign(brandArea.style, {
@@ -404,7 +406,7 @@ export function initBookmarkSystem(
     });
 
     const mainTitle = document.createElement("span");
-    mainTitle.textContent = "単語学習 補助ツール";
+    mainTitle.textContent = "Etymology Dictionary";
     Object.assign(mainTitle.style, {
         fontSize: "17px",
         fontWeight: "800",
@@ -417,56 +419,37 @@ export function initBookmarkSystem(
     });
 
     const subTitle = document.createElement("span");
-    subTitle.textContent = "語源・コアイメージで覚える";
+    subTitle.textContent = "語源・コアイメージ辞典";
     Object.assign(subTitle.style, {
         fontSize: "11px",
         color: "#94a3b8",
         lineHeight: "1.2",
-        marginTop: "4px"
+        marginTop: "2px"
     });
 
     titleTextWrap.appendChild(mainTitle);
     titleTextWrap.appendChild(subTitle);
     brandArea.appendChild(brandIconWrap);
     brandArea.appendChild(titleTextWrap);
-    headerEl.appendChild(brandArea);
 
-    headerEl.addEventListener("mouseenter", () => {
-        brandArea.style.opacity = "0.82";
-    });
-    headerEl.addEventListener("mouseleave", () => {
-        brandArea.style.opacity = "1";
-    });
-    headerEl.addEventListener("click", (e: MouseEvent) => {
-        e.preventDefault();
-        onReturnHome();
-    });
-
-    searchContainer.parentElement.insertBefore(headerEl, searchContainer);
-
-    // 2. 「★ 単語帳」ボタン（画面上部に常に固定追従するフローティング仕様）
+    // 右端：「★ 単語帳」ボタン（フローティングさせずヘッダー右端に固定配置）
     const openModalBtn = document.createElement("button");
     openModalBtn.type = "button";
     openModalBtn.id = "openBookmarkModalBtn";
     openModalBtn.title = "マイ単語帳・フラッシュカード復習";
     Object.assign(openModalBtn.style, {
-        position: "fixed",
-        top: "16px",
-        right: "16px",
-        zIndex: "105",
-        padding: "10px 14px",
-        fontSize: "13.5px",
+        padding: "9px 14px",
+        flex: "0 0 auto",
+        fontSize: "14px",
         border: "1px solid #334155",
-        backgroundColor: "rgba(30, 41, 59, 0.92)",
-        backdropFilter: "blur(8px)",
+        backgroundColor: "#1e293b",
         color: "#f8fafc",
-        borderRadius: "10px",
+        borderRadius: "9px",
         cursor: "pointer",
         display: "inline-flex",
         alignItems: "center",
-        gap: "6px",
+        gap: "7px",
         fontWeight: "700",
-        boxShadow: "0 4px 12px rgba(0, 0, 0, 0.35)",
         transition: "all 0.2s ease"
     });
 
@@ -503,7 +486,7 @@ export function initBookmarkSystem(
     });
     openModalBtn.addEventListener("mouseleave", () => {
         openModalBtn.style.borderColor = "#334155";
-        openModalBtn.style.backgroundColor = "rgba(30, 41, 59, 0.92)";
+        openModalBtn.style.backgroundColor = "#1e293b";
     });
 
     openModalBtn.addEventListener("click", (e: MouseEvent) => {
@@ -512,7 +495,24 @@ export function initBookmarkSystem(
         openBookmarkModal(getData, getRecentSearches, onSelectWord);
     });
 
-    document.body.appendChild(openModalBtn);
+    headerEl.addEventListener("mouseenter", (e: MouseEvent) => {
+        if (!openModalBtn.contains(e.target as Node)) {
+            brandArea.style.opacity = "0.82";
+        }
+    });
+    headerEl.addEventListener("mouseleave", () => {
+        brandArea.style.opacity = "1";
+    });
+    headerEl.addEventListener("click", (e: MouseEvent) => {
+        if (openModalBtn.contains(e.target as Node)) return;
+        e.preventDefault();
+        onReturnHome();
+    });
+
+    headerEl.appendChild(brandArea);
+    headerEl.appendChild(openModalBtn);
+
+    searchContainer.parentElement.insertBefore(headerEl, searchContainer);
 }
 
 function openBookmarkModal(

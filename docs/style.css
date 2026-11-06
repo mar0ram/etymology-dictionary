@@ -118,13 +118,6 @@ footer {
 /* ==========================================================================
    2. 検索エリア：シャープで目立つ検索バー
    ========================================================================== */
-/* ヘッダーを最上部に固定 */
-.site-header > button {
-    position: sticky;
-    top: 0;
-    z-index: 101;
-}
-
 /* 検索バーはヘッダーの下に追従して固定 */
 .search-container {
     width: 95%;
@@ -132,10 +125,6 @@ footer {
     display: flex;
     justify-content: center;
     align-items: center;
-    position: sticky;
-    /* ヘッダーの高さ分（約61px）下から追従開始 */
-    top: 61px;
-    z-index: 100;
     margin: 0 auto;
     padding: 14px 0;
     gap: 14px;

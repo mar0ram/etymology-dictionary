@@ -426,22 +426,29 @@ export function setupEtymologyNetwork(
     topBar.appendChild(resetBtn);
     container.appendChild(topBar);
 
-    // 全ノードが収まるビューポートサイズを算出（単語が少ないときは基準サイズを維持）
-    let maxExtentX = centerW / 2 + 40;
-    let maxExtentY = centerH / 2 + 40;
+    // ネットワーク全体（中心ノード＋全関連語ノード）の実際の外接領域を算出
+    let minX = -centerW / 2 - 4;
+    let maxX = centerW / 2 + 4;
+    let minY = -centerH / 2 - 4;
+    let maxY = centerH / 2 + 4;
+
     relatedNodes.forEach(node => {
-        maxExtentX = Math.max(maxExtentX, Math.abs(node.x) + node.width / 2 + 24);
-        maxExtentY = Math.max(maxExtentY, Math.abs(node.y) + node.height / 2 + 28);
+        minX = Math.min(minX, node.x - node.width / 2 - 4);
+        maxX = Math.max(maxX, node.x + node.width / 2 + 4);
+        minY = Math.min(minY, node.y - node.height / 2 - 4);
+        maxY = Math.max(maxY, node.y + node.height / 2 + 4);
     });
-    const viewWidth = Math.max(680, Math.ceil(maxExtentX * 2));
-    const viewHeight = Math.max(380, Math.ceil(maxExtentY * 2));
+
+    const netWidth = Math.max(1, maxX - minX);
+    const netHeight = Math.max(1, maxY - minY);
+    const netCenterX = (minX + maxX) / 2;
+    const netCenterY = (minY + maxY) / 2;
 
     // SVGキャンバスの生成
     const svgNS = "http://www.w3.org/2000/svg";
     const svg = document.createElementNS(svgNS, "svg");
     svg.setAttribute("width", "100%");
     svg.setAttribute("height", "100%");
-    svg.setAttribute("viewBox", `${-viewWidth / 2} ${-viewHeight / 2} ${viewWidth} ${viewHeight}`);
     Object.assign(svg.style, {
         display: "block",
         width: "100%",
@@ -594,11 +601,20 @@ export function setupEtymologyNetwork(
 
     h3Content.insertBefore(container, h3Content.firstChild);
 
-    // --- ③ スマホ・PC両対応の1本指スクロール（パン）＆2本指ピンチズーム制御 ---
+    // --- ③ ブロック内への最大フィット計算＆1本指スクロール（パン）・2本指ピンチズーム制御 ---
+    let viewWidth = 680;
+    let viewHeight = 380;
+    let fitScale = 1;
+    let fitPanX = 0;
+    let fitPanY = 0;
+    let minScale = 0.3;
+    let maxScale = 4.0;
+
     let panX = 0;
     let panY = 0;
     let scale = 1;
     let isDraggingMoved = false;
+    let hasUserInteracted = false;
 
     const activePointers = new Map<number, { x: number; y: number }>();
     let initialPinchDist = 0;
@@ -611,12 +627,62 @@ export function setupEtymologyNetwork(
         );
     };
 
+    // 上部バー（辞書ジャンプ・位置リセット）と重ならず、ブロックからはみ出さない最大表示サイズを算出
+    const updateFitMetrics = (): void => {
+        const rect = svg.getBoundingClientRect();
+        viewWidth = rect.width > 0 ? rect.width : container.clientWidth || 680;
+        viewHeight = rect.height > 0 ? rect.height : container.clientHeight || 380;
+
+        svg.setAttribute(
+            "viewBox",
+            `${-viewWidth / 2} ${-viewHeight / 2} ${viewWidth} ${viewHeight}`
+        );
+
+        const topBarRect = topBar.getBoundingClientRect();
+        const topBarHeight = topBarRect.height > 0 ? topBarRect.height : topBar.offsetHeight || 28;
+
+        const padTop = 8 + topBarHeight + 10;
+        const padBottom = 14;
+        const padX = 14;
+
+        const availW = Math.max(60, viewWidth - padX * 2);
+        const availH = Math.max(60, viewHeight - padTop - padBottom);
+
+        fitScale = Math.min(availW / netWidth, availH / netHeight);
+        minScale = Math.min(0.3, fitScale * 0.5);
+        maxScale = Math.max(4.0, fitScale * 3.0);
+
+        const availCenterOffsetY = (padTop - padBottom) / 2;
+        fitPanX = -netCenterX * fitScale;
+        fitPanY = availCenterOffsetY - netCenterY * fitScale;
+    };
+
+    const resetToFit = (): void => {
+        updateFitMetrics();
+        scale = fitScale;
+        panX = fitPanX;
+        panY = fitPanY;
+        updateTransform();
+    };
+
+    resetToFit();
+
+    let resizeObserver: ResizeObserver | null = null;
+    if (typeof ResizeObserver !== "undefined") {
+        resizeObserver = new ResizeObserver(() => {
+            if (!hasUserInteracted) {
+                resetToFit();
+            } else {
+                updateFitMetrics();
+            }
+        });
+        resizeObserver.observe(container);
+    }
+
     resetBtn.addEventListener("click", (e: MouseEvent) => {
         e.stopPropagation();
-        panX = 0;
-        panY = 0;
-        scale = 1;
-        updateTransform();
+        hasUserInteracted = false;
+        resetToFit();
     });
 
     const onPointerDown = (e: PointerEvent): void => {
@@ -640,11 +706,12 @@ export function setupEtymologyNetwork(
         if (activePointers.size === 2) {
             // ③ 2本指によるピンチ拡大縮小
             isDraggingMoved = true;
+            hasUserInteracted = true;
             const pts = Array.from(activePointers.values());
             const currentDist = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
             if (initialPinchDist > 0) {
                 const factor = currentDist / initialPinchDist;
-                scale = Math.min(2.5, Math.max(0.5, initialScale * factor));
+                scale = Math.min(maxScale, Math.max(minScale, initialScale * factor));
                 updateTransform();
             }
         } else if (activePointers.size === 1) {
@@ -653,6 +720,7 @@ export function setupEtymologyNetwork(
             const dy = e.clientY - oldPt.y;
             if (Math.abs(dx) > 6 || Math.abs(dy) > 6) {
                 isDraggingMoved = true;
+                hasUserInteracted = true;
             }
             if (isDraggingMoved) {
                 const rect = svg.getBoundingClientRect();
@@ -678,8 +746,9 @@ export function setupEtymologyNetwork(
     const onWheel = (e: WheelEvent): void => {
         if (!e.ctrlKey && !e.metaKey) return;
         e.preventDefault();
+        hasUserInteracted = true;
         const factor = e.deltaY < 0 ? 1.12 : 0.9;
-        scale = Math.min(2.5, Math.max(0.5, scale * factor));
+        scale = Math.min(maxScale, Math.max(minScale, scale * factor));
         updateTransform();
     };
 
@@ -690,6 +759,9 @@ export function setupEtymologyNetwork(
     svg.addEventListener("wheel", onWheel, { passive: false });
 
     return () => {
+        if (resizeObserver) {
+            resizeObserver.disconnect();
+        }
         svg.removeEventListener("pointerdown", onPointerDown);
         window.removeEventListener("pointermove", onPointerMove);
         window.removeEventListener("pointerup", onPointerUp);
