@@ -81,13 +81,72 @@ function removeBookmarkByValue(searchValue: string): void {
     syncPageBookmarkButtons();
 }
 
-// 画面上に表示されている見出しの★ボタン状態を同期
+let currentDockEntry: DictionaryEntry | null = null;
+let currentDockIsNumber = false;
+let dockEl: HTMLElement | null = null;
+let dockStarBtn: HTMLButtonElement | null = null;
+let closeLiquidSearchImmediate: (() => void) | null = null;
+
+function updateDockStarState(): void {
+    if (!dockStarBtn || !currentDockEntry || !currentDockEntry.word) return;
+    const word = String(currentDockEntry.word).trim();
+    const numStr =
+        currentDockEntry.num !== undefined && currentDockEntry.num !== ""
+            ? String(currentDockEntry.num)
+            : "";
+    const searchValue = currentDockIsNumber && numStr ? numStr : word;
+    const active = isBookmarked(searchValue);
+
+    const iconEl = dockStarBtn.querySelector<HTMLElement>("i");
+    const labelEl = dockStarBtn.querySelector<HTMLElement>(".liquid-btn-label");
+    if (iconEl) {
+        iconEl.className = active ? "fa-solid fa-star" : "fa-regular fa-star";
+        iconEl.style.color = active ? "#fbbf24" : "#ffffff";
+        iconEl.style.filter = active
+            ? "drop-shadow(0 1px 2px rgba(15, 23, 42, 0.95)) drop-shadow(0 0 6px rgba(251, 191, 36, 0.65))"
+            : "";
+    }
+    if (labelEl) {
+        labelEl.textContent = "登録";
+        labelEl.style.color = active ? "#fde68a" : "#f8fafc";
+    }
+    dockStarBtn.classList.toggle("is-active-star", active);
+}
+
+// 画面上に表示されている見出しの★ボタン状態と下部ドックを同期
 function syncPageBookmarkButtons(): void {
     document.querySelectorAll<HTMLButtonElement>(".entry-bookmark-btn").forEach(btn => {
         const val = btn.dataset.searchValue || "";
         const active = isBookmarked(val);
         applyBookmarkBtnStyle(btn, active);
     });
+    updateDockStarState();
+}
+
+// 単語検索ページでの下部Liquid Glassドックの表示・状態更新
+export function setBottomDockContext(
+    item: DictionaryEntry | null,
+    isNumberSearch: boolean
+): void {
+    currentDockEntry = item;
+    currentDockIsNumber = isNumberSearch;
+
+    if (!dockEl) return;
+
+    if (!item || !item.word) {
+        if (closeLiquidSearchImmediate) {
+            closeLiquidSearchImmediate();
+        }
+        dockEl.style.opacity = "0";
+        dockEl.style.pointerEvents = "none";
+        dockEl.style.transform = "translate(-50%, 20px) scale(0.96)";
+        return;
+    }
+
+    updateDockStarState();
+    dockEl.style.opacity = "1";
+    dockEl.style.pointerEvents = "auto";
+    dockEl.style.transform = "translate(-50%, 0) scale(1)";
 }
 
 function applyBookmarkBtnStyle(btn: HTMLButtonElement, active: boolean): void {
@@ -154,6 +213,7 @@ export function attachBookmarkButton(
         e.stopPropagation();
         const nowActive = toggleBookmark(item, isNumberSearch);
         applyBookmarkBtnStyle(btn, nowActive);
+        updateDockStarState();
     });
 
     headEl.appendChild(btn);
@@ -513,12 +573,748 @@ export function initBookmarkSystem(
     headerEl.appendChild(openModalBtn);
 
     searchContainer.parentElement.insertBefore(headerEl, searchContainer);
+
+    // 検索窓と検索ボタンがスクロールに追従しないように固定解除
+    Object.assign(searchContainer.style, {
+        position: "relative",
+        top: "auto"
+    });
+
+    // Liquid Glass 用のSVGレンズ屈折フィルタ定義（下の要素をガラス曲面に沿って湾曲させる）
+    if (!document.getElementById("liquid-glass-svg-defs")) {
+        const svgDefs = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+        svgDefs.id = "liquid-glass-svg-defs";
+        Object.assign(svgDefs.style, {
+            position: "fixed",
+            width: "0",
+            height: "0",
+            pointerEvents: "none",
+            opacity: "0"
+        });
+
+        const lensMapSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="320" height="80" viewBox="0 0 320 80"><defs><radialGradient id="g" cx="50%" cy="50%" r="54%"><stop offset="0%" stop-color="rgb(128,128,128)"/><stop offset="68%" stop-color="rgb(138,118,128)"/><stop offset="90%" stop-color="rgb(215,40,128)"/><stop offset="100%" stop-color="rgb(255,0,128)"/></radialGradient></defs><rect width="320" height="80" rx="40" fill="url(#g)"/></svg>`;
+        const lensMapUri = `data:image/svg+xml;utf8,${encodeURIComponent(lensMapSvg)}`;
+
+        svgDefs.innerHTML = `
+            <defs>
+                <filter id="liquid-glass-lens" x="-15%" y="-15%" width="130%" height="130%" color-interpolation-filters="sRGB">
+                    <feImage href="${lensMapUri}" result="lensMap" preserveAspectRatio="none" />
+                    <feTurbulence type="fractalNoise" baseFrequency="0.018 0.045" numOctaves="2" seed="3" result="waveNoise" />
+                    <feBlend mode="overlay" in="lensMap" in2="waveNoise" result="combinedMap" />
+                    <feGaussianBlur in="SourceGraphic" stdDeviation="1.8" result="softBg" />
+                    <feDisplacementMap in="softBg" in2="combinedMap" scale="22" xChannelSelector="R" yChannelSelector="G" result="refracted" />
+                    <feColorMatrix in="refracted" type="saturate" values="1.45" />
+                </filter>
+            </defs>
+        `;
+        document.body.appendChild(svgDefs);
+    }
+
+    // Liquid Glass ボトムドックおよび検索ポップアップのスタイル定義
+    if (!document.getElementById("liquid-glass-dock-style")) {
+        const styleEl = document.createElement("style");
+        styleEl.id = "liquid-glass-dock-style";
+        styleEl.textContent = `
+            .search-container {
+                position: relative !important;
+                top: auto !important;
+                z-index: 600 !important;
+            }
+            #suggestionList {
+                z-index: 601 !important;
+            }
+            .liquid-glass-dock {
+                position: fixed;
+                bottom: max(16px, env(safe-area-inset-bottom, 16px));
+                left: 50%;
+                transform: translate(-50%, 20px) scale(0.96);
+                z-index: 950;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 10px;
+                padding: 9px 15px;
+                border-radius: 9999px;
+                background:
+                    radial-gradient(120% 140% at 50% 0%, rgba(255, 255, 255, 0.22) 0%, rgba(15, 23, 42, 0.18) 55%, rgba(15, 23, 42, 0.30) 100%),
+                    rgba(15, 23, 42, 0.24);
+                backdrop-filter: url(#liquid-glass-lens) blur(4px) saturate(190%) brightness(0.92) contrast(1.08);
+                -webkit-backdrop-filter: blur(6px) saturate(200%) brightness(0.92) contrast(1.08);
+                border: 1px solid rgba(255, 255, 255, 0.42);
+                box-shadow:
+                    0 16px 36px rgba(0, 0, 0, 0.40),
+                    0 2px 8px rgba(0, 0, 0, 0.24),
+                    0 0 0 1px rgba(15, 23, 42, 0.25),
+                    inset 0 2px 2px rgba(255, 255, 255, 0.80),
+                    inset 0 -2px 3px rgba(255, 255, 255, 0.32),
+                    inset 3px 0 6px rgba(56, 189, 248, 0.22),
+                    inset -3px 0 6px rgba(255, 255, 255, 0.26),
+                    inset 0 0 18px rgba(15, 23, 42, 0.18);
+                overflow: hidden;
+                opacity: 0;
+                pointer-events: none;
+                user-select: none;
+                transition: opacity 0.25s ease, transform 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+            }
+            .liquid-glass-dock::before {
+                content: "";
+                position: absolute;
+                inset: 1px 10px auto 10px;
+                height: 42%;
+                border-radius: 9999px;
+                background: linear-gradient(
+                    180deg,
+                    rgba(255, 255, 255, 0.42) 0%,
+                    rgba(255, 255, 255, 0.06) 65%,
+                    rgba(255, 255, 255, 0) 100%
+                );
+                pointer-events: none;
+            }
+            .liquid-glass-btn {
+                position: relative;
+                min-width: 64px;
+                height: 50px;
+                padding: 6px 14px;
+                border-radius: 9999px;
+                border: 1px solid rgba(255, 255, 255, 0.38);
+                background:
+                    radial-gradient(100% 120% at 50% 0%, rgba(255, 255, 255, 0.26) 0%, rgba(15, 23, 42, 0.16) 62%, rgba(15, 23, 42, 0.28) 100%),
+                    rgba(15, 23, 42, 0.20);
+                box-shadow:
+                    0 4px 12px rgba(0, 0, 0, 0.22),
+                    0 0 0 1px rgba(15, 23, 42, 0.20),
+                    inset 0 1.5px 1.5px rgba(255, 255, 255, 0.82),
+                    inset 0 -1.5px 2px rgba(255, 255, 255, 0.28),
+                    inset 0 0 10px rgba(15, 23, 42, 0.14);
+                backdrop-filter: blur(2.5px) saturate(180%) brightness(0.94);
+                -webkit-backdrop-filter: blur(3.5px) saturate(190%) brightness(0.94);
+                color: #ffffff;
+                display: inline-flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                gap: 4px;
+                cursor: pointer;
+                overflow: hidden;
+                transition: transform 0.18s cubic-bezier(0.22, 1, 0.36, 1), background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+                -webkit-tap-highlight-color: transparent;
+            }
+            .liquid-glass-btn::before {
+                content: "";
+                position: absolute;
+                inset: 1px 6px auto 6px;
+                height: 45%;
+                border-radius: 9999px;
+                background: linear-gradient(
+                    180deg,
+                    rgba(255, 255, 255, 0.45) 0%,
+                    rgba(255, 255, 255, 0.04) 100%
+                );
+                pointer-events: none;
+            }
+            .liquid-glass-btn:hover {
+                transform: translateY(-2px) scale(1.03);
+                border-color: rgba(255, 255, 255, 0.65);
+                background:
+                    radial-gradient(100% 120% at 50% 0%, rgba(255, 255, 255, 0.34) 0%, rgba(15, 23, 42, 0.18) 65%, rgba(56, 189, 248, 0.22) 100%),
+                    rgba(15, 23, 42, 0.24);
+                box-shadow:
+                    0 8px 18px rgba(0, 0, 0, 0.28),
+                    inset 0 2px 2px rgba(255, 255, 255, 0.92),
+                    inset 0 -2px 3px rgba(56, 189, 248, 0.38);
+            }
+            .liquid-glass-btn:active {
+                transform: scale(0.93);
+            }
+            .liquid-glass-btn.is-active-star {
+                border-color: rgba(251, 191, 36, 0.72);
+                background:
+                    radial-gradient(100% 120% at 50% 0%, rgba(251, 191, 36, 0.32) 0%, rgba(15, 23, 42, 0.22) 65%, rgba(251, 191, 36, 0.20) 100%),
+                    rgba(15, 23, 42, 0.26);
+            }
+            .liquid-glass-btn.is-active-search {
+                border-color: rgba(56, 189, 248, 0.85);
+                background:
+                    radial-gradient(100% 120% at 50% 0%, rgba(56, 189, 248, 0.38) 0%, rgba(15, 23, 42, 0.22) 65%, rgba(0, 180, 204, 0.28) 100%),
+                    rgba(15, 23, 42, 0.28);
+            }
+            .liquid-glass-btn i {
+                position: relative;
+                z-index: 1;
+                font-size: 16px;
+                line-height: 1;
+                color: #ffffff;
+                filter:
+                    drop-shadow(0 0 2px rgba(15, 23, 42, 0.95))
+                    drop-shadow(0 1px 4px rgba(0, 0, 0, 0.85));
+                transition: transform 0.2s ease, color 0.2s ease;
+            }
+            .liquid-glass-btn .liquid-btn-label {
+                position: relative;
+                z-index: 1;
+                font-size: 10.5px;
+                font-weight: 700;
+                letter-spacing: 0.03em;
+                line-height: 1;
+                color: #ffffff;
+                text-shadow:
+                    0 0 2px rgba(15, 23, 42, 0.98),
+                    0 1px 3px rgba(0, 0, 0, 0.90),
+                    0 0 6px rgba(15, 23, 42, 0.75);
+                white-space: nowrap;
+            }
+            /* 虫眼鏡から飛び出す・吸い込まれる Liquid Glass 検索パネル */
+            .liquid-search-popup {
+                position: fixed;
+                bottom: calc(max(16px, env(safe-area-inset-bottom, 16px)) + 78px);
+                left: 50%;
+                width: min(92vw, 440px);
+                z-index: 955;
+                display: flex;
+                flex-direction: column;
+                gap: 8px;
+                padding: 12px;
+                border-radius: 26px;
+                background:
+                    radial-gradient(120% 140% at 50% 0%, rgba(255, 255, 255, 0.24) 0%, rgba(15, 23, 42, 0.22) 55%, rgba(15, 23, 42, 0.36) 100%),
+                    rgba(15, 23, 42, 0.28);
+                backdrop-filter: url(#liquid-glass-lens) blur(5px) saturate(195%) brightness(0.92) contrast(1.08);
+                -webkit-backdrop-filter: blur(8px) saturate(200%) brightness(0.92) contrast(1.08);
+                border: 1px solid rgba(255, 255, 255, 0.44);
+                box-shadow:
+                    0 18px 42px rgba(0, 0, 0, 0.45),
+                    0 2px 10px rgba(0, 0, 0, 0.28),
+                    0 0 0 1px rgba(15, 23, 42, 0.28),
+                    inset 0 2px 2px rgba(255, 255, 255, 0.82),
+                    inset 0 -2px 3px rgba(255, 255, 255, 0.30),
+                    inset 3px 0 6px rgba(56, 189, 248, 0.22),
+                    inset -3px 0 6px rgba(255, 255, 255, 0.24);
+                box-sizing: border-box;
+                opacity: 0;
+                visibility: hidden;
+                pointer-events: none;
+                transform: translate(-50%, 24px) scale(0.06);
+                transition:
+                    transform 0.34s cubic-bezier(0.34, 1.56, 0.64, 1),
+                    opacity 0.22s ease,
+                    visibility 0.34s;
+            }
+            .liquid-search-popup.is-open {
+                opacity: 1;
+                visibility: visible;
+                pointer-events: auto;
+                transform: translate(-50%, 0) scale(1);
+            }
+            .liquid-search-popup.is-closing {
+                opacity: 0;
+                visibility: hidden;
+                pointer-events: none;
+                transform: translate(-50%, 24px) scale(0.05);
+                transition:
+                    transform 0.26s cubic-bezier(0.36, 0, 0.66, -0.2),
+                    opacity 0.20s ease,
+                    visibility 0.26s;
+            }
+            .liquid-search-bar-row {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                width: 100%;
+            }
+            .liquid-search-input-wrap {
+                position: relative;
+                flex: 1 1 auto;
+                min-width: 0;
+                display: flex;
+                align-items: center;
+            }
+            .liquid-search-input {
+                width: 100%;
+                height: 44px;
+                padding: 0 16px;
+                border-radius: 9999px;
+                border: 1px solid rgba(255, 255, 255, 0.42);
+                background:
+                    radial-gradient(100% 120% at 50% 0%, rgba(255, 255, 255, 0.22) 0%, rgba(15, 23, 42, 0.24) 100%),
+                    rgba(15, 23, 42, 0.28);
+                box-shadow:
+                    inset 0 1.5px 2px rgba(0, 0, 0, 0.35),
+                    inset 0 -1px 1.5px rgba(255, 255, 255, 0.45);
+                color: #ffffff;
+                font-size: 16px;
+                font-weight: 600;
+                outline: none;
+                box-sizing: border-box;
+                text-shadow: 0 1px 2px rgba(15, 23, 42, 0.9);
+            }
+            .liquid-search-input::placeholder {
+                color: rgba(241, 245, 249, 0.78);
+                text-shadow: 0 1px 2px rgba(15, 23, 42, 0.85);
+            }
+            .liquid-search-input:focus {
+                border-color: rgba(56, 189, 248, 0.9);
+                box-shadow:
+                    0 0 0 2px rgba(56, 189, 248, 0.28),
+                    inset 0 1.5px 2px rgba(0, 0, 0, 0.35),
+                    inset 0 -1px 1.5px rgba(255, 255, 255, 0.6);
+            }
+            .liquid-search-submit-btn {
+                height: 44px;
+                padding: 0 18px;
+                border-radius: 9999px;
+                border: 1px solid rgba(255, 255, 255, 0.46);
+                background:
+                    radial-gradient(100% 120% at 50% 0%, rgba(56, 189, 248, 0.45) 0%, rgba(0, 180, 204, 0.28) 65%, rgba(15, 23, 42, 0.35) 100%),
+                    rgba(0, 180, 204, 0.25);
+                box-shadow:
+                    0 4px 12px rgba(0, 0, 0, 0.25),
+                    inset 0 1.5px 1.5px rgba(255, 255, 255, 0.85),
+                    inset 0 -1.5px 2px rgba(255, 255, 255, 0.30);
+                color: #ffffff;
+                font-size: 14px;
+                font-weight: 800;
+                letter-spacing: 0.03em;
+                white-space: nowrap;
+                cursor: pointer;
+                flex-shrink: 0;
+                text-shadow:
+                    0 0 2px rgba(15, 23, 42, 0.98),
+                    0 1px 3px rgba(0, 0, 0, 0.90);
+                transition: transform 0.15s ease, border-color 0.2s ease;
+            }
+            .liquid-search-submit-btn:hover {
+                transform: translateY(-1px);
+                border-color: rgba(255, 255, 255, 0.78);
+            }
+            .liquid-search-submit-btn:active {
+                transform: scale(0.94);
+            }
+            .liquid-search-history-list {
+                list-style: none;
+                margin: 0;
+                padding: 4px;
+                max-height: min(34vh, 220px);
+                overflow-y: auto;
+                overscroll-behavior: contain;
+                border-radius: 18px;
+                background: rgba(15, 23, 42, 0.32);
+                border: 1px solid rgba(255, 255, 255, 0.24);
+                box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.3);
+                scrollbar-width: thin;
+                scrollbar-color: rgba(56, 189, 248, 0.55) transparent;
+            }
+            .liquid-search-history-list:empty {
+                display: none;
+            }
+            .liquid-search-history-header {
+                padding: 5px 12px 4px 12px;
+                font-size: 11px;
+                font-weight: 700;
+                color: #bae6fd;
+                text-shadow: 0 1px 2px rgba(15, 23, 42, 0.95);
+                letter-spacing: 0.03em;
+            }
+            .liquid-search-history-item {
+                padding: 9px 12px;
+                border-radius: 12px;
+                color: #ffffff;
+                font-size: 14.5px;
+                font-weight: 600;
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 8px;
+                text-shadow:
+                    0 0 2px rgba(15, 23, 42, 0.98),
+                    0 1px 3px rgba(0, 0, 0, 0.88);
+                transition: background 0.15s ease;
+            }
+            .liquid-search-history-item:hover,
+            .liquid-search-history-item:active {
+                background: rgba(56, 189, 248, 0.25);
+            }
+            @media (max-width: 480px) {
+                .liquid-glass-dock {
+                    gap: 7px;
+                    padding: 7px 11px;
+                }
+                .liquid-glass-btn {
+                    min-width: 58px;
+                    height: 46px;
+                    padding: 5px 11px;
+                }
+                .liquid-glass-btn i {
+                    font-size: 15px;
+                }
+                .liquid-glass-btn .liquid-btn-label {
+                    font-size: 10px;
+                }
+                .liquid-search-popup {
+                    bottom: calc(max(16px, env(safe-area-inset-bottom, 16px)) + 72px);
+                    padding: 10px;
+                    border-radius: 22px;
+                }
+            }
+        `;
+        document.head.appendChild(styleEl);
+    }
+
+    const existingDock = document.getElementById("liquidGlassBottomDock");
+    if (existingDock) existingDock.remove();
+
+    const existingSearchPopup = document.getElementById("liquidGlassSearchPopup");
+    if (existingSearchPopup) existingSearchPopup.remove();
+
+    dockEl = document.createElement("nav");
+    dockEl.id = "liquidGlassBottomDock";
+    dockEl.className = "liquid-glass-dock";
+    dockEl.setAttribute("aria-label", "クイックアクション");
+
+    // ドック上のタップ・クリックが背後要素に貫通しないように遮断
+    ["pointerdown", "mousedown", "touchstart", "touchend", "click"].forEach(evtName => {
+        dockEl!.addEventListener(evtName, (e: Event) => {
+            e.stopPropagation();
+        });
+    });
+
+    const createDockButton = (iconClass: string, labelText: string): HTMLButtonElement => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "liquid-glass-btn";
+
+        const icon = document.createElement("i");
+        icon.className = iconClass;
+
+        const label = document.createElement("span");
+        label.className = "liquid-btn-label";
+        label.textContent = labelText;
+
+        btn.appendChild(icon);
+        btn.appendChild(label);
+        return btn;
+    };
+
+    // --- Liquid Glass 検索ポップアップ（検索窓・検索ボタン・検索履歴）の構築 ---
+    const searchPopupEl = document.createElement("div");
+    searchPopupEl.id = "liquidGlassSearchPopup";
+    searchPopupEl.className = "liquid-search-popup";
+
+    // 背景要素へのクリック・タップ貫通を防止
+    ["pointerdown", "mousedown", "touchstart", "click"].forEach(evtName => {
+        searchPopupEl.addEventListener(evtName, (e: Event) => {
+            e.stopPropagation();
+        });
+    });
+
+    const searchBarRow = document.createElement("div");
+    searchBarRow.className = "liquid-search-bar-row";
+
+    const searchInputWrap = document.createElement("div");
+    searchInputWrap.className = "liquid-search-input-wrap";
+
+    const liquidInput = document.createElement("input");
+    liquidInput.type = "text";
+    liquidInput.className = "liquid-search-input";
+    liquidInput.placeholder = "単語・熟語番号を入力...";
+    liquidInput.autocomplete = "off";
+    liquidInput.autocapitalize = "off";
+    liquidInput.spellcheck = false;
+
+    const liquidSubmitBtn = document.createElement("button");
+    liquidSubmitBtn.type = "button";
+    liquidSubmitBtn.className = "liquid-search-submit-btn";
+    liquidSubmitBtn.textContent = "検索";
+
+    const liquidHistoryList = document.createElement("ul");
+    liquidHistoryList.className = "liquid-search-history-list";
+
+    searchInputWrap.appendChild(liquidInput);
+    searchBarRow.appendChild(searchInputWrap);
+    searchBarRow.appendChild(liquidSubmitBtn);
+    searchPopupEl.appendChild(searchBarRow);
+    searchPopupEl.appendChild(liquidHistoryList);
+    document.body.appendChild(searchPopupEl);
+
+    // タップ・クリック後のゴーストクリック貫通を防ぐ一時シールド関数
+    const blockGhostClickThrough = (): void => {
+        const shield = document.createElement("div");
+        Object.assign(shield.style, {
+            position: "fixed",
+            inset: "0",
+            zIndex: "9998",
+            background: "transparent",
+            pointerEvents: "auto"
+        });
+        const swallow = (ev: Event): void => {
+            ev.preventDefault();
+            ev.stopPropagation();
+        };
+        ["pointerdown", "pointerup", "mousedown", "mouseup", "touchstart", "touchend", "click"].forEach(
+            type => shield.addEventListener(type, swallow, { passive: false })
+        );
+        document.body.appendChild(shield);
+        setTimeout(() => {
+            shield.remove();
+        }, 360);
+    };
+
+    // 1. 虫眼鏡アイコン + 検索
+    const searchDockBtn = createDockButton("fa-solid fa-magnifying-glass", "検索");
+    let isLiquidSearchOpen = false;
+    let closeAnimTimer: ReturnType<typeof setTimeout> | null = null;
+
+    // 虫眼鏡ボタンの中心座標を基準に transform-origin を計算（ひょいっと飛び出し・吸い込まれる起点）
+    const updatePopupOriginToSearchBtn = (): void => {
+        const btnRect = searchDockBtn.getBoundingClientRect();
+        const popWidth = Math.min(window.innerWidth * 0.92, 440);
+        const popLeft = (window.innerWidth - popWidth) / 2;
+        const originX = Math.max(24, Math.min(popWidth - 24, btnRect.left + btnRect.width / 2 - popLeft));
+        searchPopupEl.style.transformOrigin = `${Math.round(originX)}px calc(100% + 42px)`;
+    };
+
+    // 検索履歴・入力候補リストの描画
+    const renderLiquidSuggestions = (): void => {
+        liquidHistoryList.innerHTML = "";
+        const rawQuery = liquidInput.value.trim();
+
+        if (!rawQuery) {
+            const recent = getRecentSearches();
+            if (recent.length === 0) return;
+
+            const headerLi = document.createElement("li");
+            headerLi.className = "liquid-search-history-header";
+            headerLi.textContent = "最近の検索履歴";
+            liquidHistoryList.appendChild(headerLi);
+
+            recent.forEach(item => {
+                const li = document.createElement("li");
+                li.className = "liquid-search-history-item";
+                li.innerHTML = `
+                    <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${item.label}</span>
+                    <i class="fa-solid fa-clock-rotate-left" style="font-size: 12px; opacity: 0.75; flex-shrink: 0;"></i>
+                `;
+                const triggerSelect = (ev: Event): void => {
+                    ev.preventDefault();
+                    ev.stopPropagation();
+                    executeLiquidSearch(item.searchValue);
+                };
+                li.addEventListener("click", triggerSelect);
+                liquidHistoryList.appendChild(li);
+            });
+            return;
+        }
+
+        const dict = getData();
+        const isNum = /^[0-9]+$/.test(rawQuery);
+        const matches: { label: string; searchValue: string }[] = [];
+
+        if (isNum) {
+            (dict.idioms || []).forEach(item => {
+                if (item.num !== undefined && String(item.num).startsWith(rawQuery)) {
+                    matches.push({
+                        label: `${item.num}. ${item.word}`,
+                        searchValue: String(item.num)
+                    });
+                }
+            });
+        } else {
+            const lowerQ = rawQuery.toLowerCase();
+            const words = dict.words || [];
+            words.forEach(item => {
+                if (item.word && String(item.word).toLowerCase().startsWith(lowerQ)) {
+                    matches.push({
+                        label: String(item.word),
+                        searchValue: String(item.word)
+                    });
+                }
+            });
+            if (matches.length < 15) {
+                words.forEach(item => {
+                    const w = String(item.word || "");
+                    if (w && !w.toLowerCase().startsWith(lowerQ) && w.toLowerCase().includes(lowerQ)) {
+                        matches.push({
+                            label: w,
+                            searchValue: w
+                        });
+                    }
+                });
+            }
+        }
+
+        matches.slice(0, 15).forEach(m => {
+            const li = document.createElement("li");
+            li.className = "liquid-search-history-item";
+            li.innerHTML = `
+                <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${m.label}</span>
+                <i class="fa-solid fa-magnifying-glass" style="font-size: 11px; opacity: 0.7; flex-shrink: 0;"></i>
+            `;
+            const triggerSelect = (ev: Event): void => {
+                ev.preventDefault();
+                ev.stopPropagation();
+                executeLiquidSearch(m.searchValue);
+            };
+            li.addEventListener("click", triggerSelect);
+            liquidHistoryList.appendChild(li);
+        });
+    };
+
+    // 背景部分をタップ・クリックした際に、背後への貫通を防ぎつつ虫眼鏡へ吸い込んで閉じる
+    const onOutsideSearchPointerDown = (e: PointerEvent): void => {
+        if (!isLiquidSearchOpen) return;
+        const target = e.target as Node | null;
+        if (target && (searchPopupEl.contains(target) || (dockEl && dockEl.contains(target)))) {
+            return;
+        }
+        e.preventDefault();
+        e.stopPropagation();
+        blockGhostClickThrough();
+        suckIntoMagnifierAndClose();
+    };
+
+    // 虫眼鏡ボタンへ吸い込まれるアニメーションで閉じる（入力文字もリセット）
+    const suckIntoMagnifierAndClose = (): void => {
+        if (!isLiquidSearchOpen) return;
+        isLiquidSearchOpen = false;
+        document.removeEventListener("pointerdown", onOutsideSearchPointerDown, true);
+        searchDockBtn.classList.remove("is-active-search");
+        liquidInput.value = "";
+        liquidInput.blur();
+
+        updatePopupOriginToSearchBtn();
+        searchPopupEl.classList.remove("is-open");
+        searchPopupEl.classList.add("is-closing");
+
+        if (closeAnimTimer) clearTimeout(closeAnimTimer);
+        closeAnimTimer = setTimeout(() => {
+            searchPopupEl.classList.remove("is-closing");
+            liquidHistoryList.innerHTML = "";
+        }, 270);
+    };
+
+    // 検索実行時などに即座に非表示にして入力文字をクリア
+    closeLiquidSearchImmediate = (): void => {
+        isLiquidSearchOpen = false;
+        document.removeEventListener("pointerdown", onOutsideSearchPointerDown, true);
+        searchDockBtn.classList.remove("is-active-search");
+        if (closeAnimTimer) {
+            clearTimeout(closeAnimTimer);
+            closeAnimTimer = null;
+        }
+        liquidInput.value = "";
+        liquidInput.blur();
+        liquidHistoryList.innerHTML = "";
+        searchPopupEl.classList.remove("is-open", "is-closing");
+    };
+
+    const executeLiquidSearch = (rawTarget: string): void => {
+        const target = rawTarget.trim();
+        if (!target) return;
+        blockGhostClickThrough();
+        if (closeLiquidSearchImmediate) {
+            closeLiquidSearchImmediate();
+        }
+        onSelectWord(target);
+    };
+
+    liquidInput.addEventListener("input", () => {
+        renderLiquidSuggestions();
+    });
+
+    liquidInput.addEventListener("keydown", (e: KeyboardEvent) => {
+        if (e.key === "Enter") {
+            e.preventDefault();
+            e.stopPropagation();
+            executeLiquidSearch(liquidInput.value);
+        } else if (e.key === "Escape") {
+            e.preventDefault();
+            e.stopPropagation();
+            suckIntoMagnifierAndClose();
+        }
+    });
+
+    liquidSubmitBtn.addEventListener("click", (e: MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        executeLiquidSearch(liquidInput.value);
+    });
+
+    searchDockBtn.addEventListener("click", (e: MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        if (isLiquidSearchOpen) {
+            // 入力途中でもう一度虫眼鏡ボタンを押したら、虫眼鏡ボタンに吸い込まれて消える（文字も消去）
+            suckIntoMagnifierAndClose();
+            return;
+        }
+
+        // 開くときは常に空の状態から開始し、虫眼鏡ボタンからひょいっと飛び出して即座にフォーカス
+        if (closeAnimTimer) {
+            clearTimeout(closeAnimTimer);
+            closeAnimTimer = null;
+        }
+        liquidInput.value = "";
+        renderLiquidSuggestions();
+        updatePopupOriginToSearchBtn();
+
+        isLiquidSearchOpen = true;
+        searchDockBtn.classList.add("is-active-search");
+        searchPopupEl.classList.remove("is-closing");
+        searchPopupEl.classList.add("is-open");
+        document.addEventListener("pointerdown", onOutsideSearchPointerDown, true);
+
+        // モバイルでも即座にキーボードが立ち上がるよう同期フォーカス
+        liquidInput.focus({ preventScroll: true });
+    });
+
+    // 2. 星アイコン + 登録
+    dockStarBtn = createDockButton("fa-regular fa-star", "登録");
+    dockStarBtn.addEventListener("click", (e: MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (!currentDockEntry) return;
+        toggleBookmark(currentDockEntry, currentDockIsNumber);
+        syncPageBookmarkButtons();
+    });
+
+    // 3. 本アイコン + テスト
+    const testDockBtn = createDockButton("fa-solid fa-book", "テスト");
+    testDockBtn.addEventListener("click", (e: MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (isLiquidSearchOpen && closeLiquidSearchImmediate) {
+            closeLiquidSearchImmediate();
+        }
+        openBookmarkModal(getData, getRecentSearches, onSelectWord, "card");
+    });
+
+    // 4. メガホンアイコン + 発音
+    const pronDockBtn = createDockButton("fa-solid fa-bullhorn", "発音");
+    pronDockBtn.addEventListener("click", (e: MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const mainAudioBtn =
+            document.querySelector<HTMLElement>("#results .entry .w-p4-header .audio_button") ||
+            document.querySelector<HTMLElement>("#results .entry .audio_button");
+        if (mainAudioBtn) {
+            mainAudioBtn.click();
+        }
+    });
+
+    dockEl.appendChild(searchDockBtn);
+    dockEl.appendChild(dockStarBtn);
+    dockEl.appendChild(testDockBtn);
+    dockEl.appendChild(pronDockBtn);
+
+    document.body.appendChild(dockEl);
 }
 
 function openBookmarkModal(
     getData: () => DictionaryData,
     getRecentSearches: () => RecentSearchItem[],
-    onSelectWord: (searchValue: string) => void
+    onSelectWord: (searchValue: string) => void,
+    initialTab: "list" | "card" = "list"
 ): void {
     const existing = document.getElementById("bookmark-review-modal");
     if (existing) existing.remove();
@@ -625,7 +1421,7 @@ function openBookmarkModal(
     document.body.appendChild(overlay);
 
     // フラッシュカード用の状態
-    let activeTab: "list" | "card" = "list";
+    let activeTab: "list" | "card" = initialTab;
     let cardSource: "bookmarks" | "recent" = bookmarks.length > 0 ? "bookmarks" : "recent";
     let cardDirection: "en-to-ja" | "ja-to-en" = "en-to-ja";
     let deck: FlashcardData[] = [];
@@ -1191,5 +1987,10 @@ function openBookmarkModal(
         renderCardView();
     });
 
-    renderListView();
+    if (initialTab === "card") {
+        rebuildDeck();
+        renderCardView();
+    } else {
+        renderListView();
+    }
 }

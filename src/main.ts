@@ -16,7 +16,7 @@ import { createFormatter } from "./formatter.js";
 import { resetZoom, setupDetailsAnimation, insertSampleImages } from "./ui.js";
 import { findDidYouMeanCandidates } from "./fuzzy.js";
 import { setupEtymologyNetwork } from "./network.js";
-import { attachBookmarkButton, initBookmarkSystem } from "./bookmark.js";
+import { attachBookmarkButton, initBookmarkSystem, setBottomDockContext } from "./bookmark.js";
 
 export type { CleanupFn, Disposable, AnimationResult };
 export { registerCleanup };
@@ -449,6 +449,7 @@ function resetToHomeScreen(): void {
 
     window.scrollTo({ top: 0, left: 0, behavior: "instant" });
     resetZoom(viewportMeta);
+    setBottomDockContext(null, false);
 
     if (currentRenderedWord === null && results.children.length > 0) {
         return;
@@ -1078,6 +1079,7 @@ function doSearch(updateHistory = true): void {
     }
 
     if (filtered.length === 0) {
+        setBottomDockContext(null, false);
         const candidates = !isNumber ? findDidYouMeanCandidates(query, data.words || []) : [];
         if (candidates.length === 0) {
             results.innerHTML = "<p>該当なし</p>";
@@ -1155,6 +1157,9 @@ function doSearch(updateHistory = true): void {
     }
 
     const nl2br = createFormatter(query, data.words || []);
+
+    setBottomDockContext(filtered[0] || null, isNumber);
+    results.style.paddingBottom = "92px";
 
     filtered.forEach(item => {
         const div = document.createElement("div");
