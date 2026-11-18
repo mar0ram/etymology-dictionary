@@ -1316,19 +1316,90 @@ function openBookmarkModal(
     onSelectWord: (searchValue: string) => void,
     initialTab: "list" | "card" = "list"
 ): void {
-    const existing = document.getElementById("bookmark-review-modal");
-    if (existing) existing.remove();
+    const existing = document.getElementById("bookmark-review-modal") as
+        | (HTMLElement & { __closeModal?: () => void })
+        | null;
+    if (existing) {
+        if (typeof existing.__closeModal === "function") {
+            existing.__closeModal();
+        } else {
+            existing.remove();
+        }
+    }
 
-    const overlay = document.createElement("div");
+    // iPhoneの上下バー領域（セーフエリア外）まで描画を広げるため viewport-fit=cover を確実に付与
+    const vpMeta = document.querySelector<HTMLMetaElement>("meta[name=viewport]");
+    if (vpMeta) {
+        const content = vpMeta.getAttribute("content") || "";
+        if (!content.includes("viewport-fit=cover")) {
+            vpMeta.setAttribute(
+                "content",
+                content ? `${content}, viewport-fit=cover` : "width=device-width, initial-scale=1.0, viewport-fit=cover"
+            );
+        }
+    }
+
+    // 画面外（上下URLバー・ツールバー裏）まで完全に覆うマスク用のスタイル定義
+    if (!document.getElementById("bookmark-modal-fullscreen-style")) {
+        const modalStyle = document.createElement("style");
+        modalStyle.id = "bookmark-modal-fullscreen-style";
+        modalStyle.textContent = `
+            #bookmark-review-modal::before {
+                content: "";
+                position: fixed;
+                top: -100vh;
+                left: -100vw;
+                width: 300vw;
+                height: 300vh;
+                background-color: rgba(0, 0, 0, 0.78);
+                backdrop-filter: blur(6px);
+                -webkit-backdrop-filter: blur(6px);
+                pointer-events: none;
+                z-index: -1;
+            }
+        `;
+        document.head.appendChild(modalStyle);
+    }
+
+    // iOS Safariの上下バー着色（ティント）をマスク合成色に同期し、背景スクロールをロック
+    const computeMaskedBgColor = (): string => {
+        const bodyBg = window.getComputedStyle(document.body).backgroundColor || "";
+        const htmlBg = window.getComputedStyle(document.documentElement).backgroundColor || "";
+        const rawBg = bodyBg && bodyBg !== "rgba(0, 0, 0, 0)" && bodyBg !== "transparent" ? bodyBg : htmlBg;
+        const match = rawBg.match(/rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/i);
+        if (match) {
+            const r = Math.round(Number(match[1]) * 0.22);
+            const g = Math.round(Number(match[2]) * 0.22);
+            const b = Math.round(Number(match[3]) * 0.22);
+            return `rgb(${r}, ${g}, ${b})`;
+        }
+        return "#04060b";
+    };
+
+    const maskedBarColor = computeMaskedBgColor();
+    let themeMeta = document.querySelector<HTMLMetaElement>("meta[name='theme-color']");
+    const hadThemeMeta = Boolean(themeMeta);
+    const prevThemeContent = themeMeta ? themeMeta.getAttribute("content") : null;
+    if (!themeMeta) {
+        themeMeta = document.createElement("meta");
+        themeMeta.name = "theme-color";
+        document.head.appendChild(themeMeta);
+    }
+    themeMeta.setAttribute("content", maskedBarColor);
+
+    const prevHtmlBg = document.documentElement.style.backgroundColor;
+    const prevBodyOverflow = document.body.style.overflow;
+    document.documentElement.style.backgroundColor = maskedBarColor;
+    document.body.style.overflow = "hidden";
+
+    const overlay = document.createElement("div") as HTMLElement & { __closeModal?: () => void };
     overlay.id = "bookmark-review-modal";
     Object.assign(overlay.style, {
         position: "fixed",
         top: "0",
         left: "0",
-        width: "100vw",
-        height: "100vh",
-        backgroundColor: "rgba(0, 0, 0, 0.78)",
-        backdropFilter: "blur(6px)",
+        width: "100%",
+        height: "100dvh",
         zIndex: "9999",
         display: "flex",
         justifyContent: "center",
@@ -1341,7 +1412,8 @@ function openBookmarkModal(
     Object.assign(panel.style, {
         width: "100%",
         maxWidth: "680px",
-        maxHeight: "88vh",
+        maxHeight: "calc(100% - 32px)",
+        margin: "auto",
         backgroundColor: "#0f172a",
         border: "1px solid #334155",
         borderRadius: "14px",
@@ -1351,6 +1423,28 @@ function openBookmarkModal(
         overflow: "hidden",
         color: "#f8fafc"
     });
+
+    // 現在ユーザーに見えている画面領域（Visual Viewport）の中央に常時合わせる
+    const syncOverlayToViewport = (): void => {
+        const vv = window.visualViewport;
+        if (vv) {
+            overlay.style.top = `${vv.offsetTop}px`;
+            overlay.style.left = `${vv.offsetLeft}px`;
+            overlay.style.width = `${vv.width}px`;
+            overlay.style.height = `${vv.height}px`;
+        } else {
+            overlay.style.top = "0";
+            overlay.style.left = "0";
+            overlay.style.width = `${window.innerWidth}px`;
+            overlay.style.height = `${window.innerHeight}px`;
+        }
+    };
+    syncOverlayToViewport();
+    window.addEventListener("resize", syncOverlayToViewport);
+    if (window.visualViewport) {
+        window.visualViewport.addEventListener("resize", syncOverlayToViewport);
+        window.visualViewport.addEventListener("scroll", syncOverlayToViewport);
+    }
 
     // ヘッダーとモード切替タブ
     const header = document.createElement("div");
@@ -1430,8 +1524,27 @@ function openBookmarkModal(
 
     const closeModal = (): void => {
         window.removeEventListener("keydown", handleModalKeydown);
+        window.removeEventListener("resize", syncOverlayToViewport);
+        if (window.visualViewport) {
+            window.visualViewport.removeEventListener("resize", syncOverlayToViewport);
+            window.visualViewport.removeEventListener("scroll", syncOverlayToViewport);
+        }
+        document.documentElement.style.backgroundColor = prevHtmlBg;
+        document.body.style.overflow = prevBodyOverflow;
+        if (themeMeta) {
+            if (hadThemeMeta) {
+                if (prevThemeContent !== null) {
+                    themeMeta.setAttribute("content", prevThemeContent);
+                } else {
+                    themeMeta.removeAttribute("content");
+                }
+            } else {
+                themeMeta.remove();
+            }
+        }
         overlay.remove();
     };
+    overlay.__closeModal = closeModal;
 
     closeBtn.addEventListener("click", closeModal);
     overlay.addEventListener("click", (e: MouseEvent) => {
@@ -1812,6 +1925,29 @@ function openBookmarkModal(
                         .flashcard-ml-scroll::-webkit-scrollbar-corner {
                             background: transparent;
                         }
+                        .flashcard-ml-scroll.content {
+                            padding-left: 0 !important;
+                            padding-right: 0 !important;
+                        }
+                        .flashcard-ml-scroll.content > div {
+                            width: 100% !important;
+                            max-width: 100% !important;
+                            margin-left: 0 !important;
+                            margin-right: 0 !important;
+                            padding-left: 0 !important;
+                            padding-right: 0 !important;
+                            box-sizing: border-box !important;
+                        }
+                        .flashcard-ml-scroll.content .ml {
+                            display: block !important;
+                            width: 100% !important;
+                            max-width: 100% !important;
+                            margin-left: 0 !important;
+                            margin-right: 0 !important;
+                            padding-left: 0 !important;
+                            padding-right: 0 !important;
+                            box-sizing: border-box !important;
+                        }
                     `;
                     document.head.appendChild(styleEl);
                 }
@@ -1820,7 +1956,7 @@ function openBookmarkModal(
                 mlScrollBox.className = "content flashcard-ml-scroll";
                 Object.assign(mlScrollBox.style, {
                     backgroundColor: "rgba(15, 23, 42, 0.7)",
-                    padding: "12px 14px",
+                    padding: "12px 0",
                     borderRadius: "8px",
                     textAlign: "left",
                     flex: "1 1 auto",
