@@ -354,7 +354,10 @@ function buildFlashcardData(
                 el => !el.parentElement?.closest(".ml")
             );
             mlEls.forEach(el => {
-                mlHtmlParts.push(`<div>${el.outerHTML}</div>`);
+                const inner = el.innerHTML.trim();
+                if (inner) {
+                    mlHtmlParts.push(inner);
+                }
             });
         });
     }
@@ -383,7 +386,7 @@ function buildFlashcardData(
         word,
         numStr,
         meanings,
-        mlHtml: mlHtmlParts.join("")
+        mlHtml: mlHtmlParts.join("<br><br>")
     };
 }
 
@@ -1339,7 +1342,7 @@ function openBookmarkModal(
         }
     }
 
-    // 画面外（上下URLバー・ツールバー裏）まで完全に覆うマスク用のスタイル定義
+    // 画面外（上下URLバー・ツールバー裏）まで完全に覆うマスクおよびモーダル内スクロールバーのスタイル定義
     if (!document.getElementById("bookmark-modal-fullscreen-style")) {
         const modalStyle = document.createElement("style");
         modalStyle.id = "bookmark-modal-fullscreen-style";
@@ -1356,6 +1359,29 @@ function openBookmarkModal(
                 -webkit-backdrop-filter: blur(6px);
                 pointer-events: none;
                 z-index: -1;
+            }
+            .bookmark-modal-body-scroll {
+                scrollbar-width: thin;
+                scrollbar-color: rgba(0, 180, 204, 0.5) rgba(15, 23, 42, 0.6);
+            }
+            .bookmark-modal-body-scroll::-webkit-scrollbar {
+                width: 6px;
+            }
+            .bookmark-modal-body-scroll::-webkit-scrollbar-track {
+                background: rgba(15, 23, 42, 0.6);
+                border-radius: 999px;
+                margin: 6px 0;
+            }
+            .bookmark-modal-body-scroll::-webkit-scrollbar-thumb {
+                background: linear-gradient(180deg, rgba(0, 180, 204, 0.65) 0%, rgba(56, 189, 248, 0.45) 100%);
+                border-radius: 999px;
+                border: 1px solid rgba(15, 23, 42, 0.4);
+            }
+            .bookmark-modal-body-scroll::-webkit-scrollbar-thumb:hover {
+                background: linear-gradient(180deg, #00b4cc 0%, #38bdf8 100%);
+            }
+            .bookmark-modal-body-scroll::-webkit-scrollbar-corner {
+                background: transparent;
             }
         `;
         document.head.appendChild(modalStyle);
@@ -1452,7 +1478,10 @@ function openBookmarkModal(
         display: "flex",
         justifyContent: "space-between",
         alignItems: "center",
-        padding: "14px 18px",
+        gap: "8px",
+        flexWrap: "nowrap",
+        flexShrink: "0",
+        padding: "clamp(10px, 2.8vw, 14px) clamp(12px, 3.5vw, 18px)",
         borderBottom: "1px solid #1e293b",
         backgroundColor: "#1e293b"
     });
@@ -1460,7 +1489,10 @@ function openBookmarkModal(
     const tabGroup = document.createElement("div");
     Object.assign(tabGroup.style, {
         display: "flex",
-        gap: "8px"
+        alignItems: "center",
+        flexWrap: "nowrap",
+        minWidth: "0",
+        gap: "clamp(6px, 1.8vw, 8px)"
     });
 
     const listTabBtn = document.createElement("button");
@@ -1473,14 +1505,17 @@ function openBookmarkModal(
 
     const styleTab = (btn: HTMLButtonElement, active: boolean): void => {
         Object.assign(btn.style, {
-            padding: "8px 14px",
-            fontSize: "14px",
+            padding: "clamp(6px, 1.8vw, 8px) clamp(10px, 2.8vw, 14px)",
+            fontSize: "clamp(12px, 3.3vw, 14px)",
             fontWeight: "700",
+            lineHeight: "1.2",
+            whiteSpace: "nowrap",
             borderRadius: "8px",
             border: active ? "1px solid #00b4cc" : "1px solid transparent",
             backgroundColor: active ? "rgba(0, 180, 204, 0.18)" : "transparent",
             color: active ? "#38bdf8" : "#94a3b8",
-            cursor: "pointer"
+            cursor: "pointer",
+            transition: "background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease"
         });
     };
 
@@ -1491,13 +1526,20 @@ function openBookmarkModal(
     closeBtn.type = "button";
     closeBtn.textContent = "×";
     Object.assign(closeBtn.style, {
+        display: "inline-flex",
+        alignItems: "center",
+        justifyContent: "center",
+        width: "clamp(28px, 7.5vw, 32px)",
+        height: "clamp(28px, 7.5vw, 32px)",
+        flexShrink: "0",
         background: "transparent",
         border: "none",
+        borderRadius: "6px",
         color: "#94a3b8",
-        fontSize: "24px",
+        fontSize: "clamp(20px, 5.5vw, 24px)",
         lineHeight: "1",
         cursor: "pointer",
-        padding: "0 6px"
+        padding: "0"
     });
 
     header.appendChild(tabGroup);
@@ -1505,9 +1547,11 @@ function openBookmarkModal(
     panel.appendChild(header);
 
     const bodyArea = document.createElement("div");
+    bodyArea.className = "bookmark-modal-body-scroll";
     Object.assign(bodyArea.style, {
-        padding: "18px",
+        padding: "clamp(12px, 3.5vw, 18px)",
         overflowY: "auto",
+        overscrollBehavior: "contain",
         flex: "1 1 auto"
     });
     panel.appendChild(bodyArea);
@@ -1521,6 +1565,8 @@ function openBookmarkModal(
     let deck: FlashcardData[] = [];
     let currentCardIndex = 0;
     let isCardFlipped = false;
+    let toggleCardFlip: (() => void) | null = null;
+    let navigateCard: ((dir: "prev" | "next") => void) | null = null;
 
     const closeModal = (): void => {
         window.removeEventListener("keydown", handleModalKeydown);
@@ -1561,23 +1607,241 @@ function openBookmarkModal(
             const emptyMsg = document.createElement("div");
             Object.assign(emptyMsg.style, {
                 textAlign: "center",
-                padding: "40px 16px",
+                padding: "clamp(28px, 7vw, 40px) clamp(12px, 3.5vw, 16px)",
                 color: "#94a3b8"
             });
             emptyMsg.innerHTML = `
-                <div style="font-size: 16px; margin-bottom: 8px; color: #cbd5e1;">まだ単語が保存されていません</div>
-                <div style="font-size: 13px;">各単語の見出し右上にある「☆ 単語帳」ボタンを押すと、ここに保存されます。</div>
+                <div style="font-size: clamp(14px, 3.8vw, 16px); margin-bottom: 8px; color: #cbd5e1;">まだ単語が保存されていません</div>
+                <div style="font-size: clamp(12px, 3.2vw, 13px); line-height: 1.5;">各単語の見出し右上にある「☆ 単語帳」ボタンを押すと、ここに保存されます。</div>
             `;
             bodyArea.appendChild(emptyMsg);
             return;
         }
+
+        const listHeader = document.createElement("div");
+        Object.assign(listHeader.style, {
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            gap: "8px",
+            marginBottom: "clamp(10px, 2.6vw, 12px)",
+            padding: "0 2px"
+        });
+
+        const countLabel = document.createElement("div");
+        Object.assign(countLabel.style, {
+            fontSize: "clamp(12px, 3.2vw, 13px)",
+            fontWeight: "600",
+            color: "#94a3b8"
+        });
+        countLabel.innerHTML = `保存件数: <span style="color: #38bdf8; font-weight: 700;">${bookmarks.length}</span> 件`;
+
+        const clearAllBtn = document.createElement("button");
+        clearAllBtn.type = "button";
+        Object.assign(clearAllBtn.style, {
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "5px",
+            padding: "clamp(4px, 1.2vw, 6px) clamp(9px, 2.5vw, 12px)",
+            fontSize: "clamp(11px, 3vw, 12px)",
+            fontWeight: "600",
+            lineHeight: "1.2",
+            whiteSpace: "nowrap",
+            backgroundColor: "rgba(239, 68, 68, 0.15)",
+            color: "#f87171",
+            border: "1px solid rgba(239, 68, 68, 0.35)",
+            borderRadius: "6px",
+            cursor: "pointer",
+            flexShrink: "0",
+            transition: "background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease"
+        });
+
+        const trashIcon = document.createElement("i");
+        trashIcon.className = "fa-regular fa-trash-can";
+        trashIcon.style.fontSize = "clamp(10px, 2.8vw, 11px)";
+
+        const clearAllText = document.createElement("span");
+        clearAllText.textContent = "一括削除";
+
+        clearAllBtn.appendChild(trashIcon);
+        clearAllBtn.appendChild(clearAllText);
+
+        clearAllBtn.addEventListener("mouseenter", () => {
+            clearAllBtn.style.backgroundColor = "rgba(239, 68, 68, 0.28)";
+            clearAllBtn.style.borderColor = "rgba(248, 113, 113, 0.65)";
+            clearAllBtn.style.color = "#fecaca";
+        });
+        clearAllBtn.addEventListener("mouseleave", () => {
+            clearAllBtn.style.backgroundColor = "rgba(239, 68, 68, 0.15)";
+            clearAllBtn.style.borderColor = "rgba(239, 68, 68, 0.35)";
+            clearAllBtn.style.color = "#f87171";
+        });
+
+        clearAllBtn.addEventListener("click", (e: MouseEvent) => {
+            e.preventDefault();
+            e.stopPropagation();
+
+            const existingConfirm = document.getElementById("bookmark-clear-confirm-overlay");
+            if (existingConfirm) existingConfirm.remove();
+
+            const confirmOverlay = document.createElement("div");
+            confirmOverlay.id = "bookmark-clear-confirm-overlay";
+            Object.assign(confirmOverlay.style, {
+                position: "fixed",
+                inset: "0",
+                backgroundColor: "rgba(2, 6, 23, 0.72)",
+                backdropFilter: "blur(3px)",
+                zIndex: "10001",
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
+                padding: "16px",
+                boxSizing: "border-box"
+            });
+
+            const confirmBox = document.createElement("div");
+            Object.assign(confirmBox.style, {
+                width: "100%",
+                maxWidth: "340px",
+                backgroundColor: "#0f172a",
+                border: "1px solid #334155",
+                borderRadius: "12px",
+                boxShadow: "0 16px 36px rgba(0, 0, 0, 0.7)",
+                padding: "clamp(16px, 4.5vw, 22px)",
+                boxSizing: "border-box",
+                display: "flex",
+                flexDirection: "column",
+                gap: "12px",
+                textAlign: "center",
+                color: "#f8fafc"
+            });
+
+            const titleRow = document.createElement("div");
+            Object.assign(titleRow.style, {
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "8px",
+                fontSize: "clamp(15px, 4.2vw, 17px)",
+                fontWeight: "700",
+                color: "#f87171"
+            });
+
+            const warnIcon = document.createElement("i");
+            warnIcon.className = "fa-solid fa-triangle-exclamation";
+            const titleText = document.createElement("span");
+            titleText.textContent = "一括削除の確認";
+            titleRow.appendChild(warnIcon);
+            titleRow.appendChild(titleText);
+
+            const descText = document.createElement("div");
+            Object.assign(descText.style, {
+                fontSize: "clamp(12px, 3.4vw, 13.5px)",
+                lineHeight: "1.6",
+                color: "#cbd5e1"
+            });
+            descText.innerHTML = `保存されている <span style="color: #38bdf8; font-weight: 700;">${bookmarks.length}</span> 件の単語をすべて削除しますか？`;
+
+            const btnRow = document.createElement("div");
+            Object.assign(btnRow.style, {
+                display: "flex",
+                gap: "10px",
+                marginTop: "6px"
+            });
+
+            const cancelBtn = document.createElement("button");
+            cancelBtn.type = "button";
+            cancelBtn.textContent = "キャンセル";
+            Object.assign(cancelBtn.style, {
+                flex: "1 1 0",
+                padding: "9px 12px",
+                fontSize: "clamp(12px, 3.4vw, 13px)",
+                fontWeight: "600",
+                backgroundColor: "#1e293b",
+                color: "#cbd5e1",
+                border: "1px solid #475569",
+                borderRadius: "8px",
+                cursor: "pointer",
+                transition: "background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease"
+            });
+            cancelBtn.addEventListener("mouseenter", () => {
+                cancelBtn.style.backgroundColor = "#334155";
+                cancelBtn.style.color = "#ffffff";
+            });
+            cancelBtn.addEventListener("mouseleave", () => {
+                cancelBtn.style.backgroundColor = "#1e293b";
+                cancelBtn.style.color = "#cbd5e1";
+            });
+
+            const confirmDelBtn = document.createElement("button");
+            confirmDelBtn.type = "button";
+            confirmDelBtn.textContent = "すべて削除";
+            Object.assign(confirmDelBtn.style, {
+                flex: "1 1 0",
+                padding: "9px 12px",
+                fontSize: "clamp(12px, 3.4vw, 13px)",
+                fontWeight: "700",
+                backgroundColor: "rgba(239, 68, 68, 0.22)",
+                color: "#fca5a5",
+                border: "1px solid rgba(248, 113, 113, 0.55)",
+                borderRadius: "8px",
+                cursor: "pointer",
+                transition: "background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease"
+            });
+            confirmDelBtn.addEventListener("mouseenter", () => {
+                confirmDelBtn.style.backgroundColor = "rgba(239, 68, 68, 0.38)";
+                confirmDelBtn.style.borderColor = "#f87171";
+                confirmDelBtn.style.color = "#ffffff";
+            });
+            confirmDelBtn.addEventListener("mouseleave", () => {
+                confirmDelBtn.style.backgroundColor = "rgba(239, 68, 68, 0.22)";
+                confirmDelBtn.style.borderColor = "rgba(248, 113, 113, 0.55)";
+                confirmDelBtn.style.color = "#fca5a5";
+            });
+
+            cancelBtn.addEventListener("click", (ev: MouseEvent) => {
+                ev.preventDefault();
+                ev.stopPropagation();
+                confirmOverlay.remove();
+            });
+
+            confirmOverlay.addEventListener("click", (ev: MouseEvent) => {
+                ev.stopPropagation();
+                if (ev.target === confirmOverlay) {
+                    confirmOverlay.remove();
+                }
+            });
+
+            confirmDelBtn.addEventListener("click", (ev: MouseEvent) => {
+                ev.preventDefault();
+                ev.stopPropagation();
+                confirmOverlay.remove();
+                bookmarks = [];
+                saveBookmarksToStorage();
+                updateNavBadge();
+                syncPageBookmarkButtons();
+                renderListView();
+            });
+
+            btnRow.appendChild(cancelBtn);
+            btnRow.appendChild(confirmDelBtn);
+            confirmBox.appendChild(titleRow);
+            confirmBox.appendChild(descText);
+            confirmBox.appendChild(btnRow);
+            confirmOverlay.appendChild(confirmBox);
+            overlay.appendChild(confirmOverlay);
+        });
+
+        listHeader.appendChild(countLabel);
+        listHeader.appendChild(clearAllBtn);
+        bodyArea.appendChild(listHeader);
 
         const data = getData();
         const listEl = document.createElement("div");
         Object.assign(listEl.style, {
             display: "flex",
             flexDirection: "column",
-            gap: "8px"
+            gap: "clamp(6px, 1.8vw, 8px)"
         });
 
         bookmarks.forEach(item => {
@@ -1587,13 +1851,14 @@ function openBookmarkModal(
                 display: "flex",
                 justifyContent: "space-between",
                 alignItems: "center",
-                padding: "12px 14px",
+                padding: "clamp(10px, 2.6vw, 12px) clamp(10px, 3vw, 14px)",
                 backgroundColor: "#1e293b",
                 border: "1px solid #334155",
                 borderRadius: "10px",
                 cursor: "pointer",
-                gap: "12px",
-                transition: "border-color 0.15s ease"
+                gap: "clamp(8px, 2.5vw, 12px)",
+                boxSizing: "border-box",
+                transition: "border-color 0.15s ease, background-color 0.15s ease"
             });
 
             row.addEventListener("mouseenter", () => {
@@ -1607,21 +1872,28 @@ function openBookmarkModal(
             Object.assign(leftCol.style, {
                 display: "flex",
                 flexDirection: "column",
-                gap: "4px",
+                flex: "1 1 auto",
+                minWidth: "0",
+                gap: "clamp(2px, 0.8vw, 4px)",
                 overflow: "hidden"
             });
 
             const wordLine = document.createElement("div");
             Object.assign(wordLine.style, {
-                fontSize: "17px",
+                fontSize: "clamp(15px, 4.2vw, 17px)",
                 fontWeight: "700",
-                color: "#f8fafc"
+                lineHeight: "1.3",
+                color: "#f8fafc",
+                whiteSpace: "nowrap",
+                overflow: "hidden",
+                textOverflow: "ellipsis"
             });
             wordLine.textContent = item.numStr ? `${item.numStr}. ${item.word}` : item.word;
 
             const meaningLine = document.createElement("div");
             Object.assign(meaningLine.style, {
-                fontSize: "13px",
+                fontSize: "clamp(12px, 3.2vw, 13px)",
+                lineHeight: "1.3",
                 color: "#94a3b8",
                 whiteSpace: "nowrap",
                 overflow: "hidden",
@@ -1636,14 +1908,29 @@ function openBookmarkModal(
             delBtn.type = "button";
             delBtn.textContent = "削除";
             Object.assign(delBtn.style, {
-                padding: "5px 10px",
-                fontSize: "12px",
+                padding: "clamp(4px, 1.2vw, 6px) clamp(8px, 2.4vw, 11px)",
+                fontSize: "clamp(11px, 3vw, 12px)",
+                fontWeight: "600",
+                lineHeight: "1.2",
+                whiteSpace: "nowrap",
                 backgroundColor: "rgba(239, 68, 68, 0.15)",
                 color: "#f87171",
                 border: "1px solid rgba(239, 68, 68, 0.35)",
                 borderRadius: "6px",
                 cursor: "pointer",
-                flexShrink: "0"
+                flexShrink: "0",
+                transition: "background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease"
+            });
+
+            delBtn.addEventListener("mouseenter", () => {
+                delBtn.style.backgroundColor = "rgba(239, 68, 68, 0.28)";
+                delBtn.style.borderColor = "rgba(248, 113, 113, 0.65)";
+                delBtn.style.color = "#fecaca";
+            });
+            delBtn.addEventListener("mouseleave", () => {
+                delBtn.style.backgroundColor = "rgba(239, 68, 68, 0.15)";
+                delBtn.style.borderColor = "rgba(239, 68, 68, 0.35)";
+                delBtn.style.color = "#f87171";
             });
 
             delBtn.addEventListener("click", (e: MouseEvent) => {
@@ -1698,63 +1985,298 @@ function openBookmarkModal(
         const controls = document.createElement("div");
         Object.assign(controls.style, {
             display: "flex",
-            flexWrap: "wrap",
-            gap: "8px",
+            flexWrap: "nowrap",
+            gap: "clamp(5px, 1.5vw, 8px)",
             justifyContent: "space-between",
             alignItems: "center",
-            marginBottom: "14px"
+            marginBottom: "14px",
+            width: "100%",
+            boxSizing: "border-box"
         });
 
-        const sourceSelect = document.createElement("select");
-        Object.assign(sourceSelect.style, {
-            padding: "6px 10px",
-            backgroundColor: "#1e293b",
-            color: "#f8fafc",
-            border: "1px solid #334155",
-            borderRadius: "6px",
-            fontSize: "13px"
-        });
-        sourceSelect.innerHTML = `
-            <option value="bookmarks" ${cardSource === "bookmarks" ? "selected" : ""}>★ 保存した単語 (${bookmarks.length})</option>
-            <option value="recent" ${cardSource === "recent" ? "selected" : ""}>最近の検索履歴 (${getRecentSearches().length})</option>
-        `;
-        sourceSelect.addEventListener("change", () => {
-            cardSource = sourceSelect.value as "bookmarks" | "recent";
-            rebuildDeck();
-            renderCardView();
-        });
+        const dropdownClosers: (() => void)[] = [];
+        const closeAllDropdowns = (): void => {
+            dropdownClosers.forEach(closeFn => closeFn());
+        };
 
-        const dirSelect = document.createElement("select");
-        Object.assign(dirSelect.style, {
-            padding: "6px 10px",
-            backgroundColor: "#1e293b",
-            color: "#f8fafc",
-            border: "1px solid #334155",
-            borderRadius: "6px",
-            fontSize: "13px"
-        });
-        dirSelect.innerHTML = `
-            <option value="en-to-ja" ${cardDirection === "en-to-ja" ? "selected" : ""}>英語→日本語</option>
-            <option value="ja-to-en" ${cardDirection === "ja-to-en" ? "selected" : ""}>日本語→英語</option>
-        `;
-        dirSelect.addEventListener("change", () => {
-            cardDirection = dirSelect.value as "en-to-ja" | "ja-to-en";
-            isCardFlipped = false;
-            renderCardView();
-        });
+        const createCustomDropdown = <T extends string>(
+            options: { value: T; label: string }[],
+            currentValue: T,
+            onChange: (newValue: T) => void,
+            allowShrink = false
+        ): HTMLElement => {
+            const wrapper = document.createElement("div");
+            Object.assign(wrapper.style, {
+                position: "relative",
+                display: "inline-flex",
+                flex: allowShrink ? "0 1 auto" : "0 0 auto",
+                minWidth: "0",
+                userSelect: "none"
+            });
+
+            const currentOpt = options.find(o => o.value === currentValue) || options[0];
+
+            const triggerBtn = document.createElement("button");
+            triggerBtn.type = "button";
+            Object.assign(triggerBtn.style, {
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: "clamp(4px, 1.2vw, 8px)",
+                height: "clamp(32px, 8vw, 36px)",
+                padding: "0 clamp(7px, 2.2vw, 11px)",
+                width: "100%",
+                minWidth: "0",
+                boxSizing: "border-box",
+                backgroundColor: "#1e293b",
+                color: "#f8fafc",
+                border: "1px solid #475569",
+                borderRadius: "8px",
+                fontSize: "clamp(11px, 3vw, 13px)",
+                fontWeight: "600",
+                cursor: "pointer",
+                whiteSpace: "nowrap",
+                transition: "border-color 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease"
+            });
+
+            const labelSpan = document.createElement("span");
+            labelSpan.textContent = currentOpt.label;
+            Object.assign(labelSpan.style, {
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap"
+            });
+
+            const arrowIcon = document.createElement("i");
+            arrowIcon.className = "fa-solid fa-chevron-down";
+            Object.assign(arrowIcon.style, {
+                fontSize: "clamp(10px, 2.6vw, 11px)",
+                color: "#38bdf8",
+                flexShrink: "0",
+                transition: "transform 0.2s ease"
+            });
+
+            triggerBtn.appendChild(labelSpan);
+            triggerBtn.appendChild(arrowIcon);
+
+            const menuList = document.createElement("div");
+            Object.assign(menuList.style, {
+                position: "absolute",
+                top: "calc(100% + 6px)",
+                left: "0",
+                minWidth: "100%",
+                width: "max-content",
+                backgroundColor: "#0f172a",
+                border: "1px solid #00b4cc",
+                borderRadius: "10px",
+                boxShadow: "0 12px 28px rgba(0, 0, 0, 0.65)",
+                padding: "5px",
+                boxSizing: "border-box",
+                zIndex: "100",
+                display: "none",
+                flexDirection: "column",
+                gap: "3px"
+            });
+
+            let isOpen = false;
+
+            const handleOutsidePointerDown = (e: PointerEvent): void => {
+                if (!wrapper.isConnected) {
+                    document.removeEventListener("pointerdown", handleOutsidePointerDown, true);
+                    return;
+                }
+                if (!wrapper.contains(e.target as Node)) {
+                    closeDropdown();
+                }
+            };
+
+            const closeDropdown = (): void => {
+                if (!isOpen) return;
+                isOpen = false;
+                menuList.style.display = "none";
+                arrowIcon.style.transform = "rotate(0deg)";
+                triggerBtn.style.borderColor = "#475569";
+                triggerBtn.style.backgroundColor = "#1e293b";
+                triggerBtn.style.boxShadow = "none";
+                document.removeEventListener("pointerdown", handleOutsidePointerDown, true);
+            };
+
+            const openDropdown = (): void => {
+                closeAllDropdowns();
+                isOpen = true;
+                menuList.style.display = "flex";
+                arrowIcon.style.transform = "rotate(180deg)";
+                triggerBtn.style.borderColor = "#00b4cc";
+                triggerBtn.style.backgroundColor = "#0f172a";
+                triggerBtn.style.boxShadow = "0 0 0 2px rgba(0, 180, 204, 0.22)";
+                document.addEventListener("pointerdown", handleOutsidePointerDown, true);
+            };
+
+            dropdownClosers.push(closeDropdown);
+
+            triggerBtn.addEventListener("mouseenter", () => {
+                if (!isOpen) {
+                    triggerBtn.style.borderColor = "#00b4cc";
+                    triggerBtn.style.backgroundColor = "#0f172a";
+                }
+            });
+            triggerBtn.addEventListener("mouseleave", () => {
+                if (!isOpen) {
+                    triggerBtn.style.borderColor = "#475569";
+                    triggerBtn.style.backgroundColor = "#1e293b";
+                }
+            });
+
+            triggerBtn.addEventListener("click", (e: MouseEvent) => {
+                e.preventDefault();
+                e.stopPropagation();
+                if (isOpen) {
+                    closeDropdown();
+                } else {
+                    openDropdown();
+                }
+            });
+
+            options.forEach(opt => {
+                const isSelected = opt.value === currentValue;
+                const itemBtn = document.createElement("button");
+                itemBtn.type = "button";
+                Object.assign(itemBtn.style, {
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    gap: "10px",
+                    width: "100%",
+                    padding: "8px 10px",
+                    border: "none",
+                    borderRadius: "6px",
+                    backgroundColor: isSelected ? "rgba(0, 180, 204, 0.18)" : "transparent",
+                    color: isSelected ? "#38bdf8" : "#e2e8f0",
+                    fontSize: "clamp(12px, 3.2vw, 13px)",
+                    fontWeight: isSelected ? "700" : "500",
+                    textAlign: "left",
+                    whiteSpace: "nowrap",
+                    cursor: "pointer",
+                    transition: "background-color 0.15s ease, color 0.15s ease"
+                });
+
+                const itemText = document.createElement("span");
+                itemText.textContent = opt.label;
+
+                const checkIcon = document.createElement("i");
+                checkIcon.className = "fa-solid fa-check";
+                Object.assign(checkIcon.style, {
+                    fontSize: "11px",
+                    color: "#38bdf8",
+                    opacity: isSelected ? "1" : "0"
+                });
+
+                itemBtn.appendChild(itemText);
+                itemBtn.appendChild(checkIcon);
+
+                itemBtn.addEventListener("mouseenter", () => {
+                    if (!isSelected) {
+                        itemBtn.style.backgroundColor = "#1e293b";
+                        itemBtn.style.color = "#ffffff";
+                    }
+                });
+                itemBtn.addEventListener("mouseleave", () => {
+                    if (!isSelected) {
+                        itemBtn.style.backgroundColor = "transparent";
+                        itemBtn.style.color = "#e2e8f0";
+                    }
+                });
+
+                itemBtn.addEventListener("click", (e: MouseEvent) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    closeDropdown();
+                    if (opt.value !== currentValue) {
+                        onChange(opt.value);
+                    }
+                });
+
+                menuList.appendChild(itemBtn);
+            });
+
+            wrapper.appendChild(triggerBtn);
+            wrapper.appendChild(menuList);
+            return wrapper;
+        };
+
+        const sourceDropdown = createCustomDropdown<"bookmarks" | "recent">(
+            [
+                { value: "bookmarks", label: `★ 保存した単語 (${bookmarks.length})` },
+                { value: "recent", label: `最近の検索履歴 (${getRecentSearches().length})` }
+            ],
+            cardSource,
+            newVal => {
+                cardSource = newVal;
+                rebuildDeck();
+                renderCardView();
+            },
+            true
+        );
+
+        const dirDropdown = createCustomDropdown<"en-to-ja" | "ja-to-en">(
+            [
+                { value: "en-to-ja", label: "英語→日本語" },
+                { value: "ja-to-en", label: "日本語→英語" }
+            ],
+            cardDirection,
+            newVal => {
+                cardDirection = newVal;
+                isCardFlipped = false;
+                renderCardView();
+            },
+            false
+        );
 
         const shuffleBtn = document.createElement("button");
         shuffleBtn.type = "button";
-        shuffleBtn.textContent = "シャッフル";
         Object.assign(shuffleBtn.style, {
-            padding: "6px 12px",
+            display: "inline-flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: "clamp(4px, 1.2vw, 6px)",
+            height: "clamp(32px, 8vw, 36px)",
+            padding: "0 clamp(7px, 2.2vw, 11px)",
+            flex: "0 0 auto",
+            boxSizing: "border-box",
             backgroundColor: "#1e293b",
-            color: "#cbd5e1",
-            border: "1px solid #334155",
-            borderRadius: "6px",
-            fontSize: "13px",
-            cursor: "pointer"
+            color: "#f8fafc",
+            border: "1px solid #475569",
+            borderRadius: "8px",
+            fontSize: "clamp(11px, 3vw, 13px)",
+            fontWeight: "600",
+            cursor: "pointer",
+            whiteSpace: "nowrap",
+            transition: "border-color 0.15s ease, background-color 0.15s ease"
         });
+
+        const shuffleIcon = document.createElement("i");
+        shuffleIcon.className = "fa-solid fa-shuffle";
+        Object.assign(shuffleIcon.style, {
+            fontSize: "clamp(10px, 2.8vw, 12px)",
+            color: "#38bdf8",
+            flexShrink: "0"
+        });
+
+        const shuffleLabel = document.createElement("span");
+        shuffleLabel.textContent = "シャッフル";
+
+        shuffleBtn.appendChild(shuffleIcon);
+        shuffleBtn.appendChild(shuffleLabel);
+
+        shuffleBtn.addEventListener("mouseenter", () => {
+            shuffleBtn.style.borderColor = "#00b4cc";
+            shuffleBtn.style.backgroundColor = "#0f172a";
+        });
+        shuffleBtn.addEventListener("mouseleave", () => {
+            shuffleBtn.style.borderColor = "#475569";
+            shuffleBtn.style.backgroundColor = "#1e293b";
+        });
+
         shuffleBtn.addEventListener("click", () => {
             for (let i = deck.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
@@ -1765,12 +2287,14 @@ function openBookmarkModal(
             renderCardView();
         });
 
-        controls.appendChild(sourceSelect);
-        controls.appendChild(dirSelect);
+        controls.appendChild(sourceDropdown);
+        controls.appendChild(dirDropdown);
         controls.appendChild(shuffleBtn);
         bodyArea.appendChild(controls);
 
         if (deck.length === 0) {
+            toggleCardFlip = null;
+            navigateCard = null;
             const emptyBox = document.createElement("div");
             Object.assign(emptyBox.style, {
                 textAlign: "center",
@@ -1785,178 +2309,245 @@ function openBookmarkModal(
             return;
         }
 
-        const currentCard = deck[currentCardIndex];
+        if (!document.getElementById("flashcard-scroll-style")) {
+            const styleEl = document.createElement("style");
+            styleEl.id = "flashcard-scroll-style";
+            styleEl.textContent = `
+                .flashcard-ml-scroll {
+                    scrollbar-width: thin;
+                    scrollbar-color: #cbd5e1 #f1f5f9;
+                }
+                .flashcard-ml-scroll::-webkit-scrollbar {
+                    width: 6px;
+                }
+                .flashcard-ml-scroll::-webkit-scrollbar-track {
+                    background: #f1f5f9;
+                    border-radius: 999px;
+                    margin: 6px 0;
+                }
+                .flashcard-ml-scroll::-webkit-scrollbar-thumb {
+                    background: #cbd5e1;
+                    border-radius: 999px;
+                    border: 1px solid #f8fafc;
+                }
+                .flashcard-ml-scroll::-webkit-scrollbar-thumb:hover {
+                    background: #94a3b8;
+                }
+                .flashcard-ml-scroll::-webkit-scrollbar-corner {
+                    background: transparent;
+                }
+                .flashcard-ml-scroll.ml {
+                    display: block !important;
+                    width: 100% !important;
+                    max-width: 100% !important;
+                    margin: 0 !important;
+                    padding: clamp(10px, 2.6vw, 14px) clamp(12px, 3.2vw, 16px) !important;
+                    box-sizing: border-box !important;
+                    background-color: #ffffff !important;
+                    color: #000000 !important;
+                }
+                .flashcard-3d-scene {
+                    perspective: 1200px;
+                    -webkit-perspective: 1200px;
+                }
+                .flashcard-3d-inner {
+                    position: relative;
+                    width: 100%;
+                    height: 100%;
+                    transform-style: preserve-3d;
+                    -webkit-transform-style: preserve-3d;
+                    transition: transform 0.52s cubic-bezier(0.22, 1, 0.36, 1);
+                    transform: rotateY(0deg);
+                }
+                .flashcard-3d-inner.is-flipped {
+                    transform: rotateY(180deg);
+                }
+                .flashcard-3d-face {
+                    position: absolute;
+                    inset: 0;
+                    width: 100%;
+                    height: 100%;
+                    box-sizing: border-box;
+                    border-radius: 12px;
+                    padding: 32px clamp(10px, 3vw, 20px) clamp(10px, 2.8vw, 18px) clamp(10px, 3vw, 20px);
+                    display: flex;
+                    flex-direction: column;
+                    justify-content: center;
+                    align-items: center;
+                    text-align: center;
+                    overflow: hidden;
+                    backface-visibility: hidden;
+                    -webkit-backface-visibility: hidden;
+                }
+                .flashcard-3d-face-front {
+                    background-color: #1e293b;
+                    border: 2px solid #334155;
+                    transform: rotateY(0deg) translateZ(1px);
+                    -webkit-transform: rotateY(0deg) translateZ(1px);
+                }
+                .flashcard-3d-face-back {
+                    background-color: #152238;
+                    border: 2px solid #00b4cc;
+                    transform: rotateY(180deg) translateZ(1px);
+                    -webkit-transform: rotateY(180deg) translateZ(1px);
+                }
+            `;
+            document.head.appendChild(styleEl);
+        }
 
-        // カード本体（表面・裏面でサイズが変わらないよう高さを固定）
-        const cardBox = document.createElement("div");
-        Object.assign(cardBox.style, {
-            height: "340px",
-            boxSizing: "border-box",
-            overflow: "hidden",
-            backgroundColor: isCardFlipped ? "#152238" : "#1e293b",
-            border: isCardFlipped ? "2px solid #00b4cc" : "2px solid #334155",
-            borderRadius: "12px",
-            padding: "36px 20px 18px 20px",
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "center",
-            alignItems: "center",
-            textAlign: "center",
-            cursor: "pointer",
-            userSelect: "none",
-            position: "relative",
-            transition: "background-color 0.2s ease, border-color 0.2s ease"
-        });
-
-        const badge = document.createElement("div");
-        Object.assign(badge.style, {
-            position: "absolute",
-            top: "12px",
-            left: "14px",
-            fontSize: "12px",
-            color: "#94a3b8"
-        });
-        badge.textContent = `${currentCardIndex + 1} / ${deck.length}`;
-
-        const flipGuide = document.createElement("div");
-        Object.assign(flipGuide.style, {
-            position: "absolute",
-            top: "12px",
-            right: "14px",
-            fontSize: "12px",
-            color: isCardFlipped ? "#38bdf8" : "#64748b"
-        });
-        flipGuide.textContent = isCardFlipped ? "裏面（解答）" : "タップ / Spaceでめくる";
-
-        cardBox.appendChild(badge);
-        cardBox.appendChild(flipGuide);
-
-        const contentWrap = document.createElement("div");
-        Object.assign(contentWrap.style, {
+        // カードが左右にスライドして出入りするステージ枠（要素外へはみ出たカードを隠す）
+        const cardViewport = document.createElement("div");
+        Object.assign(cardViewport.style, {
             width: "100%",
-            height: "100%",
-            minHeight: "0",
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: isCardFlipped && currentCard.mlHtml ? "flex-start" : "center",
-            alignItems: "center",
-            overflow: isCardFlipped ? "hidden" : "auto"
+            height: "clamp(300px, 48dvh, 420px)",
+            position: "relative",
+            overflow: "hidden",
+            borderRadius: "12px"
         });
 
-        let mlScrollBox: HTMLElement | null = null;
+        // 指定したインデックスのカード要素一式を生成するヘルパー
+        const buildCardElement = (
+            cardIndex: number,
+            initialFlipped: boolean
+        ): { element: HTMLElement; flip: () => void } => {
+            const cardData = deck[cardIndex];
 
-        if (!isCardFlipped) {
-            // 表面
+            const cardBox = document.createElement("div");
+            cardBox.className = "flashcard-3d-scene";
+            Object.assign(cardBox.style, {
+                position: "absolute",
+                inset: "0",
+                width: "100%",
+                height: "100%",
+                boxSizing: "border-box",
+                cursor: "pointer",
+                userSelect: "none",
+                willChange: "transform, opacity"
+            });
+
+            const cardFlipInner = document.createElement("div");
+            cardFlipInner.className = `flashcard-3d-inner${initialFlipped ? " is-flipped" : ""}`;
+
+            const appendFaceBadges = (faceEl: HTMLElement, isBackFace: boolean): void => {
+                const badge = document.createElement("div");
+                Object.assign(badge.style, {
+                    position: "absolute",
+                    top: "10px",
+                    left: "clamp(10px, 3vw, 16px)",
+                    fontSize: "12px",
+                    color: "#94a3b8"
+                });
+                badge.textContent = `${cardIndex + 1} / ${deck.length}`;
+
+                const flipGuide = document.createElement("div");
+                Object.assign(flipGuide.style, {
+                    position: "absolute",
+                    top: "10px",
+                    right: "clamp(10px, 3vw, 16px)",
+                    fontSize: "12px",
+                    color: isBackFace ? "#38bdf8" : "#64748b"
+                });
+                flipGuide.textContent = isBackFace ? "裏面（解答）" : "タップ / Spaceでめくる";
+
+                faceEl.appendChild(badge);
+                faceEl.appendChild(flipGuide);
+            };
+
+            // --- 1. 表面（Front Face）の構築 ---
+            const frontFace = document.createElement("div");
+            frontFace.className = "flashcard-3d-face flashcard-3d-face-front";
+            frontFace.style.pointerEvents = initialFlipped ? "none" : "auto";
+            appendFaceBadges(frontFace, false);
+
+            const frontContentWrap = document.createElement("div");
+            Object.assign(frontContentWrap.style, {
+                width: "100%",
+                height: "100%",
+                minHeight: "0",
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "center",
+                alignItems: "center",
+                overflow: "auto"
+            });
+
             if (cardDirection === "en-to-ja") {
                 const wordTitle = document.createElement("div");
                 Object.assign(wordTitle.style, {
-                    fontSize: "32px",
+                    fontSize: "clamp(26px, 6.5vw, 32px)",
                     fontWeight: "700",
                     color: "#ffffff",
                     letterSpacing: "0.03em"
                 });
-                wordTitle.textContent = currentCard.word;
-                contentWrap.appendChild(wordTitle);
+                wordTitle.textContent = cardData.word;
+                frontContentWrap.appendChild(wordTitle);
             } else {
                 // ⑤ 日本語→英語のとき、カード表面は単語の意味のみを表示（下のヒント部分は削除）
                 const meaningTitle = document.createElement("div");
                 Object.assign(meaningTitle.style, {
-                    fontSize: "24px",
+                    fontSize: "clamp(20px, 5.2vw, 24px)",
                     fontWeight: "700",
                     color: "#38bdf8",
                     lineHeight: "1.5"
                 });
-                meaningTitle.textContent = currentCard.meanings.join(" ・ ");
-                contentWrap.appendChild(meaningTitle);
+                meaningTitle.textContent = cardData.meanings.join(" ・ ");
+                frontContentWrap.appendChild(meaningTitle);
             }
-        } else {
-            // 裏面（解答）
+            frontFace.appendChild(frontContentWrap);
+
+            // --- 2. 裏面（Back Face）の構築 ---
+            const backFace = document.createElement("div");
+            backFace.className = "flashcard-3d-face flashcard-3d-face-back";
+            backFace.style.pointerEvents = initialFlipped ? "auto" : "none";
+            appendFaceBadges(backFace, true);
+
+            const backContentWrap = document.createElement("div");
+            Object.assign(backContentWrap.style, {
+                width: "100%",
+                height: "100%",
+                minHeight: "0",
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: cardData.mlHtml ? "flex-start" : "center",
+                alignItems: "center",
+                overflow: "hidden"
+            });
+
             const ansWord = document.createElement("div");
             Object.assign(ansWord.style, {
-                fontSize: "24px",
+                fontSize: "clamp(20px, 5.2vw, 24px)",
                 fontWeight: "700",
                 color: "#ffffff",
-                marginBottom: "6px",
+                marginBottom: "4px",
                 flexShrink: "0"
             });
-            ansWord.textContent = currentCard.numStr
-                ? `${currentCard.numStr}. ${currentCard.word}`
-                : currentCard.word;
+            ansWord.textContent = cardData.numStr
+                ? `${cardData.numStr}. ${cardData.word}`
+                : cardData.word;
 
             const ansMeaning = document.createElement("div");
             Object.assign(ansMeaning.style, {
-                fontSize: "17px",
+                fontSize: "clamp(15px, 4vw, 17px)",
                 fontWeight: "700",
                 color: "#fbbf24",
-                marginBottom: currentCard.mlHtml ? "10px" : "0",
+                marginBottom: cardData.mlHtml ? "8px" : "0",
                 flexShrink: "0"
             });
-            ansMeaning.textContent = currentCard.meanings.join(" ・ ");
+            ansMeaning.textContent = cardData.meanings.join(" ・ ");
 
-            contentWrap.appendChild(ansWord);
-            contentWrap.appendChild(ansMeaning);
+            backContentWrap.appendChild(ansWord);
+            backContentWrap.appendChild(ansMeaning);
+
+            let mlScrollBox: HTMLElement | null = null;
 
             // ④ 辞書ページの .ml 要素の内容（画像除く）をすべて表示し、固定カード内の残り領域でスクロール可能にする
-            if (currentCard.mlHtml) {
-                if (!document.getElementById("flashcard-scroll-style")) {
-                    const styleEl = document.createElement("style");
-                    styleEl.id = "flashcard-scroll-style";
-                    styleEl.textContent = `
-                        .flashcard-ml-scroll {
-                            scrollbar-width: thin;
-                            scrollbar-color: rgba(0, 180, 204, 0.5) rgba(15, 23, 42, 0.6);
-                        }
-                        .flashcard-ml-scroll::-webkit-scrollbar {
-                            width: 6px;
-                        }
-                        .flashcard-ml-scroll::-webkit-scrollbar-track {
-                            background: rgba(15, 23, 42, 0.6);
-                            border-radius: 999px;
-                            margin: 6px 0;
-                        }
-                        .flashcard-ml-scroll::-webkit-scrollbar-thumb {
-                            background: linear-gradient(180deg, rgba(0, 180, 204, 0.65) 0%, rgba(56, 189, 248, 0.45) 100%);
-                            border-radius: 999px;
-                            border: 1px solid rgba(15, 23, 42, 0.4);
-                        }
-                        .flashcard-ml-scroll::-webkit-scrollbar-thumb:hover {
-                            background: linear-gradient(180deg, #00b4cc 0%, #38bdf8 100%);
-                        }
-                        .flashcard-ml-scroll::-webkit-scrollbar-corner {
-                            background: transparent;
-                        }
-                        .flashcard-ml-scroll.content {
-                            padding-left: 0 !important;
-                            padding-right: 0 !important;
-                        }
-                        .flashcard-ml-scroll.content > div {
-                            width: 100% !important;
-                            max-width: 100% !important;
-                            margin-left: 0 !important;
-                            margin-right: 0 !important;
-                            padding-left: 0 !important;
-                            padding-right: 0 !important;
-                            box-sizing: border-box !important;
-                        }
-                        .flashcard-ml-scroll.content .ml {
-                            display: block !important;
-                            width: 100% !important;
-                            max-width: 100% !important;
-                            margin-left: 0 !important;
-                            margin-right: 0 !important;
-                            padding-left: 0 !important;
-                            padding-right: 0 !important;
-                            box-sizing: border-box !important;
-                        }
-                    `;
-                    document.head.appendChild(styleEl);
-                }
-
+            if (cardData.mlHtml) {
                 mlScrollBox = document.createElement("div");
-                mlScrollBox.className = "content flashcard-ml-scroll";
+                mlScrollBox.className = "ml flashcard-ml-scroll";
                 Object.assign(mlScrollBox.style, {
-                    backgroundColor: "rgba(15, 23, 42, 0.7)",
-                    padding: "12px 0",
+                    backgroundColor: "#ffffff",
+                    color: "#000000",
+                    padding: "clamp(10px, 2.6vw, 14px) clamp(12px, 3.2vw, 16px)",
                     borderRadius: "8px",
                     textAlign: "left",
                     flex: "1 1 auto",
@@ -1967,45 +2558,128 @@ function openBookmarkModal(
                     boxSizing: "border-box",
                     width: "100%"
                 });
-                mlScrollBox.innerHTML = currentCard.mlHtml;
-                contentWrap.appendChild(mlScrollBox);
+                mlScrollBox.innerHTML = cardData.mlHtml;
+                backContentWrap.appendChild(mlScrollBox);
             }
-        }
+            backFace.appendChild(backContentWrap);
 
-        // スクロール操作やテキストドラッグ時に誤ってカードがめくれないように判定
-        let downX = 0;
-        let downY = 0;
-        let downScrollTop = 0;
-        let isScrollbarClick = false;
+            cardFlipInner.appendChild(frontFace);
+            cardFlipInner.appendChild(backFace);
+            cardBox.appendChild(cardFlipInner);
 
-        cardBox.addEventListener(
-            "pointerdown",
-            (e: PointerEvent) => {
-                downX = e.clientX;
-                downY = e.clientY;
-                downScrollTop = mlScrollBox ? mlScrollBox.scrollTop : 0;
-                isScrollbarClick = false;
-                if (mlScrollBox && mlScrollBox.contains(e.target as Node)) {
-                    const rect = mlScrollBox.getBoundingClientRect();
-                    if (e.clientX - rect.left > mlScrollBox.clientWidth) {
-                        isScrollbarClick = true;
+            let localFlipped = initialFlipped;
+            const performFlip = (): void => {
+                localFlipped = !localFlipped;
+                isCardFlipped = localFlipped;
+                cardFlipInner.classList.toggle("is-flipped", localFlipped);
+                frontFace.style.pointerEvents = localFlipped ? "none" : "auto";
+                backFace.style.pointerEvents = localFlipped ? "auto" : "none";
+            };
+
+            let downX = 0;
+            let downY = 0;
+            let downScrollTop = 0;
+            let isScrollbarClick = false;
+
+            cardBox.addEventListener(
+                "pointerdown",
+                (e: PointerEvent) => {
+                    downX = e.clientX;
+                    downY = e.clientY;
+                    downScrollTop = mlScrollBox ? mlScrollBox.scrollTop : 0;
+                    isScrollbarClick = false;
+                    if (localFlipped && mlScrollBox && mlScrollBox.contains(e.target as Node)) {
+                        const rect = mlScrollBox.getBoundingClientRect();
+                        if (e.clientX - rect.left > mlScrollBox.clientWidth) {
+                            isScrollbarClick = true;
+                        }
                     }
-                }
-            },
-            { passive: true }
-        );
+                },
+                { passive: true }
+            );
 
-        cardBox.appendChild(contentWrap);
-        cardBox.addEventListener("click", (e: MouseEvent) => {
-            const moveDist = Math.hypot(e.clientX - downX, e.clientY - downY);
-            const scrolled = mlScrollBox ? Math.abs(mlScrollBox.scrollTop - downScrollTop) > 2 : false;
-            if (moveDist > 8 || scrolled || isScrollbarClick) {
-                return;
+            cardBox.addEventListener("click", (e: MouseEvent) => {
+                const moveDist = Math.hypot(e.clientX - downX, e.clientY - downY);
+                const scrolled =
+                    localFlipped && mlScrollBox ? Math.abs(mlScrollBox.scrollTop - downScrollTop) > 2 : false;
+                if (moveDist > 8 || scrolled || isScrollbarClick) {
+                    return;
+                }
+                performFlip();
+            });
+
+            return { element: cardBox, flip: performFlip };
+        };
+
+        let activeCardObj = buildCardElement(currentCardIndex, isCardFlipped);
+        toggleCardFlip = activeCardObj.flip;
+        cardViewport.appendChild(activeCardObj.element);
+        bodyArea.appendChild(cardViewport);
+
+        let slideTimer: ReturnType<typeof setTimeout> | null = null;
+        let outgoingCardEl: HTMLElement | null = null;
+
+        // prev / next 押下時に現在のカードを左右へスライドアウトさせ、新しいカードを反対側からスライドインさせる
+        const slideToCard = (dir: "prev" | "next"): void => {
+            if (deck.length === 0) return;
+
+            // 連打された場合は進行中のスライドの後片付けを即座に完了させる
+            if (slideTimer) {
+                clearTimeout(slideTimer);
+                slideTimer = null;
             }
-            isCardFlipped = !isCardFlipped;
-            renderCardView();
-        });
-        bodyArea.appendChild(cardBox);
+            if (outgoingCardEl) {
+                outgoingCardEl.remove();
+                outgoingCardEl = null;
+            }
+
+            const nextIndex =
+                dir === "next"
+                    ? (currentCardIndex + 1) % deck.length
+                    : (currentCardIndex - 1 + deck.length) % deck.length;
+
+            currentCardIndex = nextIndex;
+            isCardFlipped = false;
+
+            const oldCardEl = activeCardObj.element;
+            oldCardEl.style.pointerEvents = "none";
+            outgoingCardEl = oldCardEl;
+
+            const newCardObj = buildCardElement(currentCardIndex, false);
+            const newCardEl = newCardObj.element;
+            activeCardObj = newCardObj;
+            toggleCardFlip = newCardObj.flip;
+
+            // next: 新カードは右(+108%)から登場し、旧カードは左(-108%)へ消える
+            // prev: 新カードは左(-108%)から登場し、旧カードは右(+108%)へ消える
+            const enterFromX = dir === "next" ? "108%" : "-108%";
+            const exitToX = dir === "next" ? "-108%" : "108%";
+
+            newCardEl.style.transition = "none";
+            newCardEl.style.transform = `translate3d(${enterFromX}, 0, 0)`;
+            cardViewport.appendChild(newCardEl);
+
+            // 初期位置を確定させてからトランジションを開始
+            void newCardEl.offsetWidth;
+
+            const slideTransition = "transform 0.38s cubic-bezier(0.22, 1, 0.36, 1)";
+            oldCardEl.style.transition = slideTransition;
+            newCardEl.style.transition = slideTransition;
+
+            oldCardEl.style.transform = `translate3d(${exitToX}, 0, 0)`;
+            newCardEl.style.transform = "translate3d(0, 0, 0)";
+
+            slideTimer = setTimeout(() => {
+                slideTimer = null;
+                if (outgoingCardEl === oldCardEl) {
+                    outgoingCardEl = null;
+                }
+                oldCardEl.remove();
+                newCardEl.style.transition = "";
+                newCardEl.style.transform = "";
+            }, 390);
+        };
+        navigateCard = slideToCard;
 
         // ①・② 下部ナビゲーションボタン（prev / 辞書ページへ / next・折り返し防止）
         const navBar = document.createElement("div");
@@ -2034,9 +2708,7 @@ function openBookmarkModal(
             fontWeight: "600"
         });
         prevBtn.addEventListener("click", () => {
-            currentCardIndex = (currentCardIndex - 1 + deck.length) % deck.length;
-            isCardFlipped = false;
-            renderCardView();
+            slideToCard("prev");
         });
 
         const openDictBtn = document.createElement("button");
@@ -2055,8 +2727,10 @@ function openBookmarkModal(
             fontWeight: "600"
         });
         openDictBtn.addEventListener("click", () => {
+            const targetCard = deck[currentCardIndex];
+            if (!targetCard) return;
             closeModal();
-            onSelectWord(currentCard.searchValue);
+            onSelectWord(targetCard.searchValue);
         });
 
         const nextBtn = document.createElement("button");
@@ -2075,9 +2749,7 @@ function openBookmarkModal(
             fontWeight: "600"
         });
         nextBtn.addEventListener("click", () => {
-            currentCardIndex = (currentCardIndex + 1) % deck.length;
-            isCardFlipped = false;
-            renderCardView();
+            slideToCard("next");
         });
 
         navBar.appendChild(prevBtn);
@@ -2096,18 +2768,30 @@ function openBookmarkModal(
 
         if (e.key === " " || e.key === "Enter") {
             e.preventDefault();
-            isCardFlipped = !isCardFlipped;
-            renderCardView();
+            if (toggleCardFlip) {
+                toggleCardFlip();
+            } else {
+                isCardFlipped = !isCardFlipped;
+                renderCardView();
+            }
         } else if (e.key === "ArrowRight") {
             e.preventDefault();
-            currentCardIndex = (currentCardIndex + 1) % deck.length;
-            isCardFlipped = false;
-            renderCardView();
+            if (navigateCard) {
+                navigateCard("next");
+            } else {
+                currentCardIndex = (currentCardIndex + 1) % deck.length;
+                isCardFlipped = false;
+                renderCardView();
+            }
         } else if (e.key === "ArrowLeft") {
             e.preventDefault();
-            currentCardIndex = (currentCardIndex - 1 + deck.length) % deck.length;
-            isCardFlipped = false;
-            renderCardView();
+            if (navigateCard) {
+                navigateCard("prev");
+            } else {
+                currentCardIndex = (currentCardIndex - 1 + deck.length) % deck.length;
+                isCardFlipped = false;
+                renderCardView();
+            }
         }
     };
 
