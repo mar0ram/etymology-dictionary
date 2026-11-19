@@ -86,6 +86,7 @@ let currentDockIsNumber = false;
 let dockEl: HTMLElement | null = null;
 let dockStarBtn: HTMLButtonElement | null = null;
 let closeLiquidSearchImmediate: (() => void) | null = null;
+let collapseLiquidDockImmediate: (() => void) | null = null;
 
 function updateDockStarState(): void {
     if (!dockStarBtn || !currentDockEntry || !currentDockEntry.word) return;
@@ -137,16 +138,22 @@ export function setBottomDockContext(
         if (closeLiquidSearchImmediate) {
             closeLiquidSearchImmediate();
         }
+        if (collapseLiquidDockImmediate) {
+            collapseLiquidDockImmediate();
+        }
         dockEl.style.opacity = "0";
         dockEl.style.pointerEvents = "none";
-        dockEl.style.transform = "translate(-50%, 20px) scale(0.96)";
+        dockEl.style.transform = "translate3d(0, 20px, 0) scale(0.9)";
         return;
     }
 
+    if (collapseLiquidDockImmediate) {
+        collapseLiquidDockImmediate();
+    }
     updateDockStarState();
     dockEl.style.opacity = "1";
     dockEl.style.pointerEvents = "auto";
-    dockEl.style.transform = "translate(-50%, 0) scale(1)";
+    dockEl.style.transform = "translate3d(0, 0, 0) scale(1)";
 }
 
 function applyBookmarkBtnStyle(btn: HTMLButtonElement, active: boolean): void {
@@ -629,15 +636,57 @@ export function initBookmarkSystem(
             .liquid-glass-dock {
                 position: fixed;
                 bottom: max(16px, env(safe-area-inset-bottom, 16px));
-                left: 50%;
-                transform: translate(-50%, 20px) scale(0.96);
+                left: max(16px, env(safe-area-inset-left, 16px));
+                transform: translate3d(0, 20px, 0) scale(0.9);
+                transform-origin: left center;
                 z-index: 950;
                 display: flex;
                 align-items: center;
                 justify-content: center;
-                gap: 10px;
-                padding: 9px 15px;
+                gap: 0;
+                width: 50px;
+                height: 50px;
+                padding: 0;
+                box-sizing: border-box;
                 border-radius: 9999px;
+                background:
+                    radial-gradient(115% 115% at 30% 18%, rgba(255, 255, 255, 0.22) 0%, rgba(255, 255, 255, 0.04) 48%, rgba(255, 255, 255, 0.01) 100%),
+                    rgba(255, 255, 255, 0.03);
+                backdrop-filter: url(#liquid-glass-lens) blur(1.2px) saturate(145%) brightness(1.03) contrast(1.04);
+                -webkit-backdrop-filter: blur(2px) saturate(145%) brightness(1.03) contrast(1.04);
+                border: 1px solid rgba(255, 255, 255, 0.32);
+                box-shadow:
+                    0 8px 20px rgba(0, 0, 0, 0.18),
+                    0 1px 4px rgba(0, 0, 0, 0.12),
+                    inset 0 1.5px 2px rgba(255, 255, 255, 0.78),
+                    inset 0 -1.5px 2px rgba(255, 255, 255, 0.22),
+                    inset 1.5px 0 4px rgba(255, 255, 255, 0.18),
+                    inset -1.5px 0 4px rgba(186, 230, 253, 0.18);
+                overflow: hidden;
+                opacity: 0;
+                pointer-events: none;
+                user-select: none;
+                touch-action: manipulation;
+                will-change: width, height, transform;
+                transition: opacity 0.25s ease, transform 0.25s cubic-bezier(0.22, 1, 0.36, 1), background 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+            }
+            .liquid-glass-dock.is-dock-right {
+                left: auto;
+                right: max(16px, env(safe-area-inset-right, 16px));
+                transform-origin: right center;
+            }
+            .liquid-glass-dock.is-dock-right {
+                left: auto;
+                right: max(16px, env(safe-area-inset-right, 16px));
+                transform-origin: right center;
+            }
+            .liquid-glass-dock.is-expanded {
+                width: auto;
+                height: 64px;
+                max-width: calc(100vw - max(16px, env(safe-area-inset-left, 16px)) - 12px);
+                justify-content: flex-start;
+                gap: 10px;
+                padding: 7px 14px 7px 9px;
                 background:
                     radial-gradient(120% 140% at 50% 0%, rgba(255, 255, 255, 0.22) 0%, rgba(15, 23, 42, 0.18) 55%, rgba(15, 23, 42, 0.30) 100%),
                     rgba(15, 23, 42, 0.24);
@@ -653,32 +702,119 @@ export function initBookmarkSystem(
                     inset 3px 0 6px rgba(56, 189, 248, 0.22),
                     inset -3px 0 6px rgba(255, 255, 255, 0.26),
                     inset 0 0 18px rgba(15, 23, 42, 0.18);
-                overflow: hidden;
-                opacity: 0;
-                pointer-events: none;
-                user-select: none;
-                transition: opacity 0.25s ease, transform 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+            }
+            .liquid-glass-dock.is-dock-right.is-expanded {
+                flex-direction: row-reverse;
+                max-width: calc(100vw - max(16px, env(safe-area-inset-right, 16px)) - 12px);
+                padding: 7px 9px 7px 14px;
+            }
+            .liquid-glass-dock.is-dock-right.is-expanded {
+                flex-direction: row-reverse;
+                max-width: calc(100vw - max(16px, env(safe-area-inset-right, 16px)) - 12px);
+                padding: 7px 9px 7px 14px;
             }
             .liquid-glass-dock::before {
                 content: "";
                 position: absolute;
+                inset: 2px 9px auto 9px;
+                height: 36%;
+                border-radius: 9999px;
+                background: linear-gradient(
+                    180deg,
+                    rgba(255, 255, 255, 0.34) 0%,
+                    rgba(255, 255, 255, 0.04) 65%,
+                    rgba(255, 255, 255, 0) 100%
+                );
+                pointer-events: none;
+            }
+            .liquid-glass-dock.is-expanded::before {
                 inset: 1px 10px auto 10px;
                 height: 42%;
-                border-radius: 9999px;
                 background: linear-gradient(
                     180deg,
                     rgba(255, 255, 255, 0.42) 0%,
                     rgba(255, 255, 255, 0.06) 65%,
                     rgba(255, 255, 255, 0) 100%
                 );
-                pointer-events: none;
+            }
+            .liquid-glass-dock.is-dragging {
+                transition: none !important;
+                cursor: grabbing;
+            }
+            .liquid-dock-toggle-btn {
+                position: relative;
+                z-index: 2;
+                width: 100%;
+                height: 100%;
+                padding: 0;
+                border-radius: 9999px;
+                border: none;
+                background: transparent;
+                color: #ffffff;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                cursor: grab;
+                flex-shrink: 0;
+                touch-action: none;
+                -webkit-tap-highlight-color: transparent;
+                transition: transform 0.18s cubic-bezier(0.22, 1, 0.36, 1), background 0.2s ease, border-color 0.2s ease;
+            }
+            .liquid-glass-dock.is-dragging .liquid-dock-toggle-btn {
+                cursor: grabbing;
+                transform: scale(1.06);
+            }
+            .liquid-dock-toggle-btn:active {
+                transform: scale(0.92);
+            }
+            .liquid-dock-toggle-btn i {
+                font-size: 17px;
+                line-height: 1;
+                color: rgba(255, 255, 255, 0.88);
+                filter:
+                    drop-shadow(0 0 1.5px rgba(15, 23, 42, 0.72))
+                    drop-shadow(0 1px 3px rgba(0, 0, 0, 0.55));
+                transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1), color 0.2s ease;
+            }
+            .liquid-glass-dock.is-expanded .liquid-dock-toggle-btn {
+                width: 44px;
+                height: 48px;
+                cursor: pointer;
+                touch-action: manipulation;
+                border: 1px solid rgba(255, 255, 255, 0.34);
+                background:
+                    radial-gradient(100% 120% at 50% 0%, rgba(255, 255, 255, 0.24) 0%, rgba(15, 23, 42, 0.18) 100%),
+                    rgba(15, 23, 42, 0.22);
+                box-shadow:
+                    0 4px 10px rgba(0, 0, 0, 0.20),
+                    inset 0 1.5px 1.5px rgba(255, 255, 255, 0.78),
+                    inset 0 -1.5px 2px rgba(255, 255, 255, 0.24);
+            }
+            .liquid-glass-dock.is-expanded .liquid-dock-toggle-btn i {
+                font-size: 16px;
+                color: #ffffff;
+                filter:
+                    drop-shadow(0 0 2px rgba(15, 23, 42, 0.95))
+                    drop-shadow(0 1px 4px rgba(0, 0, 0, 0.85));
+            }
+            .liquid-dock-actions {
+                display: none;
+                align-items: center;
+                justify-content: space-between;
+                gap: 10px;
+                flex: 1 1 auto;
+                min-width: 0;
+            }
+            .liquid-glass-dock.is-expanded .liquid-dock-actions {
+                display: flex;
             }
             .liquid-glass-btn {
                 position: relative;
                 min-width: 64px;
-                height: 50px;
-                padding: 6px 14px;
+                height: 48px;
+                padding: 5px 14px;
                 border-radius: 9999px;
+                touch-action: manipulation;
                 border: 1px solid rgba(255, 255, 255, 0.38);
                 background:
                     radial-gradient(100% 120% at 50% 0%, rgba(255, 255, 255, 0.26) 0%, rgba(15, 23, 42, 0.16) 62%, rgba(15, 23, 42, 0.28) 100%),
@@ -939,22 +1075,50 @@ export function initBookmarkSystem(
             }
             @media (max-width: 480px) {
                 .liquid-glass-dock {
-                    gap: 7px;
-                    padding: 7px 11px;
+                    left: max(12px, env(safe-area-inset-left, 12px));
+                    width: 46px;
+                    height: 46px;
+                }
+                .liquid-glass-dock.is-dock-right {
+                    left: auto;
+                    right: max(12px, env(safe-area-inset-right, 12px));
+                }
+                .liquid-glass-dock.is-expanded {
+                    height: 56px;
+                    max-width: calc(100vw - max(12px, env(safe-area-inset-left, 12px)) - 10px);
+                    gap: 6px;
+                    padding: 5px 9px 5px 7px;
+                }
+                .liquid-glass-dock.is-dock-right.is-expanded {
+                    max-width: calc(100vw - max(12px, env(safe-area-inset-right, 12px)) - 10px);
+                    padding: 5px 7px 5px 9px;
+                }
+                .liquid-dock-toggle-btn i {
+                    font-size: 16px;
+                }
+                .liquid-glass-dock.is-expanded .liquid-dock-toggle-btn {
+                    width: 38px;
+                    height: 44px;
+                }
+                .liquid-glass-dock.is-expanded .liquid-dock-toggle-btn i {
+                    font-size: 15px;
+                }
+                .liquid-dock-actions {
+                    gap: 6px;
                 }
                 .liquid-glass-btn {
-                    min-width: 58px;
-                    height: 46px;
-                    padding: 5px 11px;
+                    min-width: 52px;
+                    height: 44px;
+                    padding: 4px 8px;
                 }
                 .liquid-glass-btn i {
-                    font-size: 15px;
+                    font-size: 14px;
                 }
                 .liquid-glass-btn .liquid-btn-label {
                     font-size: 10px;
                 }
                 .liquid-search-popup {
-                    bottom: calc(max(16px, env(safe-area-inset-bottom, 16px)) + 72px);
+                    bottom: calc(max(16px, env(safe-area-inset-bottom, 16px)) + 68px);
                     padding: 10px;
                     border-radius: 22px;
                 }
@@ -1067,13 +1231,25 @@ export function initBookmarkSystem(
     let isLiquidSearchOpen = false;
     let closeAnimTimer: ReturnType<typeof setTimeout> | null = null;
 
-    // 虫眼鏡ボタンの中心座標を基準に transform-origin を計算（ひょいっと飛び出し・吸い込まれる起点）
+    // 虫眼鏡ボタンの中心座標とドックの上下位置を基準にポップアップ配置・transform-origin を計算
     const updatePopupOriginToSearchBtn = (): void => {
         const btnRect = searchDockBtn.getBoundingClientRect();
+        const dockRect = dockEl ? dockEl.getBoundingClientRect() : btnRect;
         const popWidth = Math.min(window.innerWidth * 0.92, 440);
         const popLeft = (window.innerWidth - popWidth) / 2;
         const originX = Math.max(24, Math.min(popWidth - 24, btnRect.left + btnRect.width / 2 - popLeft));
-        searchPopupEl.style.transformOrigin = `${Math.round(originX)}px calc(100% + 42px)`;
+
+        const spaceAbove = dockRect.top;
+        const spaceBelow = window.innerHeight - dockRect.bottom;
+        if (spaceAbove >= 260 || spaceAbove >= spaceBelow) {
+            searchPopupEl.style.top = "auto";
+            searchPopupEl.style.bottom = `${Math.max(12, Math.round(window.innerHeight - dockRect.top + 12))}px`;
+            searchPopupEl.style.transformOrigin = `${Math.round(originX)}px calc(100% + 42px)`;
+        } else {
+            searchPopupEl.style.bottom = "auto";
+            searchPopupEl.style.top = `${Math.max(12, Math.round(dockRect.bottom + 12))}px`;
+            searchPopupEl.style.transformOrigin = `${Math.round(originX)}px -36px`;
+        }
     };
 
     // 検索履歴・入力候補リストの描画
@@ -1305,10 +1481,434 @@ export function initBookmarkSystem(
         }
     });
 
-    dockEl.appendChild(searchDockBtn);
-    dockEl.appendChild(dockStarBtn);
-    dockEl.appendChild(testDockBtn);
-    dockEl.appendChild(pronDockBtn);
+    // 左下の円形トグルボタン（押すと右へゴムのように伸びて少し縮み下部ドックを展開／再押下で円に戻る）
+    const toggleDockBtn = document.createElement("button");
+    toggleDockBtn.type = "button";
+    toggleDockBtn.className = "liquid-dock-toggle-btn";
+    toggleDockBtn.setAttribute("aria-label", "クイックアクションを開く");
+    toggleDockBtn.setAttribute("aria-expanded", "false");
+
+    const toggleDockIcon = document.createElement("i");
+    toggleDockIcon.className = "fa-solid fa-bars";
+    toggleDockBtn.appendChild(toggleDockIcon);
+
+    const dockActionsWrap = document.createElement("div");
+    dockActionsWrap.className = "liquid-dock-actions";
+    dockActionsWrap.appendChild(searchDockBtn);
+    dockActionsWrap.appendChild(dockStarBtn);
+    dockActionsWrap.appendChild(testDockBtn);
+    dockActionsWrap.appendChild(pronDockBtn);
+
+    dockEl.appendChild(toggleDockBtn);
+    dockEl.appendChild(dockActionsWrap);
+
+    let isDockExpanded = false;
+    let dockSide: "left" | "right" = "left";
+    let currentDockAnim: Animation | null = null;
+    let currentActionsAnim: Animation | null = null;
+    let currentSnapAnim: Animation | null = null;
+
+    const getCollapsedCircleWidth = (): number => (window.innerWidth <= 480 ? 46 : 50);
+
+    const cancelDockAnimations = (): void => {
+        if (currentDockAnim) {
+            currentDockAnim.cancel();
+            currentDockAnim = null;
+        }
+        if (currentActionsAnim) {
+            currentActionsAnim.cancel();
+            currentActionsAnim = null;
+        }
+        if (currentSnapAnim) {
+            currentSnapAnim.cancel();
+            currentSnapAnim = null;
+        }
+    };
+
+    const applyDockSide = (side: "left" | "right"): void => {
+        dockSide = side;
+        if (!dockEl) return;
+        dockEl.classList.toggle("is-dock-right", side === "right");
+        dockEl.style.left = "";
+        dockEl.style.right = "";
+    };
+
+    const setToggleVisualState = (expanded: boolean): void => {
+        toggleDockIcon.className = expanded ? "fa-solid fa-xmark" : "fa-solid fa-bars";
+        toggleDockBtn.setAttribute("aria-label", expanded ? "クイックアクションを閉じる" : "クイックアクションを開く");
+        toggleDockBtn.setAttribute("aria-expanded", String(expanded));
+    };
+
+    const expandDock = (): void => {
+        if (!dockEl || isDockExpanded) return;
+        cancelDockAnimations();
+        isDockExpanded = true;
+        setToggleVisualState(true);
+
+        const isRight = dockSide === "right";
+        const dirSign = isRight ? -1 : 1;
+        const initialRect = dockEl.getBoundingClientRect();
+        const collapsedWidth = initialRect.width || getCollapsedCircleWidth();
+        const collapsedHeight = initialRect.height || collapsedWidth;
+        const edgeOffset = isRight ? Math.max(0, window.innerWidth - initialRect.right) : Math.max(0, initialRect.left);
+
+        // 展開時の自然幅・高さを計測
+        dockEl.classList.add("is-expanded");
+        dockEl.style.width = "auto";
+        const expandedRect = dockEl.getBoundingClientRect();
+        const measuredWidth = expandedRect.width;
+        const targetHeight = expandedRect.height || (window.innerWidth <= 480 ? 56 : 64);
+        const maxAllowedWidth = Math.max(collapsedWidth, window.innerWidth - edgeOffset - 10);
+        const targetWidth = Math.min(measuredWidth, maxAllowedWidth);
+        const stretchWidth = Math.min(targetWidth * 1.12, window.innerWidth - edgeOffset - 4);
+        const reboundWidth = Math.max(collapsedWidth, targetWidth * 0.96);
+
+        dockEl.style.width = `${targetWidth}px`;
+
+        if (typeof dockEl.animate === "function") {
+            const anim = dockEl.animate(
+                [
+                    {
+                        width: `${collapsedWidth}px`,
+                        height: `${collapsedHeight}px`,
+                        transform: "translate3d(0, 0, 0) scaleY(1)"
+                    },
+                    {
+                        width: `${stretchWidth}px`,
+                        height: `${targetHeight}px`,
+                        transform: "translate3d(0, 0, 0) scaleY(0.91)",
+                        offset: 0.48
+                    },
+                    {
+                        width: `${reboundWidth}px`,
+                        height: `${targetHeight}px`,
+                        transform: "translate3d(0, 0, 0) scaleY(1.04)",
+                        offset: 0.78
+                    },
+                    {
+                        width: `${targetWidth}px`,
+                        height: `${targetHeight}px`,
+                        transform: "translate3d(0, 0, 0) scaleY(1)"
+                    }
+                ],
+                {
+                    duration: 540,
+                    easing: "cubic-bezier(0.22, 1, 0.36, 1)"
+                }
+            );
+            currentDockAnim = anim;
+
+            const actionsAnim = dockActionsWrap.animate(
+                [
+                    { opacity: 0, transform: `translate3d(${-14 * dirSign}px, 0, 0) scaleX(0.86)` },
+                    { opacity: 0, transform: `translate3d(${-10 * dirSign}px, 0, 0) scaleX(0.92)`, offset: 0.22 },
+                    { opacity: 1, transform: `translate3d(${4 * dirSign}px, 0, 0) scaleX(1.03)`, offset: 0.55 },
+                    { opacity: 1, transform: "translate3d(0, 0, 0) scaleX(1)" }
+                ],
+                {
+                    duration: 540,
+                    easing: "cubic-bezier(0.22, 1, 0.36, 1)"
+                }
+            );
+            currentActionsAnim = actionsAnim;
+
+            anim.onfinish = () => {
+                if (currentDockAnim === anim) {
+                    currentDockAnim = null;
+                }
+                if (dockEl && isDockExpanded) {
+                    dockEl.style.width = "";
+                }
+            };
+            actionsAnim.onfinish = () => {
+                if (currentActionsAnim === actionsAnim) {
+                    currentActionsAnim = null;
+                }
+            };
+        } else {
+            dockEl.style.width = "";
+        }
+    };
+
+    const collapseDock = (immediate = false): void => {
+        if (!dockEl) return;
+        if (closeLiquidSearchImmediate) {
+            closeLiquidSearchImmediate();
+        }
+        cancelDockAnimations();
+
+        if (!isDockExpanded && immediate) {
+            dockEl.classList.remove("is-expanded");
+            dockEl.style.width = "";
+            setToggleVisualState(false);
+            return;
+        }
+        if (!isDockExpanded) return;
+
+        isDockExpanded = false;
+        setToggleVisualState(false);
+
+        if (immediate || typeof dockEl.animate !== "function") {
+            dockEl.classList.remove("is-expanded");
+            dockEl.style.width = "";
+            return;
+        }
+
+        const isRight = dockSide === "right";
+        const dirSign = isRight ? -1 : 1;
+        const startRect = dockEl.getBoundingClientRect();
+        const startWidth = startRect.width;
+        const startHeight = startRect.height;
+        const edgeOffset = isRight ? Math.max(0, window.innerWidth - startRect.right) : Math.max(0, startRect.left);
+        const collapsedWidth = getCollapsedCircleWidth();
+        const pullWidth = Math.min(startWidth * 1.04, window.innerWidth - edgeOffset - 4);
+
+        const actionsAnim = dockActionsWrap.animate(
+            [
+                { opacity: 1, transform: "translate3d(0, 0, 0)" },
+                { opacity: 0, transform: `translate3d(${-12 * dirSign}px, 0, 0)` }
+            ],
+            {
+                duration: 150,
+                easing: "ease-in",
+                fill: "forwards"
+            }
+        );
+        currentActionsAnim = actionsAnim;
+
+        const anim = dockEl.animate(
+            [
+                {
+                    width: `${startWidth}px`,
+                    height: `${startHeight}px`,
+                    transform: "translate3d(0, 0, 0) scaleY(1)"
+                },
+                {
+                    width: `${pullWidth}px`,
+                    height: `${startHeight}px`,
+                    transform: "translate3d(0, 0, 0) scaleY(0.95)",
+                    offset: 0.18
+                },
+                {
+                    width: `${collapsedWidth}px`,
+                    height: `${collapsedWidth}px`,
+                    transform: "translate3d(0, 0, 0) scaleY(1.05)",
+                    offset: 0.8
+                },
+                {
+                    width: `${collapsedWidth}px`,
+                    height: `${collapsedWidth}px`,
+                    transform: "translate3d(0, 0, 0) scaleY(1)"
+                }
+            ],
+            {
+                duration: 360,
+                easing: "cubic-bezier(0.32, 0, 0.24, 1)"
+            }
+        );
+        currentDockAnim = anim;
+
+        anim.onfinish = () => {
+            if (currentDockAnim === anim) {
+                currentDockAnim = null;
+            }
+            if (currentActionsAnim === actionsAnim) {
+                actionsAnim.cancel();
+                currentActionsAnim = null;
+            }
+            if (dockEl && !isDockExpanded) {
+                dockEl.classList.remove("is-expanded");
+                dockEl.style.width = "";
+            }
+        };
+    };
+
+    collapseLiquidDockImmediate = (): void => {
+        collapseDock(true);
+    };
+
+    // 円形ボタンの上下左右ドラッグ移動および左右端への吸着（スナップ）制御・localStorage保存対応
+    const DOCK_BOTTOM_STORAGE_KEY = "liquid_dock_bottom_v1";
+    const DOCK_SIDE_STORAGE_KEY = "liquid_dock_side_v1";
+    let customDockBottom: number | null = null;
+
+    const clampDockBottom = (bottomPx: number): number => {
+        const dockHeight = dockEl?.offsetHeight || getCollapsedCircleWidth();
+        const minBottom = 16;
+        const maxBottom = Math.max(minBottom, window.innerHeight - dockHeight - 16);
+        return Math.min(maxBottom, Math.max(minBottom, Math.round(bottomPx)));
+    };
+
+    const clampDockLeft = (leftPx: number): number => {
+        const dockWidth = dockEl?.offsetWidth || getCollapsedCircleWidth();
+        const minMargin = window.innerWidth <= 480 ? 12 : 16;
+        const maxLeft = Math.max(minMargin, window.innerWidth - dockWidth - minMargin);
+        return Math.min(maxLeft, Math.max(minMargin, Math.round(leftPx)));
+    };
+
+    const applyDockBottom = (bottomPx: number): void => {
+        if (!dockEl) return;
+        const clamped = clampDockBottom(bottomPx);
+        customDockBottom = clamped;
+        dockEl.style.bottom = `${clamped}px`;
+    };
+
+    try {
+        const savedSide = localStorage.getItem(DOCK_SIDE_STORAGE_KEY);
+        if (savedSide === "right" || savedSide === "left") {
+            applyDockSide(savedSide);
+        }
+        const savedBottom = Number(localStorage.getItem(DOCK_BOTTOM_STORAGE_KEY));
+        if (Number.isFinite(savedBottom) && savedBottom >= 16) {
+            customDockBottom = savedBottom;
+            dockEl.style.bottom = `${clampDockBottom(savedBottom)}px`;
+        }
+    } catch { }
+
+    window.addEventListener("resize", () => {
+        if (customDockBottom !== null) {
+            applyDockBottom(customDockBottom);
+        }
+    });
+
+    let isDockDragging = false;
+    let hasDockDragged = false;
+    let activeDragPointerId: number | null = null;
+    let dragStartX = 0;
+    let dragStartY = 0;
+    let dragStartLeft = 16;
+    let dragStartBottom = 16;
+    let suppressNextToggleClick = false;
+    let suppressClickTimer: ReturnType<typeof setTimeout> | null = null;
+
+    toggleDockBtn.addEventListener("pointerdown", (e: PointerEvent) => {
+        if (isDockExpanded || !dockEl) return;
+        if (e.pointerType === "mouse" && e.button !== 0) return;
+
+        cancelDockAnimations();
+        isDockDragging = true;
+        hasDockDragged = false;
+        activeDragPointerId = e.pointerId;
+        dragStartX = e.clientX;
+        dragStartY = e.clientY;
+        const rect = dockEl.getBoundingClientRect();
+        dragStartLeft = rect.left;
+        dragStartBottom = window.innerHeight - rect.bottom;
+    });
+
+    toggleDockBtn.addEventListener("pointermove", (e: PointerEvent) => {
+        if (!isDockDragging || e.pointerId !== activeDragPointerId || isDockExpanded || !dockEl) return;
+
+        const dx = e.clientX - dragStartX;
+        const dy = e.clientY - dragStartY;
+        if (!hasDockDragged) {
+            if (Math.hypot(dx, dy) < 6) return;
+            hasDockDragged = true;
+            dockEl.classList.add("is-dragging");
+            dockEl.style.right = "auto";
+            try {
+                toggleDockBtn.setPointerCapture(e.pointerId);
+            } catch { }
+        }
+
+        e.preventDefault();
+        dockEl.style.left = `${clampDockLeft(dragStartLeft + dx)}px`;
+        applyDockBottom(dragStartBottom - dy);
+    });
+
+    const finishDockDrag = (e: PointerEvent): void => {
+        if (!isDockDragging || e.pointerId !== activeDragPointerId) return;
+
+        const didDrag = hasDockDragged;
+        isDockDragging = false;
+        hasDockDragged = false;
+        activeDragPointerId = null;
+
+        try {
+            if (toggleDockBtn.hasPointerCapture(e.pointerId)) {
+                toggleDockBtn.releasePointerCapture(e.pointerId);
+            }
+        } catch { }
+
+        if (dockEl) {
+            const currentRect = dockEl.getBoundingClientRect();
+            dockEl.classList.remove("is-dragging");
+
+            if (didDrag) {
+                const centerX = currentRect.left + currentRect.width / 2;
+                const nextSide: "left" | "right" = centerX >= window.innerWidth / 2 ? "right" : "left";
+
+                applyDockSide(nextSide);
+                const finalRect = dockEl.getBoundingClientRect();
+                const deltaX = currentRect.left - finalRect.left;
+
+                if (Math.abs(deltaX) > 1 && typeof dockEl.animate === "function") {
+                    const snapAnim = dockEl.animate(
+                        [
+                            { transform: `translate3d(${deltaX}px, 0, 0) scale(1.06)` },
+                            { transform: "translate3d(0, 0, 0) scale(1)" }
+                        ],
+                        {
+                            duration: 280,
+                            easing: "cubic-bezier(0.22, 1, 0.36, 1)"
+                        }
+                    );
+                    currentSnapAnim = snapAnim;
+                    snapAnim.onfinish = () => {
+                        if (currentSnapAnim === snapAnim) {
+                            currentSnapAnim = null;
+                        }
+                    };
+                }
+
+                try {
+                    localStorage.setItem(DOCK_SIDE_STORAGE_KEY, nextSide);
+                } catch { }
+            }
+        }
+
+        if (didDrag) {
+            suppressNextToggleClick = true;
+            if (suppressClickTimer) clearTimeout(suppressClickTimer);
+            suppressClickTimer = setTimeout(() => {
+                suppressNextToggleClick = false;
+                suppressClickTimer = null;
+            }, 350);
+
+            if (customDockBottom !== null) {
+                try {
+                    localStorage.setItem(DOCK_BOTTOM_STORAGE_KEY, String(customDockBottom));
+                } catch { }
+            }
+        }
+    };
+
+    toggleDockBtn.addEventListener("pointerup", finishDockDrag);
+    toggleDockBtn.addEventListener("pointercancel", finishDockDrag);
+
+    toggleDockBtn.addEventListener(
+        "touchmove",
+        (e: TouchEvent) => {
+            if (isDockDragging && !isDockExpanded) {
+                e.preventDefault();
+            }
+        },
+        { passive: false }
+    );
+
+    toggleDockBtn.addEventListener("click", (e: MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (suppressNextToggleClick) {
+            suppressNextToggleClick = false;
+            return;
+        }
+        if (isDockExpanded) {
+            collapseDock(false);
+        } else {
+            expandDock();
+        }
+    });
 
     document.body.appendChild(dockEl);
 }
@@ -1347,6 +1947,10 @@ function openBookmarkModal(
         const modalStyle = document.createElement("style");
         modalStyle.id = "bookmark-modal-fullscreen-style";
         modalStyle.textContent = `
+            #bookmark-review-modal,
+            #bookmark-review-modal * {
+                touch-action: manipulation;
+            }
             #bookmark-review-modal::before {
                 content: "";
                 position: fixed;
@@ -1431,8 +2035,18 @@ function openBookmarkModal(
         justifyContent: "center",
         alignItems: "center",
         padding: "16px",
-        boxSizing: "border-box"
+        boxSizing: "border-box",
+        touchAction: "manipulation"
     });
+
+    // iOS Safari等でカードを素早く連続タップした際のダブルタップ拡大（スマートズーム）を防止
+    overlay.addEventListener(
+        "dblclick",
+        (e: MouseEvent) => {
+            e.preventDefault();
+        },
+        { passive: false }
+    );
 
     const panel = document.createElement("div");
     Object.assign(panel.style, {
@@ -2277,14 +2891,35 @@ function openBookmarkModal(
             shuffleBtn.style.backgroundColor = "#1e293b";
         });
 
+        let triggerShuffleAnimation: (() => void) | null = null;
+
         shuffleBtn.addEventListener("click", () => {
+            if (deck.length === 0) return;
+            const prevTopSearchValue = deck[currentCardIndex]?.searchValue;
             for (let i = deck.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
                 [deck[i], deck[j]] = [deck[j], deck[i]];
             }
+            // 2枚以上ある場合はシャッフル前後で同じ単語が連続しないように調整
+            if (deck.length > 1 && prevTopSearchValue && deck[0].searchValue === prevTopSearchValue) {
+                [deck[0], deck[1]] = [deck[1], deck[0]];
+            }
             currentCardIndex = 0;
             isCardFlipped = false;
-            renderCardView();
+
+            // シャッフルアイコンの360度回転フィードバック
+            shuffleIcon.style.transition = "transform 0.42s cubic-bezier(0.22, 1, 0.36, 1)";
+            shuffleIcon.style.transform = "rotate(360deg)";
+            setTimeout(() => {
+                shuffleIcon.style.transition = "none";
+                shuffleIcon.style.transform = "rotate(0deg)";
+            }, 430);
+
+            if (triggerShuffleAnimation) {
+                triggerShuffleAnimation();
+            } else {
+                renderCardView();
+            }
         });
 
         controls.appendChild(sourceDropdown);
@@ -2404,6 +3039,8 @@ function openBookmarkModal(
             overflow: "hidden",
             borderRadius: "12px"
         });
+
+        let lastSwipeEndTime = 0;
 
         // 指定したインデックスのカード要素一式を生成するヘルパー
         const buildCardElement = (
@@ -2599,6 +3236,9 @@ function openBookmarkModal(
             );
 
             cardBox.addEventListener("click", (e: MouseEvent) => {
+                if (Date.now() - lastSwipeEndTime < 350) {
+                    return;
+                }
                 const moveDist = Math.hypot(e.clientX - downX, e.clientY - downY);
                 const scrolled =
                     localFlipped && mlScrollBox ? Math.abs(mlScrollBox.scrollTop - downScrollTop) > 2 : false;
@@ -2617,21 +3257,28 @@ function openBookmarkModal(
         bodyArea.appendChild(cardViewport);
 
         let slideTimer: ReturnType<typeof setTimeout> | null = null;
-        let outgoingCardEl: HTMLElement | null = null;
+        let outgoingCardEls: HTMLElement[] = [];
 
-        // prev / next 押下時に現在のカードを左右へスライドアウトさせ、新しいカードを反対側からスライドインさせる
-        const slideToCard = (dir: "prev" | "next"): void => {
-            if (deck.length === 0) return;
-
-            // 連打された場合は進行中のスライドの後片付けを即座に完了させる
+        const clearPendingCardAnimations = (): void => {
             if (slideTimer) {
                 clearTimeout(slideTimer);
                 slideTimer = null;
             }
-            if (outgoingCardEl) {
-                outgoingCardEl.remove();
-                outgoingCardEl = null;
+            if (outgoingCardEls.length > 0) {
+                outgoingCardEls.forEach(el => el.remove());
+                outgoingCardEls = [];
             }
+            activeCardObj.element.style.transition = "";
+            activeCardObj.element.style.transform = "";
+            activeCardObj.element.style.opacity = "";
+            activeCardObj.element.style.zIndex = "";
+        };
+
+        // prev / next 押下時およびスワイプ時に現在のカードを左右へスライドアウトさせ、新しいカードを反対側からスライドインさせる
+        const slideToCard = (dir: "prev" | "next", startOffsetX = 0): void => {
+            if (deck.length === 0) return;
+
+            clearPendingCardAnimations();
 
             const nextIndex =
                 dir === "next"
@@ -2643,7 +3290,7 @@ function openBookmarkModal(
 
             const oldCardEl = activeCardObj.element;
             oldCardEl.style.pointerEvents = "none";
-            outgoingCardEl = oldCardEl;
+            outgoingCardEls = [oldCardEl];
 
             const newCardObj = buildCardElement(currentCardIndex, false);
             const newCardEl = newCardObj.element;
@@ -2654,6 +3301,11 @@ function openBookmarkModal(
             // prev: 新カードは左(-108%)から登場し、旧カードは右(+108%)へ消える
             const enterFromX = dir === "next" ? "108%" : "-108%";
             const exitToX = dir === "next" ? "-108%" : "108%";
+
+            if (startOffsetX !== 0) {
+                oldCardEl.style.transition = "none";
+                oldCardEl.style.transform = `translate3d(${startOffsetX}px, 0, 0)`;
+            }
 
             newCardEl.style.transition = "none";
             newCardEl.style.transform = `translate3d(${enterFromX}, 0, 0)`;
@@ -2671,15 +3323,189 @@ function openBookmarkModal(
 
             slideTimer = setTimeout(() => {
                 slideTimer = null;
-                if (outgoingCardEl === oldCardEl) {
-                    outgoingCardEl = null;
-                }
                 oldCardEl.remove();
+                outgoingCardEls = [];
                 newCardEl.style.transition = "";
                 newCardEl.style.transform = "";
             }, 390);
         };
-        navigateCard = slideToCard;
+        navigateCard = dir => slideToCard(dir);
+
+        // モバイルでの左右スワイプ操作（縦スクロールと競合しないよう方向をロック判定）
+        let swipeStartX = 0;
+        let swipeStartY = 0;
+        let swipeStartTime = 0;
+        let swipeCurrentDx = 0;
+        let swipeAxis: "none" | "horizontal" | "vertical" = "none";
+        let isTouchTracking = false;
+
+        const resetSwipedCard = (): void => {
+            const el = activeCardObj.element;
+            el.style.transition = "transform 0.25s cubic-bezier(0.22, 1, 0.36, 1)";
+            el.style.transform = "translate3d(0, 0, 0)";
+            setTimeout(() => {
+                if (activeCardObj.element === el && swipeAxis !== "horizontal") {
+                    el.style.transition = "";
+                    el.style.transform = "";
+                }
+            }, 260);
+        };
+
+        cardViewport.addEventListener(
+            "touchstart",
+            (e: TouchEvent) => {
+                if (deck.length === 0 || e.touches.length !== 1) {
+                    isTouchTracking = false;
+                    return;
+                }
+                const touch = e.touches[0];
+                swipeStartX = touch.clientX;
+                swipeStartY = touch.clientY;
+                swipeStartTime = Date.now();
+                swipeCurrentDx = 0;
+                swipeAxis = "none";
+                isTouchTracking = true;
+            },
+            { passive: true }
+        );
+
+        cardViewport.addEventListener(
+            "touchmove",
+            (e: TouchEvent) => {
+                if (!isTouchTracking || e.touches.length !== 1) return;
+                const touch = e.touches[0];
+                const dx = touch.clientX - swipeStartX;
+                const dy = touch.clientY - swipeStartY;
+
+                if (swipeAxis === "none") {
+                    if (Math.abs(dx) < 10 && Math.abs(dy) < 10) {
+                        return;
+                    }
+                    if (Math.abs(dx) > Math.abs(dy) * 1.2) {
+                        swipeAxis = "horizontal";
+                        if (slideTimer) {
+                            clearPendingCardAnimations();
+                        }
+                    } else {
+                        swipeAxis = "vertical";
+                        return;
+                    }
+                }
+
+                if (swipeAxis === "horizontal") {
+                    e.preventDefault();
+                    swipeCurrentDx = dx;
+                    activeCardObj.element.style.transition = "none";
+                    activeCardObj.element.style.transform = `translate3d(${dx}px, 0, 0)`;
+                }
+            },
+            { passive: false }
+        );
+
+        const finishSwipe = (cancelled: boolean): void => {
+            if (!isTouchTracking) return;
+            isTouchTracking = false;
+
+            if (swipeAxis !== "horizontal") {
+                swipeAxis = "none";
+                return;
+            }
+
+            const dx = swipeCurrentDx;
+            const elapsed = Date.now() - swipeStartTime;
+            const viewportWidth = cardViewport.clientWidth || 320;
+            const distanceThreshold = Math.min(80, Math.max(48, viewportWidth * 0.2));
+            const isQuickFlick = elapsed < 280 && Math.abs(dx) >= 30;
+
+            swipeAxis = "none";
+            swipeCurrentDx = 0;
+            lastSwipeEndTime = Date.now();
+
+            if (!cancelled && (Math.abs(dx) >= distanceThreshold || isQuickFlick)) {
+                if (dx < 0) {
+                    slideToCard("next", dx);
+                } else {
+                    slideToCard("prev", dx);
+                }
+            } else {
+                resetSwipedCard();
+            }
+        };
+
+        cardViewport.addEventListener("touchend", () => {
+            finishSwipe(false);
+        });
+        cardViewport.addEventListener("touchcancel", () => {
+            finishSwipe(true);
+        });
+
+        // シャッフル押下時にカード束が左右に弾かれて新しい先頭カードが中央へ滑り込む演出
+        triggerShuffleAnimation = (): void => {
+            if (deck.length === 0) return;
+
+            clearPendingCardAnimations();
+
+            const oldCardEl = activeCardObj.element;
+            oldCardEl.style.pointerEvents = "none";
+            oldCardEl.style.zIndex = "2";
+
+            // 背後のカード束を表現するダミーカード
+            const ghostCardEl = document.createElement("div");
+            Object.assign(ghostCardEl.style, {
+                position: "absolute",
+                inset: "0",
+                width: "100%",
+                height: "100%",
+                boxSizing: "border-box",
+                borderRadius: "12px",
+                backgroundColor: "#1e293b",
+                border: "2px solid #00b4cc",
+                boxShadow: "0 12px 28px rgba(0, 0, 0, 0.45)",
+                pointerEvents: "none",
+                zIndex: "1",
+                transform: "translate3d(0, 0, 0) scale(0.95)",
+                opacity: "0.85"
+            });
+            cardViewport.appendChild(ghostCardEl);
+
+            const newCardObj = buildCardElement(currentCardIndex, false);
+            const newCardEl = newCardObj.element;
+            activeCardObj = newCardObj;
+            toggleCardFlip = newCardObj.flip;
+
+            newCardEl.style.transition = "none";
+            newCardEl.style.zIndex = "3";
+            newCardEl.style.opacity = "0";
+            newCardEl.style.transform = "translate3d(34%, 14px, 0) scale(0.86) rotateZ(6deg)";
+            cardViewport.appendChild(newCardEl);
+
+            outgoingCardEls = [oldCardEl, ghostCardEl];
+
+            void newCardEl.offsetWidth;
+
+            oldCardEl.style.transition = "transform 0.36s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.32s ease";
+            oldCardEl.style.transform = "translate3d(-38%, -10px, 0) scale(0.86) rotateZ(-7deg)";
+            oldCardEl.style.opacity = "0";
+
+            ghostCardEl.style.transition = "transform 0.38s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.36s ease";
+            ghostCardEl.style.transform = "translate3d(38%, -12px, 0) scale(0.86) rotateZ(7deg)";
+            ghostCardEl.style.opacity = "0";
+
+            newCardEl.style.transition = "transform 0.42s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.26s ease";
+            newCardEl.style.transform = "translate3d(0, 0, 0) scale(1) rotateZ(0deg)";
+            newCardEl.style.opacity = "1";
+
+            slideTimer = setTimeout(() => {
+                slideTimer = null;
+                oldCardEl.remove();
+                ghostCardEl.remove();
+                outgoingCardEls = [];
+                newCardEl.style.transition = "";
+                newCardEl.style.transform = "";
+                newCardEl.style.opacity = "";
+                newCardEl.style.zIndex = "";
+            }, 430);
+        };
 
         // ①・② 下部ナビゲーションボタン（prev / 辞書ページへ / next・折り返し防止）
         const navBar = document.createElement("div");
